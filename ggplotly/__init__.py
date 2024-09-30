@@ -48,9 +48,12 @@ from .scales import (
 )
 from .guides import labs
 from .positions import position_dodge, position_jitter, position_stack
+from .utils import ggsave, ggsize
 
 __all__ = [
     "ggplot",
+    "ggsave",
+    "ggsize",
     "ggtitle",
     "aes",
     "theme_default",

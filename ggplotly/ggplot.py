@@ -9,6 +9,7 @@ from .themes import Theme
 from .facets import Facet
 from .coords.coord_base import Coord
 from .guides import Labs
+from .utils import Utils, ggsize
 
 
 class ggplot:
@@ -28,7 +29,9 @@ class ggplot:
         self.facets = None
         self.coords = Coord()
         self.labs = None  # Initialize labs
+        self.size = None  # Initialize size
         self.fig = go.Figure()
+        self.auto_draw = True  # Automatically draw after adding components by default
 
     def add_component(self, component):
         """
@@ -49,12 +52,22 @@ class ggplot:
             self.set_coords(component)
         elif isinstance(component, Labs):
             self.labs = component
+        elif isinstance(component, Utils):
+            component.apply(self)
+        elif isinstance(component, ggsize):
+            self.size = component
         else:
             raise TypeError("Unsupported component")
 
     def __add__(self, other):
         self.add_component(other)
         return self
+
+    def _repr_html_(self):
+        if self.auto_draw:
+            self.draw().show()
+        return ""
+        # return "<ggplot object displaying the plot>"
 
     def add_geom(self, geom):
         """
@@ -134,6 +147,11 @@ class ggplot:
         # Apply labels
         if self.labs:
             self.labs.apply(self.fig)
+
+        # Apply resizing
+        if self.size:
+            print("a")
+            self.size.apply(self)
 
         # Show the plot
         return self.fig
