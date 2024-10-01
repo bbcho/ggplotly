@@ -36,56 +36,95 @@ class geom_bar(Geom):
             col (int): Column position in subplot (for faceting).
         """
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]] if "x" in self.mapping else None
-        y = data[self.mapping["y"]] if "y" in self.mapping else None
+        data = data.copy()
+        x, y = self._transform_data(data)
+        payload = dict()
 
         if y is None:
+            self.mapping["y"] = self.mapping["x"]
+            self.mapping.pop("x")
             y = pd.Series(x).value_counts()
             x = None
+            data = pd.DataFrame()
+            data[self.mapping["y"]] = y
+            self.data = data
+            payload["orientation"] = "v"
 
-        if x is None:
+        elif x is None:
+            self.mapping["x"] = self.mapping["y"]
+            self.mapping.pop("y")
             x = pd.Series(y).value_counts()
             y = None
+            data = pd.DataFrame()
+            data[self.mapping["x"]] = x
+            self.data = data
+            payload["orientation"] = "h"
 
-        # Handle grouping if a 'group' mapping is provided
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
+        payload["name"] = self.params.get("name", "Bar")
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        default_color = color_info["default_color"]
-        alpha = self.params.get("alpha", 1)
+        plot = go.Bar
 
-        # Generate bars based on groups and categories
-        if group_values is not None:
-            fig.add_trace(
-                go.Bar(
-                    x=x,
-                    y=y,
-                    marker=dict(
-                        color=color_values,  # Pass the color series
-                    ),
-                    opacity=alpha,
-                    showlegend=self.params.get("showlegend", True),
-                    name=self.params.get("name", "Bar"),
-                ),
-                row=row,
-                col=col,
-            )
-        else:
-            fig.add_trace(
-                go.Bar(
-                    x=x,
-                    y=y,
-                    marker_color=(
-                        color_values.iloc[0]
-                        if color_values is not None
-                        else default_color
-                    ),
-                    opacity=alpha,
-                    showlegend=self.params.get("showlegend", True),
-                    name=self.params.get("name", "Bar"),
-                ),
-                row=row,
-                col=col,
-            )
+        color_targets = dict(
+            # fill="marker_fill",
+            # fill="fillcolor",
+            color="marker_color",
+            # size="line",
+            # marker=dict(color=fill, size=size),
+        )
+
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+
+        # data = data if data is not None else self.data
+        # x = data[self.mapping["x"]] if "x" in self.mapping else None
+        # y = data[self.mapping["y"]] if "y" in self.mapping else None
+
+        # if y is None:
+        #     y = pd.Series(x).value_counts()
+        #     x = None
+
+        # if x is None:
+        #     x = pd.Series(y).value_counts()
+        #     y = None
+
+        # # Handle grouping if a 'group' mapping is provided
+        # group_values = data[self.mapping["group"]] if "group" in self.mapping else None
+
+        # # Get shared color logic from the parent Geom class
+        # color_info = self.handle_colors(data, self.mapping, self.params)
+        # color_values = color_info["color_values"]
+        # default_color = color_info["default_color"]
+        # alpha = self.params.get("alpha", 1)
+
+        # # Generate bars based on groups and categories
+        # if group_values is not None:
+        #     fig.add_trace(
+        #         go.Bar(
+        #             x=x,
+        #             y=y,
+        #             marker=dict(
+        #                 color=color_values,  # Pass the color series
+        #             ),
+        #             opacity=alpha,
+        #             showlegend=self.params.get("showlegend", True),
+        #             name=self.params.get("name", "Bar"),
+        #         ),
+        #         row=row,
+        #         col=col,
+        #     )
+        # else:
+        #     fig.add_trace(
+        #         go.Bar(
+        #             x=x,
+        #             y=y,
+        #             marker_color=(
+        #                 color_values.iloc[0]
+        #                 if color_values is not None
+        #                 else default_color
+        #             ),
+        #             opacity=alpha,
+        #             showlegend=self.params.get("showlegend", True),
+        #             name=self.params.get("name", "Bar"),
+        #         ),
+        #         row=row,
+        #         col=col,
+        #     )

@@ -21,45 +21,59 @@ class geom_boxplot(Geom):
 
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
 
-        alpha = self.params.get("alpha", 1)
+        plot = go.Box
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        fill_color = color_info["fill_colors"]
+        payload = dict(
+            name=self.params.get("name", "Boxplot"),
+        )
 
-        # Draw boxplot traces
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-                fig.add_trace(
-                    go.Box(
-                        x=x[group_mask],
-                        y=y[group_mask],
-                        marker_color=(
-                            color_values[group_mask].iloc[0]
-                            if color_values is not None
-                            else fill_color
-                        ),
-                        opacity=alpha,
-                        name=str(group),
-                    ),
-                    row=row,
-                    col=col,
-                )
-        else:
-            fig.add_trace(
-                go.Box(
-                    x=x,
-                    y=y,
-                    marker_color=fill_color,
-                    opacity=alpha,
-                    name=self.params.get("name", "Boxplot"),
-                ),
-                row=row,
-                col=col,
-            )
+        color_targets = dict(
+            fill="fillcolor",
+            color="marker_color",
+            size="marker_size",
+        )
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+
+        # x = data[self.mapping["x"]]
+        # y = data[self.mapping["y"]]
+        # group_values = data[self.mapping["group"]] if "group" in self.mapping else None
+
+        # alpha = self.params.get("alpha", 1)
+
+        # # Get shared color logic from the parent Geom class
+        # color_info = self.handle_colors(data, self.mapping, self.params)
+        # color_values = color_info["color_values"]
+        # fill_color = color_info["fill_colors"]
+
+        # # Draw boxplot traces
+        # if group_values is not None:
+        #     for group in group_values.unique():
+        #         group_mask = group_values == group
+        #         fig.add_trace(
+        #             go.Box(
+        #                 x=x[group_mask],
+        #                 y=y[group_mask],
+        #                 marker_color=(
+        #                     color_values[group_mask].iloc[0]
+        #                     if color_values is not None
+        #                     else fill_color
+        #                 ),
+        #                 opacity=alpha,
+        #                 name=str(group),
+        #             ),
+        #             row=row,
+        #             col=col,
+        #         )
+        # else:
+        #     fig.add_trace(
+        #         go.Box(
+        #             x=x,
+        #             y=y,
+        #             marker_color=fill_color,
+        #             opacity=alpha,
+        #             name=self.params.get("name", "Boxplot"),
+        #         ),
+        #         row=row,
+        #         col=col,
+        #     )

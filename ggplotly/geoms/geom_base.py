@@ -1,6 +1,7 @@
 # geoms/geom_base.py
 import plotly.express as px
 import pandas as pd
+from itertools import product
 
 
 class Geom:
@@ -27,8 +28,8 @@ class Geom:
         self.data = data
 
     def _transform_data(self, data):
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
+        x = data[self.mapping["x"]] if "x" in self.mapping else None
+        y = data[self.mapping["y"]] if "y" in self.mapping else None
 
         return x, y
 
@@ -46,20 +47,15 @@ class Geom:
 
     def _format_color_targets(self, color_targets, fill, color, size):
         # reverse dictionary color_targets
-        color_targets = {
-            f"{v}_{k}" if v != "fillcolor" else "fillcolor": (
-                None if v != "fillcolor" else k
-            )
-            for k, v in color_targets.items()
-        }
+        color_targets = {v: k for k, v in color_targets.items()}
 
         for k, v in color_targets.items():
             # check to see if "fill" in is k
-            if "fill" in k:
+            if "fill" in v:
                 color_targets[k] = fill
-            elif "color" in k:
+            elif "color" in v:
                 color_targets[k] = color
-            elif "size" in k:
+            elif "size" in v:
                 color_targets[k] = size
 
         # remove None values from color_targets
@@ -68,9 +64,9 @@ class Geom:
         return color_targets
 
     def _transform_fig(self, plot, fig, data, payload, color_targets, row, col):
-        group_values = (
-            data[self.mapping.get("group")] if "group" in self.mapping else None
-        )
+        # group_values = (
+        #     data[self.mapping.get("group")] if "group" in self.mapping else None
+        # )
 
         (
             fill,
@@ -111,16 +107,27 @@ class Geom:
         #         row=row,
         #         col=col,
         #     )
-        if color_values is not None:
-            # COLOR GROUPS
-            for key in color_values.keys():
+        if (color_values is not None) | (fill_values is not None):
+            # COLOR and FILL GROUPS
+
+            # check that both color and fill are not None
+            if (color_values is not None) & (fill_values is not None):
+                raise ValueError(
+                    "If both color and fill are passed, only one can be a column name. The other must be a color value."
+                )
+
+            if color_values is not None:
+                values = color_values
+            else:
+                values = fill_values
+
+            for key in values.keys():
                 x = data.loc[data[color] == key, self.mapping["x"]]
                 y = data.loc[data[color] == key, self.mapping["y"]]
 
                 color_targets_final = self._format_color_targets(
-                    color_targets, fill, color_values[key], size
+                    color_targets, fill, values[key], size
                 )
-                print(color_targets)
                 # drop the key "name" from the payload
                 if "name" in payload:
                     payload.pop("name")
@@ -157,20 +164,6 @@ class Geom:
                 row=row,
                 col=col,
             )
-
-        # fig.add_trace(
-        #     plot = go.Scatter(
-        #         x=None,
-        #         y=None,
-        #         mode="markers",
-        #         marker=dict(color=fill, size=size),
-        #         opacity=alpha,
-        #         name=self.params.get("name", "Point"),
-        #         showlegend=self.params.get("showlegend", True),
-        #     )
-        #     row=row,
-        #     col=col,
-        # )
 
     def handle_style(self, data, mapping, params):
         """
