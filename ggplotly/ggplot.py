@@ -1,6 +1,7 @@
 # ggplot.py
 
 import plotly.graph_objects as go
+import plotly.express as px
 import plotly.subplots as sp
 from .aes import aes
 from .geoms.geom_base import Geom
@@ -32,6 +33,7 @@ class ggplot:
         self.size = None  # Initialize size
         self.fig = go.Figure()
         self.auto_draw = True  # Automatically draw after adding components by default
+        self.color_map = None
 
     def add_component(self, component):
         """
@@ -71,12 +73,49 @@ class ggplot:
 
     def add_geom(self, geom):
         """
-        Add a geom layer to the plot.
-
-        Parameters:
-            geom (Geom): The geom to add.
+        Add a geom (trace) to the ggplot object.
+        Geoms will inherit the theme and other properties set on the plot.
         """
-        geom.setup_data(self.data, self.mapping)
+        # """
+        # Add a geom layer to the plot.
+
+        # Parameters:
+        #     geom (Geom): The geom to add.
+        # """
+        # geom.setup_data(self.data, self.mapping)
+        # geom.theme = self.theme
+        # self.layers.append(geom)
+        # Setup the geom with data, mapping, and theme
+        if geom.data is None:
+            geom.data = self.data
+
+        if geom.mapping is None:
+            geom.mapping = self.mapping
+        else:
+            # Merge plot mapping and geom mapping, with geom mapping taking precedence
+            geom.mapping = {**self.mapping, **geom.mapping}
+
+        geom.theme = self.theme  # Pass the theme to the geom
+
+        # # Create a shared color map if 'color' is in the mapping
+        # if "color" in self.mapping and self.color_map is None:
+        #     color_values = self.data[self.mapping["color"]]
+        #     unique_colors = color_values.unique()
+
+        #     # Use the theme's color palette or default Plotly colors
+        #     if self.theme and hasattr(self.theme, "template"):
+        #         color_palette = self.theme.template.layout.colorway
+        #     else:
+        #         color_palette = px.colors.qualitative.Plotly  # Fallback
+
+        #     self.color_map = {
+        #         val: color_palette[i % len(color_palette)]
+        #         for i, val in enumerate(unique_colors)
+        #     }
+
+        # Pass the color map to the geom
+        # geom.color_map = self.color_map
+        # geom.draw(self.fig)
         self.layers.append(geom)
 
     def add_scale(self, scale):
@@ -96,6 +135,7 @@ class ggplot:
             theme (Theme): The theme to apply.
         """
         self.theme = theme
+        self.theme.apply(self.fig)
 
     def set_facets(self, facets):
         """

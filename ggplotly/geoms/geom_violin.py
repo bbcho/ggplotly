@@ -26,25 +26,13 @@ class geom_violin(Geom):
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        fill_color = self.params.get("fill", "lightblue")
         alpha = self.params.get("alpha", 0.5)
-        outline_color = self.params.get("color", "black")
         linewidth = self.params.get("linewidth", 1)
 
-        # Handle fill mapping if fill is categorical
-        if group_values is not None:
-            if not pd.api.types.is_categorical_dtype(group_values):
-                data.loc[:, self.mapping["group"]] = pd.Categorical(
-                    group_values
-                )  # Fixing SettingWithCopyWarning
-                group_values = data[self.mapping["group"]]
-
-            unique_groups = group_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_groups)
-            }
-            group_values = group_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        outline_color = self.params.get("color", "black")
+        fill_color = color_info["fill_colors"]
 
         # Draw violin traces
         if group_values is not None:

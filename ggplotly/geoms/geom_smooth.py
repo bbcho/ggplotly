@@ -30,7 +30,6 @@ class geom_smooth(Geom):
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = data[self.mapping["color"]] if "color" in self.mapping else None
         method = self.params.get("method", "loess")  # Default to 'loess'
         linetype = self.params.get("linetype", "solid")
         alpha = self.params.get("alpha", 1)
@@ -38,20 +37,9 @@ class geom_smooth(Geom):
         # Initialize stat_smooth for statistical smoothing
         smoother = stat_smooth(method=method)
 
-        # Handle color mapping if color is categorical
-        if color_values is not None:
-            if not pd.api.types.is_categorical_dtype(color_values):
-                data.loc[:, self.mapping["color"]] = pd.Categorical(
-                    color_values
-                )  # Fixing SettingWithCopyWarning
-                color_values = data[self.mapping["color"]]
-
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        color_values = color_info["color_values"]
 
         # Compute smoothed values using stat_smooth
         data = smoother.compute_stat(data)

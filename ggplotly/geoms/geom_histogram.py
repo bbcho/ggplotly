@@ -39,31 +39,12 @@ class geom_histogram(Geom):
         x = data[self.mapping["x"]]
 
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = data[self.mapping["fill"]] if "fill" in self.mapping else None
-        fill_color = self.params.get("fill", "lightblue")
         alpha = self.params.get("alpha", 1)
 
-        # Automatically convert 'group' and 'fill' columns to categorical if necessary
-        if group_values is not None and not pd.api.types.is_categorical_dtype(
-            group_values
-        ):
-            data[self.mapping["group"]] = pd.Categorical(group_values)
-            group_values = data[self.mapping["group"]]
-
-        if color_values is not None and not pd.api.types.is_categorical_dtype(
-            color_values
-        ):
-            data[self.mapping["fill"]] = pd.Categorical(color_values)
-            color_values = data[self.mapping["fill"]]
-
-        # If 'fill' is categorical, map to colors automatically
-        if color_values is not None:
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        color_values = color_info["color_values"]
+        fill_color = color_info["fill_colors"]
 
         # Generate histograms based on groups and categories
         if group_values is not None:

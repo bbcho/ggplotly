@@ -5,8 +5,10 @@ from .ggtitle import ggtitle
 from .aes import aes
 from .themes import (
     theme_default,
+    theme_ggplot2,
+    theme_nytimes,
     theme_minimal,
-    theme_bw,
+    # theme_bw,
     theme_dark,
     theme_classic,
     theme_custom,
@@ -57,8 +59,10 @@ __all__ = [
     "ggtitle",
     "aes",
     "theme_default",
+    "theme_ggplot2",
+    "theme_nytimes",
     "theme_minimal",
-    "theme_bw",
+    # "theme_bw",
     "theme_dark",
     "theme_classic",
     "theme_custom",

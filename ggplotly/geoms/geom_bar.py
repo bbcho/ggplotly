@@ -36,40 +36,25 @@ class geom_bar(Geom):
             col (int): Column position in subplot (for faceting).
         """
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
+        x = data[self.mapping["x"]] if "x" in self.mapping else None
+        y = data[self.mapping["y"]] if "y" in self.mapping else None
+
+        if y is None:
+            y = pd.Series(x).value_counts()
+            x = None
+
+        if x is None:
+            x = pd.Series(y).value_counts()
+            y = None
 
         # Handle grouping if a 'group' mapping is provided
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = (
-            data[self.mapping["fill"]] if "fill" in self.mapping else None
-        )  # Use 'fill' for color mapping
-        fill_color = self.params.get("fill", "lightblue")
+
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        color_values = color_info["color_values"]
+        default_color = color_info["default_color"]
         alpha = self.params.get("alpha", 1)
-
-        # Automatically convert 'group' and 'fill' columns to categorical if necessary
-        if group_values is not None and not pd.api.types.is_categorical_dtype(
-            group_values
-        ):
-            data[self.mapping["group"]] = pd.Categorical(group_values)
-            group_values = data[self.mapping["group"]]
-
-        if color_values is not None and not pd.api.types.is_categorical_dtype(
-            color_values
-        ):
-            data[self.mapping["fill"]] = pd.Categorical(color_values)
-            color_values = data[self.mapping["fill"]]
-
-        # If 'fill' is categorical, map to colors automatically
-        if color_values is not None:
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(
-                color_map
-            )  # Apply color map to the fill aesthetic
 
         # Generate bars based on groups and categories
         if group_values is not None:
@@ -93,7 +78,9 @@ class geom_bar(Geom):
                     x=x,
                     y=y,
                     marker_color=(
-                        color_values.iloc[0] if color_values is not None else fill_color
+                        color_values.iloc[0]
+                        if color_values is not None
+                        else default_color
                     ),
                     opacity=alpha,
                     showlegend=self.params.get("showlegend", True),

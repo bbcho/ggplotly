@@ -33,21 +33,11 @@ class geom_ribbon(Geom):
         ymin = data[self.mapping["ymin"]]
         ymax = data[self.mapping["ymax"]]
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        fill_color = self.params.get("fill", "lightblue")
         alpha = self.params.get("alpha", 0.5)
 
-        # Handle fill mapping if fill is categorical
-        if group_values is not None:
-            if not pd.api.types.is_categorical_dtype(group_values):
-                data[self.mapping["group"]] = pd.Categorical(group_values)
-                group_values = data[self.mapping["group"]]
-
-            unique_groups = group_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_groups)
-            }
-            group_values = group_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        fill_color = color_info["fill_colors"]
 
         # Draw ribbon plot traces
         if group_values is not None:

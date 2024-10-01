@@ -32,23 +32,12 @@ class geom_density(Geom):
         data = data if data is not None else self.data
         x = data[self.mapping["x"]]
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = data[self.mapping["fill"]] if "fill" in self.mapping else None
-        fill_color = self.params.get("fill", "lightblue")
         alpha = self.params.get("alpha", 0.5)
         linetype = self.params.get("linetype", "solid")
 
-        # Handle fill mapping if fill is categorical
-        if color_values is not None:
-            if not pd.api.types.is_categorical_dtype(color_values):
-                data[self.mapping["fill"]] = pd.Categorical(color_values)
-                color_values = data[self.mapping["fill"]]
-
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        fill_colors = color_info["fill_colors"]
 
         # Draw density traces
         if group_values is not None:
@@ -60,8 +49,8 @@ class geom_density(Geom):
                         mode="lines",
                         line=dict(
                             color=(
-                                color_values[group_mask].iloc[0]
-                                if color_values is not None
+                                color_map[group]
+                                if color_map is not None
                                 else fill_color
                             ),
                             dash=linetype,

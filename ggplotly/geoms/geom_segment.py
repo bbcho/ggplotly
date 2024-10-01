@@ -35,23 +35,13 @@ class geom_segment(Geom):
         xend = data[self.mapping["xend"]]
         yend = data[self.mapping["yend"]]
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = data[self.mapping["color"]] if "color" in self.mapping else None
-        segment_color = self.params.get("color", "blue")
         linetype = self.params.get("linetype", "solid")
         alpha = self.params.get("alpha", 1)
 
-        # Handle color mapping if color is categorical
-        if color_values is not None:
-            if not pd.api.types.is_categorical_dtype(color_values):
-                data[self.mapping["color"]] = pd.Categorical(color_values)
-                color_values = data[self.mapping["color"]]
-
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        color_values = color_info["color_values"]
+        segment_color = color_info["fill_colors"]
 
         # Draw segment traces
         if group_values is not None:

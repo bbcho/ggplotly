@@ -37,23 +37,13 @@ class geom_errorbar(Geom):
             ymax = data[self.mapping["ymax"]]
 
         group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        color_values = data[self.mapping["fill"]] if "fill" in self.mapping else None
-        fill_color = self.params.get("fill", "lightblue")
         alpha = self.params.get("alpha", 1)
         linetype = self.params.get("linetype", "solid")
 
-        # Handle fill mapping if fill is categorical
-        if color_values is not None:
-            if not pd.api.types.is_categorical_dtype(color_values):
-                data[self.mapping["fill"]] = pd.Categorical(color_values)
-                color_values = data[self.mapping["fill"]]
-
-            unique_colors = color_values.unique()
-            color_map = {
-                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
-                for i, val in enumerate(unique_colors)
-            }
-            color_values = color_values.map(color_map)
+        # Get shared color logic from the parent Geom class
+        color_info = self.handle_colors(data, self.mapping, self.params)
+        color_values = color_info["color_values"]
+        fill_color = color_info["fill_colors"]
 
         # Draw error bar traces
         if group_values is not None:
