@@ -2,6 +2,7 @@
 import plotly.express as px
 import pandas as pd
 from itertools import product
+from ..aes import aes
 
 
 class Geom:
@@ -10,9 +11,15 @@ class Geom:
     """
 
     def __init__(self, data=None, mapping=None, **params):
-        self.mapping = mapping.mapping if mapping else {}
+        # check to see if data was passed first or if aes was passed first
+        if isinstance(data, aes):
+            self.mapping = data.mapping
+            self.data = None
+        else:
+            self.data = data
+            self.mapping = mapping.mapping if mapping else {}
+
         self.params = params
-        self.data = data
 
     def setup_data(self, data, plot_mapping):
         """
@@ -26,12 +33,6 @@ class Geom:
         combined_mapping = {**plot_mapping, **self.mapping}
         self.mapping = combined_mapping
         self.data = data
-
-    def _transform_data(self, data):
-        x = data[self.mapping["x"]] if "x" in self.mapping else None
-        y = data[self.mapping["y"]] if "y" in self.mapping else None
-
-        return x, y
 
     def draw(self, fig, data=None, row=1, col=1):
         """
@@ -80,7 +81,8 @@ class Geom:
             size,
         ) = self.handle_style(data, self.mapping, self.params)
 
-        x, y = self._transform_data(data)
+        x = data[self.mapping["x"]] if "x" in self.mapping else None
+        y = data[self.mapping["y"]] if "y" in self.mapping else None
 
         # if group_values is not None:
         # pass
@@ -118,13 +120,16 @@ class Geom:
 
             if color_values is not None:
                 values = color_values
+                value_col = color
             else:
                 values = fill_values
+                value_col = fill
 
             for key in values.keys():
-                x = data.loc[data[color] == key, self.mapping["x"]]
-                y = data.loc[data[color] == key, self.mapping["y"]]
+                x = data.loc[data[value_col] == key, self.mapping["x"]]
+                y = data.loc[data[value_col] == key, self.mapping["y"]]
 
+                # bar geom only takes colors
                 color_targets_final = self._format_color_targets(
                     color_targets, fill, values[key], size
                 )

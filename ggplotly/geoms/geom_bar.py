@@ -35,30 +35,38 @@ class geom_bar(Geom):
             row (int): Row position in subplot (for faceting).
             col (int): Column position in subplot (for faceting).
         """
-        data = data if data is not None else self.data
-        data = data.copy()
-        x, y = self._transform_data(data)
         payload = dict()
+        data = data if data is not None else self.data
+        data = pd.DataFrame(data).copy()
 
-        if y is None:
-            self.mapping["y"] = self.mapping["x"]
-            self.mapping.pop("x")
-            y = pd.Series(x).value_counts()
-            x = None
-            data = pd.DataFrame()
-            data[self.mapping["y"]] = y
-            self.data = data
+        grouping = list(set([v for k, v in self.mapping.items()]))
+        grouping = [g for g in grouping if g in data.columns]
+
+        if len(data.columns) == 1:
+            tf = data.value_counts()
+        else:
+            tf = data.groupby(grouping).count().iloc[:, [0]]
+            tf.columns = ["count"]
+            tf = tf.reset_index()
+
+        tf = tf.reset_index()
+
+        if ("x" in self.mapping) & ("y" not in self.mapping):
+            dcol = "x"
+            x = list(tf[self.mapping[dcol]])
+            y = list(tf["count"])
+            self.mapping["x"] = self.mapping[dcol]
+            self.mapping["y"] = "count"
             payload["orientation"] = "v"
-
-        elif x is None:
-            self.mapping["x"] = self.mapping["y"]
-            self.mapping.pop("y")
-            x = pd.Series(y).value_counts()
-            y = None
-            data = pd.DataFrame()
-            data[self.mapping["x"]] = x
-            self.data = data
+        elif ("y" in self.mapping) & ("x" not in self.mapping):
+            dcol = "y"
+            y = list(tf[self.mapping[dcol]])
+            x = list(tf["count"])
+            self.mapping["y"] = self.mapping[dcol]
+            self.mapping["x"] = "count"
             payload["orientation"] = "h"
+
+        data = tf
 
         payload["name"] = self.params.get("name", "Bar")
 

@@ -22,7 +22,7 @@ class ggplot:
             data (DataFrame): The dataset to plot.
             mapping (aes): Aesthetic mappings created by aes().
         """
-        self.data = data
+        self.data = data.copy()
         self.mapping = mapping.mapping if mapping else {}
         self.layers = []
         self.scales = []
@@ -87,7 +87,7 @@ class ggplot:
         # self.layers.append(geom)
         # Setup the geom with data, mapping, and theme
         if geom.data is None:
-            geom.data = self.data
+            geom.data = self.data.copy()
 
         if geom.mapping is None:
             geom.mapping = self.mapping
