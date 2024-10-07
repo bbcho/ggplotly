@@ -51,6 +51,7 @@ from .scales import (
 from .guides import labs
 from .positions import position_dodge, position_jitter, position_stack
 from .utils import ggsave, ggsize
+from .stats import *
 
 __all__ = [
     "ggplot",
@@ -106,4 +107,5 @@ __all__ = [
     "scale_x_log10",
     "scale_y_log10",
     "scale_color_gradient",
+    "stat_count",
 ]

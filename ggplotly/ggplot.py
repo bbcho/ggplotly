@@ -11,6 +11,7 @@ from .facets import Facet
 from .coords.coord_base import Coord
 from .guides import Labs
 from .utils import Utils, ggsize
+from .stats.stat_base import Stat
 
 
 class ggplot:
@@ -26,6 +27,7 @@ class ggplot:
         self.mapping = mapping.mapping if mapping else {}
         self.layers = []
         self.scales = []
+        self.stats = []
         self.theme = Theme()
         self.facets = None
         self.coords = Coord()
@@ -42,6 +44,7 @@ class ggplot:
         Parameters:
             component: The component to add.
         """
+        print(isinstance(component, Stat))
         if isinstance(component, Geom):
             self.add_geom(component)
         elif isinstance(component, Scale):
@@ -58,8 +61,11 @@ class ggplot:
             component.apply(self)
         elif isinstance(component, ggsize):
             self.size = component
+        # elif isinstance(component, Stat):
+        #     self.add_stat(component)
         else:
-            raise TypeError("Unsupported component")
+            pass
+            # raise TypeError("Unsupported component")
 
     def __add__(self, other):
         self.add_component(other)
@@ -70,6 +76,11 @@ class ggplot:
             self.draw().show()
         return ""
         # return "<ggplot object displaying the plot>"
+
+    # def add_stat(self, stat):
+    #     stat.data = self.data.copy()
+    #     stat.mapping = self.mapping.copy()
+    #     self.stats.append(stat)
 
     def add_geom(self, geom):
         """
@@ -190,7 +201,6 @@ class ggplot:
 
         # Apply resizing
         if self.size:
-            print("a")
             self.size.apply(self)
 
         # Show the plot

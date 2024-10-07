@@ -20,7 +20,11 @@ class geom_bar(Geom):
         fill (str, optional): Fill color for the bars.
         alpha (float, optional): Transparency level for the fill color. Default is 1.
         showlegend (bool, optional): Whether to show legend entries. Default is True.
+        stat: ['count', 'identity', None]
+            The statistical transformation to use on the data for this layer. Default is 'count'.
     """
+
+    stats = []
 
     def draw(self, fig, data=None, row=1, col=1):
         """
@@ -39,34 +43,50 @@ class geom_bar(Geom):
         data = data if data is not None else self.data
         data = pd.DataFrame(data).copy()
 
-        grouping = list(set([v for k, v in self.mapping.items()]))
-        grouping = [g for g in grouping if g in data.columns]
+        try:
+            stat = self.params["stat"]
+        except:
+            stat = "count"
 
-        if len(data.columns) == 1:
-            tf = data.value_counts()
-        else:
-            tf = data.groupby(grouping).count().iloc[:, [0]]
-            tf.columns = ["count"]
+        for comp in self.stats:
+            data = comp.compute(data)
+            print(data)
+
+        if stat != "identity":
+            grouping = list(set([v for k, v in self.mapping.items()]))
+            grouping = [g for g in grouping if g in data.columns]
+
+            if len(data.columns) == 1:
+                tf = data.value_counts()
+            else:
+                # if both x and y are in the grouping, remove y.
+                # Assume that y is the metric we want to summarize
+                if ("x" in grouping) & ("y" in grouping):
+                    grouping.remove("y")
+                    self.mapping.pop("y")
+
+                tf = data.groupby(grouping).agg(stat).iloc[:, [0]]
+                tf.columns = [stat]
+                tf = tf.reset_index()
+
             tf = tf.reset_index()
 
-        tf = tf.reset_index()
+            if ("x" in self.mapping) & ("y" not in self.mapping):
+                dcol = "x"
+                # x = list(tf[self.mapping[dcol]])
+                # y = list(tf["count"])
+                self.mapping["x"] = self.mapping[dcol]
+                self.mapping["y"] = stat
+                payload["orientation"] = "v"
+            elif ("y" in self.mapping) & ("x" not in self.mapping):
+                dcol = "y"
+                # y = list(tf[self.mapping[dcol]])
+                # x = list(tf["count"])
+                self.mapping["y"] = self.mapping[dcol]
+                self.mapping["x"] = stat
+                payload["orientation"] = "h"
 
-        if ("x" in self.mapping) & ("y" not in self.mapping):
-            dcol = "x"
-            x = list(tf[self.mapping[dcol]])
-            y = list(tf["count"])
-            self.mapping["x"] = self.mapping[dcol]
-            self.mapping["y"] = "count"
-            payload["orientation"] = "v"
-        elif ("y" in self.mapping) & ("x" not in self.mapping):
-            dcol = "y"
-            y = list(tf[self.mapping[dcol]])
-            x = list(tf["count"])
-            self.mapping["y"] = self.mapping[dcol]
-            self.mapping["x"] = "count"
-            payload["orientation"] = "h"
-
-        data = tf
+            data = tf
 
         payload["name"] = self.params.get("name", "Bar")
 
@@ -79,6 +99,12 @@ class geom_bar(Geom):
             # size="line",
             # marker=dict(color=fill, size=size),
         )
+
+        if "position" in self.params:
+            if self.params["position"] == "dodge":
+                fig.update_layout(barmode="group")
+        else:
+            fig.update_layout(barmode="relative")
 
         self._transform_fig(plot, fig, data, payload, color_targets, row, col)
 

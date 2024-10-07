@@ -3,12 +3,15 @@ import plotly.express as px
 import pandas as pd
 from itertools import product
 from ..aes import aes
+from ..stats.stat_base import Stat
 
 
 class Geom:
     """
     Base class for all geoms.
     """
+
+    stats = []
 
     def __init__(self, data=None, mapping=None, **params):
         # check to see if data was passed first or if aes was passed first
@@ -240,3 +243,13 @@ class Geom:
             self.params.get("alpha", 1),
             self.params.get("size", 10),
         )
+
+    # def __add__(self, other):
+    #     print("heelo")
+    #     if isinstance(other, Stat):
+    #         print("Adding stat to geom")
+    #         other.data = self.data
+    #         other.mapping = self.mapping
+    #         other.params = self.params
+
+    #         self.stats.append(other)

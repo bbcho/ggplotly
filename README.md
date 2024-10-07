@@ -28,3 +28,11 @@ ggplot(df, aes(x='x', y='y')) + geom_point()
 - geom_line
 - geom_bar
 - geom_area
+- geom_boxplot
+
+## Working Utils
+
+- ggtitle
+- lab
+- themes
+- ggsave
