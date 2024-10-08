@@ -51,9 +51,13 @@ class geom_bar(Geom):
                 stat = "count"
 
             if stat == "count":
-                print("stat_count")
-                print(self.mapping)
                 self = self + stat_count()
+
+        if ("x" in self.mapping) & ("y" not in self.mapping):
+            payload["orientation"] = "v"
+        elif ("y" in self.mapping) & ("x" not in self.mapping):
+            print("A")
+            payload["orientation"] = "h"
 
         for comp in self.stats:
             # stack all stats on the data
