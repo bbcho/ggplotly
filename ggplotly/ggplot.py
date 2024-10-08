@@ -12,6 +12,7 @@ from .coords.coord_base import Coord
 from .guides import Labs
 from .utils import Utils, ggsize
 from .stats.stat_base import Stat
+import copy
 
 
 class ggplot:
@@ -37,6 +38,15 @@ class ggplot:
         self.auto_draw = True  # Automatically draw after adding components by default
         self.color_map = None
 
+    def copy(self):
+        """
+        Create a deep copy of the ggplot object.
+
+        Returns:
+            ggplot: A copy of the ggplot object.
+        """
+        return copy.deepcopy(self)
+
     def add_component(self, component):
         """
         Add a component (geom, scale, theme, etc.) to the plot.
@@ -44,7 +54,6 @@ class ggplot:
         Parameters:
             component: The component to add.
         """
-        print(isinstance(component, Stat))
         if isinstance(component, Geom):
             self.add_geom(component)
         elif isinstance(component, Scale):
@@ -61,15 +70,15 @@ class ggplot:
             component.apply(self)
         elif isinstance(component, ggsize):
             self.size = component
-        # elif isinstance(component, Stat):
-        #     self.add_stat(component)
+        elif isinstance(component, Stat):
+            self.add_stat(component)
         else:
             pass
             # raise TypeError("Unsupported component")
 
     def __add__(self, other):
         self.add_component(other)
-        return self
+        return self.copy()
 
     def _repr_html_(self):
         if self.auto_draw:
@@ -77,7 +86,14 @@ class ggplot:
         return ""
         # return "<ggplot object displaying the plot>"
 
-    # def add_stat(self, stat):
+    def add_stat(self, stat):
+        """
+        Add stat to last geom in layer list
+        """
+        geom = self.layers[-1].copy()
+        geom = geom + stat
+        self.layers[-1] = geom
+
     #     stat.data = self.data.copy()
     #     stat.mapping = self.mapping.copy()
     #     self.stats.append(stat)

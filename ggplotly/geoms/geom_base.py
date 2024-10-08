@@ -1,9 +1,10 @@
-# geoms/geom_base.py
 import plotly.express as px
 import pandas as pd
 from itertools import product
 from ..aes import aes
 from ..stats.stat_base import Stat
+from ..aes import aes
+import copy
 
 
 class Geom:
@@ -24,6 +25,11 @@ class Geom:
 
         self.params = params
 
+    def copy(self):
+        new = copy.deepcopy(self)
+        new.stats = [*self.stats.copy()]
+        return new
+
     def setup_data(self, data, plot_mapping):
         """
         Combine plot mapping with geom-specific mapping and set data.
@@ -35,7 +41,7 @@ class Geom:
         # Merge plot mapping and geom mapping, with geom mapping taking precedence
         combined_mapping = {**plot_mapping, **self.mapping}
         self.mapping = combined_mapping
-        self.data = data
+        self.data = data.copy()
 
     def draw(self, fig, data=None, row=1, col=1):
         """
@@ -243,13 +249,3 @@ class Geom:
             self.params.get("alpha", 1),
             self.params.get("size", 10),
         )
-
-    # def __add__(self, other):
-    #     print("heelo")
-    #     if isinstance(other, Stat):
-    #         print("Adding stat to geom")
-    #         other.data = self.data
-    #         other.mapping = self.mapping
-    #         other.params = self.params
-
-    #         self.stats.append(other)

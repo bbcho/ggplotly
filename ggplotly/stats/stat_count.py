@@ -1,23 +1,32 @@
 from .stat_base import Stat
-from ..geoms.geom_base import Geom
+from ..aes import aes
+import copy
+
+# from ..geoms.geom_base import Geom
 
 
 class stat_count(Stat):
     def __init__(self, data=None, mapping=None, **params):
         self.data = data
-        self.mapping = mapping
-        self.params = params
+        self.mapping = mapping if mapping else {}
+        self.params = params if params else {}
         self.aggregator = "count"
 
-    # def __add__(self, other):
-    #     print("Adding stat to geom")
+    def copy(self):
+        return copy.deepcopy(self)
 
-    #     if isinstance(other, Geom):
-    #         print("Adding stat to geom")
-    #         other.add_stat(self)
-    #         return other
+    def __radd__(self, other):
+        # if isinstance(other, Geom):
+        # other.add_stat(self)
+        self.mapping = {**self.mapping, **other.mapping}
+        self.params = {**self.params, **other.params}
+        self.data = other.data.copy()
+
+        other.stats.append(self)
+        return other.copy()
 
     def compute(self, data):
+        data = data.copy()
         stat = self.aggregator
 
         grouping = list(set([v for k, v in self.mapping.items()]))
@@ -51,4 +60,4 @@ class stat_count(Stat):
             self.mapping["y"] = self.mapping[dcol]
             self.mapping["x"] = stat
 
-        self.data = tf
+        return tf, self.mapping

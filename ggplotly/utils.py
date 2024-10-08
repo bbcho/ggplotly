@@ -29,7 +29,6 @@ class ggsize:
         Apply the size to the given plot by setting the width and height.
         """
         plot.fig.update_layout(width=self.width, height=self.height)
-        # print(f"Plot resized to {self.width}x{self.height} pixels")
 
 
 class ggsave(Utils):

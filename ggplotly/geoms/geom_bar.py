@@ -4,6 +4,7 @@ from .geom_base import Geom
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+from ..stats.stat_count import stat_count
 
 
 class geom_bar(Geom):
@@ -24,8 +25,6 @@ class geom_bar(Geom):
             The statistical transformation to use on the data for this layer. Default is 'count'.
     """
 
-    stats = []
-
     def draw(self, fig, data=None, row=1, col=1):
         """
         Draws a bar plot on the given figure.
@@ -40,53 +39,59 @@ class geom_bar(Geom):
             col (int): Column position in subplot (for faceting).
         """
         payload = dict()
-        data = data if data is not None else self.data
-        data = pd.DataFrame(data).copy()
 
-        try:
-            stat = self.params["stat"]
-        except:
-            stat = "count"
+        # need this in case data is passed directly to the geom
+        data = data if data is not None else self.data
+        data = pd.DataFrame(data)
+
+        if self.stats == []:
+            try:
+                stat = self.params["stat"]
+            except:
+                stat = "count"
+
+            if stat == "count":
+                self = self + stat_count()
 
         for comp in self.stats:
-            data = comp.compute(data)
-            print(data)
+            # stack all stats on the data
+            data, self.mapping = comp.compute(data)
 
-        if stat != "identity":
-            grouping = list(set([v for k, v in self.mapping.items()]))
-            grouping = [g for g in grouping if g in data.columns]
+        # if stat != "identity":
+        #     grouping = list(set([v for k, v in self.mapping.items()]))
+        #     grouping = [g for g in grouping if g in data.columns]
 
-            if len(data.columns) == 1:
-                tf = data.value_counts()
-            else:
-                # if both x and y are in the grouping, remove y.
-                # Assume that y is the metric we want to summarize
-                if ("x" in grouping) & ("y" in grouping):
-                    grouping.remove("y")
-                    self.mapping.pop("y")
+        #     if len(data.columns) == 1:
+        #         tf = data.value_counts()
+        #     else:
+        #         # if both x and y are in the grouping, remove y.
+        #         # Assume that y is the metric we want to summarize
+        #         if ("x" in grouping) & ("y" in grouping):
+        #             grouping.remove("y")
+        #             self.mapping.pop("y")
 
-                tf = data.groupby(grouping).agg(stat).iloc[:, [0]]
-                tf.columns = [stat]
-                tf = tf.reset_index()
+        #         tf = data.groupby(grouping).agg(stat).iloc[:, [0]]
+        #         tf.columns = [stat]
+        #         tf = tf.reset_index()
 
-            tf = tf.reset_index()
+        #     tf = tf.reset_index()
 
-            if ("x" in self.mapping) & ("y" not in self.mapping):
-                dcol = "x"
-                # x = list(tf[self.mapping[dcol]])
-                # y = list(tf["count"])
-                self.mapping["x"] = self.mapping[dcol]
-                self.mapping["y"] = stat
-                payload["orientation"] = "v"
-            elif ("y" in self.mapping) & ("x" not in self.mapping):
-                dcol = "y"
-                # y = list(tf[self.mapping[dcol]])
-                # x = list(tf["count"])
-                self.mapping["y"] = self.mapping[dcol]
-                self.mapping["x"] = stat
-                payload["orientation"] = "h"
+        #     if ("x" in self.mapping) & ("y" not in self.mapping):
+        #         dcol = "x"
+        #         # x = list(tf[self.mapping[dcol]])
+        #         # y = list(tf["count"])
+        #         self.mapping["x"] = self.mapping[dcol]
+        #         self.mapping["y"] = stat
+        #         payload["orientation"] = "v"
+        #     elif ("y" in self.mapping) & ("x" not in self.mapping):
+        #         dcol = "y"
+        #         # y = list(tf[self.mapping[dcol]])
+        #         # x = list(tf["count"])
+        #         self.mapping["y"] = self.mapping[dcol]
+        #         self.mapping["x"] = stat
+        #         payload["orientation"] = "h"
 
-            data = tf
+        #     data = tf
 
         payload["name"] = self.params.get("name", "Bar")
 
