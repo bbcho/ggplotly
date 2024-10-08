@@ -51,6 +51,8 @@ class geom_bar(Geom):
                 stat = "count"
 
             if stat == "count":
+                print("stat_count")
+                print(self.mapping)
                 self = self + stat_count()
 
         for comp in self.stats:

@@ -22,8 +22,11 @@ class stat_count(Stat):
         self.params = {**self.params, **other.params}
         self.data = other.data.copy()
 
-        other.stats.append(self)
-        return other.copy()
+        new = other.copy()
+        new.stats = [*other.stats.copy()]
+        new.stats.append(self.copy())
+        # other.stats.append(self)
+        return new
 
     def compute(self, data):
         data = data.copy()
