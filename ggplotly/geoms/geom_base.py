@@ -12,8 +12,6 @@ class Geom:
     Base class for all geoms.
     """
 
-    stats = []
-
     def __init__(self, data=None, mapping=None, **params):
         # check to see if data was passed first or if aes was passed first
         if isinstance(data, aes):
@@ -24,6 +22,7 @@ class Geom:
             self.mapping = mapping.mapping if mapping else {}
 
         self.params = params
+        self.stats = []
 
     def copy(self):
         new = copy.deepcopy(self)

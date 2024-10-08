@@ -25,7 +25,6 @@ class stat_count(Stat):
         new = other.copy()
         new.stats = [*other.stats.copy()]
         new.stats.append(self.copy())
-        # other.stats.append(self)
         return new
 
     def compute(self, data):
