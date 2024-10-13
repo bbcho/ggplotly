@@ -63,8 +63,8 @@ class geom_bar(Geom):
         for comp in self.stats:
             # stack all stats on the data
             data, self.mapping = comp.compute(data)
-            if comp.__name__ == "bin":
-                plot = go.Histogram
+            # if comp.__name__ == "bin":
+            # plot = go.Histogram
 
         # if stat != "identity":
         #     grouping = list(set([v for k, v in self.mapping.items()]))

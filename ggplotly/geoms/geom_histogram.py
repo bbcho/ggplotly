@@ -22,6 +22,12 @@ class geom_histogram(Geom):
         showlegend (bool, optional): Whether to show legend entries. Default is True.
     """
 
+    def __init__(self, data=None, mapping=None, bin=30, barmode="stack", **params):
+
+        super().__init__(data, mapping, **params)
+        self.bin = bin
+        self.barmode = barmode
+
     def draw(self, fig, data=None, row=1, col=1):
         """
         Draws a histogram on the given figure.
@@ -35,43 +41,29 @@ class geom_histogram(Geom):
             row (int): Row position in subplot (for faceting).
             col (int): Column position in subplot (for faceting).
         """
+        payload = dict()
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]]
 
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        alpha = self.params.get("alpha", 1)
+        plot = go.Histogram
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        fill_color = color_info["fill_colors"]
+        payload["name"] = self.params.get("name", "Histogram")
+        payload["nbinsx"] = self.bin
 
-        # Generate histograms based on groups and categories
-        if group_values is not None:
-            fig.add_trace(
-                go.Histogram(
-                    x=x,
-                    marker=dict(
-                        color=color_values,  # Pass the color series
-                    ),
-                    opacity=alpha,
-                    showlegend=self.params.get("showlegend", True),
-                    name=self.params.get("name", "Histogram"),
-                ),
-                row=row,
-                col=col,
-            )
-        else:
-            fig.add_trace(
-                go.Histogram(
-                    x=x,
-                    marker_color=(
-                        color_values.iloc[0] if color_values is not None else fill_color
-                    ),
-                    opacity=alpha,
-                    showlegend=self.params.get("showlegend", True),
-                    name=self.params.get("name", "Histogram"),
-                ),
-                row=row,
-                col=col,
-            )
+        color_targets = dict(
+            # fill="marker_fill",
+            # fill="fillcolor",
+            color="marker_color",
+            # size="line",
+            # marker=dict(color=fill, size=size),
+        )
+
+        self._transform_fig(
+            plot,
+            fig,
+            data,
+            payload,
+            color_targets,
+            row,
+            col,
+            barmode=self.barmode,
+        )

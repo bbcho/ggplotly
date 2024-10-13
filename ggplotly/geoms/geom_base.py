@@ -73,7 +73,9 @@ class Geom:
 
         return color_targets
 
-    def _transform_fig(self, plot, fig, data, payload, color_targets, row, col):
+    def _transform_fig(
+        self, plot, fig, data, payload, color_targets, row, col, **layout
+    ):
         group_values = (
             data[self.mapping.get("group")] if "group" in self.mapping else None
         )
@@ -133,8 +135,16 @@ class Geom:
                 value_col = fill
 
             for key in values.keys():
-                x = data.loc[data[value_col] == key, self.mapping["x"]]
-                y = data.loc[data[value_col] == key, self.mapping["y"]]
+                x = (
+                    data.loc[data[value_col] == key, self.mapping["x"]]
+                    if "x" in self.mapping
+                    else None
+                )
+                y = (
+                    data.loc[data[value_col] == key, self.mapping["y"]]
+                    if "y" in self.mapping
+                    else None
+                )
 
                 # bar geom only takes colors
                 color_targets_final = self._format_color_targets(
@@ -178,6 +188,7 @@ class Geom:
             )
 
         fig.update_yaxes(rangemode="tozero")
+        fig.update_layout(**layout)
 
     def handle_style(self, data, mapping, params):
         """

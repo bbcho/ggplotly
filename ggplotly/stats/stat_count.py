@@ -15,7 +15,6 @@ class stat_count(Stat):
 
         data = data.copy()
         stat = self.aggregator
-        print(stat)
 
         grouping = list(set([v for k, v in self.mapping.items()]))
         grouping = [g for g in grouping if g in data.columns]
@@ -23,10 +22,10 @@ class stat_count(Stat):
 
         # if x XOR y in grouping
         # if ("x" in grouping_keys) ^ ("y" in grouping_keys):
-        if len(data[grouping]) == 1:
+        if len(data[grouping].columns) == 1:
 
             # if len(data.columns)  == 1:
-            tf = data.value_counts()
+            tf = data[grouping].value_counts()
         else:
             # if both x and y are in the grouping, remove y.
             # Assume that y is the metric we want to summarize
