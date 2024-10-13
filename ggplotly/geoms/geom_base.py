@@ -24,6 +24,15 @@ class Geom:
 
         self.params = params
         self.stats = []
+        self.layers = []
+
+    # def __add__(self, other):
+    #     if isinstance(other, Geom):
+    #         self.layers.append(other)
+
+    #     return self.copy()
+    # else:
+    # raise ValueError("Only Geom and Stat objects can be added to Geom objects.")
 
     def copy(self):
         new = copy.deepcopy(self)

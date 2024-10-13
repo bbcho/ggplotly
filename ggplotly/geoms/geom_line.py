@@ -20,14 +20,24 @@ class geom_line(Geom):
         group (str, optional): Grouping variable for the lines.
     """
 
+    __name__ = "geom_line"
+
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
+
+        line_dash = self.params.get("linetype", "solid")
+        self.params.pop("linetype", None)
+        name = self.params.get("name", "Line")
+        self.params.pop("name", None)
+        fill = self.params.get("fill", None)
+        self.params.pop("fill", None)
 
         plot = go.Scatter
         payload = dict(
             mode="lines",
-            line_dash=self.params.get("linetype", "solid"),
-            name=self.params.get("name", "Line"),
+            line_dash=line_dash,
+            name=name,
+            fill=fill,
         )
 
         color_targets = dict(

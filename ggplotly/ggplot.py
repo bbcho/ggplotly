@@ -73,8 +73,7 @@ class ggplot:
         elif isinstance(component, Stat):
             self.add_stat(component)
         else:
-            pass
-            # raise TypeError("Unsupported component")
+            raise TypeError("Unsupported component")
 
     def __add__(self, other):
         self.add_component(other)
@@ -103,16 +102,7 @@ class ggplot:
         Add a geom (trace) to the ggplot object.
         Geoms will inherit the theme and other properties set on the plot.
         """
-        # """
-        # Add a geom layer to the plot.
 
-        # Parameters:
-        #     geom (Geom): The geom to add.
-        # """
-        # geom.setup_data(self.data, self.mapping)
-        # geom.theme = self.theme
-        # self.layers.append(geom)
-        # Setup the geom with data, mapping, and theme
         if geom.data is None:
             geom.data = self.data.copy()
 
@@ -124,26 +114,25 @@ class ggplot:
 
         geom.theme = self.theme  # Pass the theme to the geom
 
-        # # Create a shared color map if 'color' is in the mapping
-        # if "color" in self.mapping and self.color_map is None:
-        #     color_values = self.data[self.mapping["color"]]
-        #     unique_colors = color_values.unique()
+        if hasattr(geom, "before_add"):
+            geom = geom.before_add()
 
-        #     # Use the theme's color palette or default Plotly colors
-        #     if self.theme and hasattr(self.theme, "template"):
-        #         color_palette = self.theme.template.layout.colorway
-        #     else:
-        #         color_palette = px.colors.qualitative.Plotly  # Fallback
+        if len(geom.layers) > 0:
+            for tgeom in geom.layers:
+                if tgeom.data is None:
+                    tgeom.data = self.data.copy()
 
-        #     self.color_map = {
-        #         val: color_palette[i % len(color_palette)]
-        #         for i, val in enumerate(unique_colors)
-        #     }
+                if tgeom.mapping is None:
+                    tgeom.mapping = self.mapping
+                else:
+                    # Merge plot mapping and geom mapping, with geom mapping taking precedence
+                    tgeom.mapping = {**self.mapping, **tgeom.mapping}
 
-        # Pass the color map to the geom
-        # geom.color_map = self.color_map
-        # geom.draw(self.fig)
-        self.layers.append(geom)
+                tgeom.theme = self.theme
+
+                self.layers.append(tgeom)
+        else:
+            self.layers.append(geom)
 
     def add_scale(self, scale):
         """
