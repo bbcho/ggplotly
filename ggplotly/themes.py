@@ -85,6 +85,50 @@ class theme_default(Theme):
         fig.update_layout(template=default_template)
 
 
+class theme_bbc(Theme):
+
+    def __init__(self):
+        # Define a template for Plotly to apply globally
+        self.template = go.layout.Template(
+            layout=dict(
+                paper_bgcolor="#FFFFFF",
+                plot_bgcolor="#FFFFFF",
+                font=dict(
+                    color="#333333", size=12, family="Helvetica"
+                ),  # Dark grey text with Helvetica font
+                xaxis=dict(
+                    showline=True,
+                    linecolor="#333333",
+                    showgrid=True,
+                    gridcolor="#CBCBCB",
+                    zeroline=True,
+                    zerolinewidth=1,
+                ),
+                yaxis=dict(
+                    showline=True,
+                    linecolor="#333333",
+                    showgrid=True,
+                    gridcolor="#CBCBCB",
+                    zeroline=True,
+                    zerolinewidth=1,
+                ),
+                colorway=[
+                    "#bb1919",
+                    "#009639",
+                    "#005293",
+                    "#ff6319",
+                    "#ffcd00",
+                ],  # BBC-like colors
+            )
+        )
+
+    def apply(self, fig):
+        """
+        Apply the theme's template to the Plotly figure.
+        """
+        fig.update_layout(template=self.template)
+
+
 class theme_ggplot2(Theme):
     """
     A theme that replicates the default ggplot2 style from R, including color palette and other global settings.

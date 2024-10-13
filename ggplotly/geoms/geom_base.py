@@ -1,4 +1,5 @@
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 from itertools import product
 from ..aes import aes
@@ -73,9 +74,9 @@ class Geom:
         return color_targets
 
     def _transform_fig(self, plot, fig, data, payload, color_targets, row, col):
-        # group_values = (
-        #     data[self.mapping.get("group")] if "group" in self.mapping else None
-        # )
+        group_values = (
+            data[self.mapping.get("group")] if "group" in self.mapping else None
+        )
 
         (
             fill,
@@ -92,32 +93,30 @@ class Geom:
         x = data[self.mapping["x"]] if "x" in self.mapping else None
         y = data[self.mapping["y"]] if "y" in self.mapping else None
 
-        # if group_values is not None:
-        # pass
-        # FACETING
-        # for group in group_values.unique():
-        #     group_mask = group_values == group
-        #     fig.add_trace(
-        #         go.Scatter(
-        #             x=x[group_mask],
-        #             y=y[group_mask],
-        #             mode="markers",
-        #             showlegend=self.params.get("showlegend", True),
-        #             marker=dict(
-        #                 color=(
-        #                     color_values[group_mask].iloc[0]
-        #                     if color_values is not None
-        #                     else default_color
-        #                 ),
-        #                 size=size,
-        #             ),
-        #             opacity=alpha,
-        #             name=str(group),
-        #         ),
-        #         row=row,
-        #         col=col,
-        #     )
-        if (color_values is not None) | (fill_values is not None):
+        if group_values is not None:
+            for group in group_values.unique():
+                group_mask = group_values == group
+                fig.add_trace(
+                    plot(
+                        x=x[group_mask],
+                        y=y[group_mask],
+                        # mode="markers",
+                        showlegend=self.params.get("showlegend", True),
+                        marker=dict(
+                            color=(
+                                color_values[group_mask].iloc[0]
+                                if color_values is not None
+                                else default_color
+                            ),
+                            # size=size,
+                        ),
+                        opacity=alpha,
+                        name=str(group),
+                    ),
+                    row=row,
+                    col=col,
+                )
+        elif (color_values is not None) | (fill_values is not None):
             # COLOR and FILL GROUPS
 
             # check that both color and fill are not None
@@ -177,6 +176,8 @@ class Geom:
                 row=row,
                 col=col,
             )
+
+        fig.update_yaxes(rangemode="tozero")
 
     def handle_style(self, data, mapping, params):
         """

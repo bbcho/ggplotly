@@ -56,12 +56,15 @@ class geom_bar(Geom):
         if ("x" in self.mapping) & ("y" not in self.mapping):
             payload["orientation"] = "v"
         elif ("y" in self.mapping) & ("x" not in self.mapping):
-            print("A")
             payload["orientation"] = "h"
+
+        plot = go.Bar
 
         for comp in self.stats:
             # stack all stats on the data
             data, self.mapping = comp.compute(data)
+            if comp.__name__ == "bin":
+                plot = go.Histogram
 
         # if stat != "identity":
         #     grouping = list(set([v for k, v in self.mapping.items()]))
@@ -100,8 +103,6 @@ class geom_bar(Geom):
         #     data = tf
 
         payload["name"] = self.params.get("name", "Bar")
-
-        plot = go.Bar
 
         color_targets = dict(
             # fill="marker_fill",

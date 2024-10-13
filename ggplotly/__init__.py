@@ -8,6 +8,7 @@ from .themes import (
     theme_ggplot2,
     theme_nytimes,
     theme_minimal,
+    theme_bbc,
     # theme_bw,
     theme_dark,
     theme_classic,
@@ -63,6 +64,7 @@ __all__ = [
     "theme_ggplot2",
     "theme_nytimes",
     "theme_minimal",
+    "theme_bbc",
     # "theme_bw",
     "theme_dark",
     "theme_classic",
@@ -108,4 +110,5 @@ __all__ = [
     "scale_y_log10",
     "scale_color_gradient",
     "stat_count",
+    "stat_bin",
 ]
