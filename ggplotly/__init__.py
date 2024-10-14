@@ -36,6 +36,8 @@ from .geoms import (
     geom_errorbar,
     geom_segment,
     geom_step,
+    geom_vline,
+    geom_hline,
 )
 from .scales import (
     scale_x_continuous,
@@ -85,6 +87,8 @@ __all__ = [
     "position_stack",
     "geom_point",
     "geom_line",
+    "geom_vline",
+    "geom_hline",
     "geom_bar",
     "geom_col",
     "geom_histogram",

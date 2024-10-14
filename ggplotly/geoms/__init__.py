@@ -17,6 +17,8 @@ from .geom_text import geom_text
 from .geom_errorbar import geom_errorbar
 from .geom_segment import geom_segment
 from .geom_step import geom_step
+from .geom_vline import geom_vline
+from .geom_hline import geom_hline
 
 __all__ = [
     "Geom",
@@ -36,4 +38,6 @@ __all__ = [
     "geom_errorbar",
     "geom_segment",
     "geom_step",
+    "geom_vline",
+    "geom_hline",
 ]
