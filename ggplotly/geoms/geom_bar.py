@@ -63,44 +63,6 @@ class geom_bar(Geom):
         for comp in self.stats:
             # stack all stats on the data
             data, self.mapping = comp.compute(data)
-            # if comp.__name__ == "bin":
-            # plot = go.Histogram
-
-        # if stat != "identity":
-        #     grouping = list(set([v for k, v in self.mapping.items()]))
-        #     grouping = [g for g in grouping if g in data.columns]
-
-        #     if len(data.columns) == 1:
-        #         tf = data.value_counts()
-        #     else:
-        #         # if both x and y are in the grouping, remove y.
-        #         # Assume that y is the metric we want to summarize
-        #         if ("x" in grouping) & ("y" in grouping):
-        #             grouping.remove("y")
-        #             self.mapping.pop("y")
-
-        #         tf = data.groupby(grouping).agg(stat).iloc[:, [0]]
-        #         tf.columns = [stat]
-        #         tf = tf.reset_index()
-
-        #     tf = tf.reset_index()
-
-        #     if ("x" in self.mapping) & ("y" not in self.mapping):
-        #         dcol = "x"
-        #         # x = list(tf[self.mapping[dcol]])
-        #         # y = list(tf["count"])
-        #         self.mapping["x"] = self.mapping[dcol]
-        #         self.mapping["y"] = stat
-        #         payload["orientation"] = "v"
-        #     elif ("y" in self.mapping) & ("x" not in self.mapping):
-        #         dcol = "y"
-        #         # y = list(tf[self.mapping[dcol]])
-        #         # x = list(tf["count"])
-        #         self.mapping["y"] = self.mapping[dcol]
-        #         self.mapping["x"] = stat
-        #         payload["orientation"] = "h"
-
-        #     data = tf
 
         payload["name"] = self.params.get("name", "Bar")
 
@@ -119,58 +81,3 @@ class geom_bar(Geom):
             fig.update_layout(barmode="relative")
 
         self._transform_fig(plot, fig, data, payload, color_targets, row, col)
-
-        # data = data if data is not None else self.data
-        # x = data[self.mapping["x"]] if "x" in self.mapping else None
-        # y = data[self.mapping["y"]] if "y" in self.mapping else None
-
-        # if y is None:
-        #     y = pd.Series(x).value_counts()
-        #     x = None
-
-        # if x is None:
-        #     x = pd.Series(y).value_counts()
-        #     y = None
-
-        # # Handle grouping if a 'group' mapping is provided
-        # group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-
-        # # Get shared color logic from the parent Geom class
-        # color_info = self.handle_colors(data, self.mapping, self.params)
-        # color_values = color_info["color_values"]
-        # default_color = color_info["default_color"]
-        # alpha = self.params.get("alpha", 1)
-
-        # # Generate bars based on groups and categories
-        # if group_values is not None:
-        #     fig.add_trace(
-        #         go.Bar(
-        #             x=x,
-        #             y=y,
-        #             marker=dict(
-        #                 color=color_values,  # Pass the color series
-        #             ),
-        #             opacity=alpha,
-        #             showlegend=self.params.get("showlegend", True),
-        #             name=self.params.get("name", "Bar"),
-        #         ),
-        #         row=row,
-        #         col=col,
-        #     )
-        # else:
-        #     fig.add_trace(
-        #         go.Bar(
-        #             x=x,
-        #             y=y,
-        #             marker_color=(
-        #                 color_values.iloc[0]
-        #                 if color_values is not None
-        #                 else default_color
-        #             ),
-        #             opacity=alpha,
-        #             showlegend=self.params.get("showlegend", True),
-        #             name=self.params.get("name", "Bar"),
-        #         ),
-        #         row=row,
-        #         col=col,
-        #     )

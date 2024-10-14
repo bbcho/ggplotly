@@ -29,47 +29,76 @@ class geom_density(Geom):
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        payload = dict()
         data = data if data is not None else self.data
+
+        # transform data into inputs to produce a density plot
+        # using go.Scatter
         x = data[self.mapping["x"]]
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        alpha = self.params.get("alpha", 0.5)
-        linetype = self.params.get("linetype", "solid")
+        kde = gaussian_kde(x)
+        x_grid = np.linspace(x.min(), x.max(), 1000)
+        y = kde(x_grid)
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        fill_colors = color_info["fill_colors"]
+        self.mapping["y"] = "density"
 
-        # Draw density traces
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-                fig.add_trace(
-                    go.Scatter(
-                        x=x[group_mask],
-                        mode="lines",
-                        line=dict(
-                            color=(
-                                color_map[group]
-                                if color_map is not None
-                                else fill_color
-                            ),
-                            dash=linetype,
-                        ),
-                        opacity=alpha,
-                        name=str(group),
-                    ),
-                    row=row,
-                    col=col,
-                )
-        else:
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    mode="lines",
-                    line=dict(color=fill_color, dash=linetype),
-                    opacity=alpha,
-                    name=self.params.get("name", "Density"),
-                ),
-                row=row,
-                col=col,
-            )
+        data = pd.DataFrame({self.mapping["x"]: x_grid, self.mapping["y"]: y})
+
+        plot = go.Scatter
+
+        payload["name"] = self.params.get("name", "Density")
+
+        line_dash = self.params.get("linetype", "solid")
+        self.params.pop("linetype", None)
+        name = self.params.get("name", "Line")
+        self.params.pop("name", None)
+        fill = self.params.get("fill", None)
+        self.params.pop("fill", None)
+
+        plot = go.Scatter
+        payload = dict(
+            mode="lines",
+            line_dash=line_dash,
+            name=name,
+            fill=fill,
+        )
+
+        color_targets = dict(
+            fill="line_fill",
+            color="line_color",
+            # size="line",
+            # marker=dict(color=fill, size=size),
+        )
+
+        self._transform_fig(
+            plot,
+            fig,
+            data,
+            payload,
+            color_targets,
+            row,
+            col,
+        )
+        payload = {}
+
+        # payload["name"] = self.params.get("name", "Histogram")
+        # payload["nbinsx"] = self.bin
+
+        color_targets = dict(
+            # fill="marker_fill",
+            # fill="fillcolor",
+            color="marker_color",
+            # size="line",
+            # marker=dict(color=fill, size=size),
+        )
+
+        data = pd.DataFrame({self.mapping["x"]: y})
+        plot = go.Histogram
+        self._transform_fig(
+            plot,
+            fig,
+            data,
+            payload,
+            color_targets,
+            row,
+            col,
+        )
