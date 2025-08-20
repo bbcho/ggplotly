@@ -31,6 +31,10 @@ class geom_line(Geom):
         self.params.pop("name", None)
         fill = self.params.get("fill", None)
         self.params.pop("fill", None)
+        size = self.params.get("size", None)
+        self.params.pop("size", None)
+        color = self.params.get("color", None)
+        self.params.pop("color", None)
 
         plot = go.Scatter
         payload = dict(
@@ -38,6 +42,8 @@ class geom_line(Geom):
             line_dash=line_dash,
             name=name,
             fill=fill,
+            line_width=size,
+            line_color=color,
         )
 
         color_targets = dict(
