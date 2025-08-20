@@ -1,10 +1,11 @@
 import pandas as pd
 from plotly.subplots import make_subplots
+from plotly.graph_objects import Figure
 
 
 # facets.py
 class Facet:
-    def apply(self, plot):
+    def apply(self, plot) -> None | Figure:
         """
         Apply faceting to the plot.
 
@@ -72,7 +73,7 @@ class facet_grid(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    geom.setup_data(facet_data, plot.mapping)
+                    # geom.setup_data(facet_data, plot.mapping)
                     geom.draw(fig, row=row, col=col)
 
         return fig
@@ -102,9 +103,6 @@ class facet_wrap(Facet):
         Returns:
             Figure: A Plotly figure with facets applied.
         """
-        import pandas as pd
-        from plotly.subplots import make_subplots
-
         # Determine unique facets and layout
         unique_facets = plot.data[self.facet_var].unique()
         n_facets = len(unique_facets)

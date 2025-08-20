@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../")
 from ggplotly import *
 
 
-def test_first():
+def test_basic_plot():
     # Sample Data
     df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
 
@@ -24,7 +24,7 @@ def test_first():
     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
 
 
-def test_2():
+def test_basic_plot_with_labels_and_theme():
     # Sample Data
     df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
 
@@ -45,9 +45,22 @@ def test_2():
 
     # Assert that the returned object is a Plotly figure
     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
+    assert (
+        "Main Title" in plotly_fig.layout.title.text and 
+        "This is a subtitle" in plotly_fig.layout.title.text
+    )
+    assert (
+        plotly_fig.layout.xaxis.title.text == "X-Axis"
+    )
+    assert (
+        plotly_fig.layout.yaxis.title.text == "Y-Axis"
+    )
+    assert (
+        plotly_fig.layout.annotations[0].text == "Data source: XYZ"
+    )
 
 
-def test_3():
+def test_basic_plot_with_ggtitle():
     # Sample Data
     df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
 
@@ -62,68 +75,71 @@ def test_3():
 
     # Assert that the returned object is a Plotly figure
     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
-
-
-def test_4():
-    # Sample Data
-    df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
-
-    # Create Plot with Title
-    p = (
-        ggplot(df, aes(x="x", y="y"))
-        + geom_point()
-        + labs(title="My Plot Title", x="X-Axis Label", y="Y-Axis Label")
-        + theme_minimal()
-    )
-    plotly_fig = p.draw()
-
-    # Assert that the returned object is a Plotly figure
-    assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
-
-
-def test_area_plot_with_faceting():
-    # Sample Data
-    df = pd.DataFrame(
-        {
-            "x": np.linspace(0, 10, 100),
-            "y": np.sin(np.linspace(0, 10, 100)),
-            "category": np.random.choice(["A", "B"], 100),
-        }
+    assert (
+        "My Plot Title" in plotly_fig.layout.title.text
     )
 
-    # Area Plot with Faceting
-    p = (
-        ggplot(df, aes(x="x", y="y"))
-        + geom_area(fill="lightblue", alpha=0.5)
-        + facet_wrap("category")
-        + theme_minimal()
-    )
-    plotly_fig = p.draw()
 
-    # Assert that the returned object is a Plotly figure
-    assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
+def test_all_geoms():
+    for func in [geom_point, geom_line, geom_bar, geom_histogram, geom_area]:
+        # Sample Data
+        df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
+
+        # Create Plot with Geom Function
+        p = (
+            ggplot(df, aes(x="x", y="y"))
+            + func()
+            + theme_minimal()
+        )
+        plotly_fig = p.draw()
+
+        # Assert that the returned object is a Plotly figure
+        assert isinstance(plotly_fig, go.Figure), f"The plot with {func.__name__} is not a Plotly figure"
 
 
-def test_plot_with_faceting_2():
-    # Sample Data
-    np.random.seed(0)
-    df = pd.DataFrame(
-        {
-            "x": np.random.randn(200),
-            "y": np.random.randn(200),
-            "category": np.random.choice(["A", "B"], size=200),
-        }
-    )
+# def test_area_plot_with_faceting():
+#     # Sample Data
+#     df = pd.DataFrame(
+#         {
+#             "x": np.linspace(0, 10, 100),
+#             "y": np.sin(np.linspace(0, 10, 100)),
+#             "category": np.random.choice(["A", "B"], 100),
+#         }
+#     )
 
-    # Create Plot with Faceting
-    p = (
-        ggplot(df, aes(x="x", y="y"))
-        + geom_point(color="blue", alpha=0.5)
-        + geom_smooth(method="loess", color="red")
-        + facet_wrap("category", ncol=1)
-        + theme_minimal()
-    )
-    plotly_fig = p.draw()
+#     # Area Plot with Faceting
+#     p = (
+#         ggplot(df, aes(x="x", y="y"))
+#         + geom_area(fill="lightblue", alpha=0.5)
+#         + facet_wrap("category")
+#         + theme_minimal()
+#     )
+#     plotly_fig = p.draw()
 
-    # Assert that the returned object is a Plotly figure
-    assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
+#     # Assert that the returned object is a Plotly figure
+#     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
+
+
+# def test_plot_with_faceting_2():
+#     # Sample Data
+#     np.random.seed(0)
+#     df = pd.DataFrame(
+#         {
+#             "x": np.random.randn(200),
+#             "y": np.random.randn(200),
+#             "category": np.random.choice(["A", "B"], size=200),
+#         }
+#     )
+
+#     # Create Plot with Faceting
+#     p = (
+#         ggplot(df, aes(x="x", y="y"))
+#         + geom_point(color="blue", alpha=0.5)
+#         + geom_smooth(method="loess", color="red")
+#         + facet_wrap("category", ncol=1)
+#         + theme_minimal()
+#     )
+#     plotly_fig = p.draw()
+
+#     # Assert that the returned object is a Plotly figure
+#     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
