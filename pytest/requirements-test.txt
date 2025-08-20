@@ -1,0 +1,17 @@
+# Testing dependencies for ggplotly
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-html>=3.0.0
+pytest-xdist>=3.0.0
+pytest-mock>=3.10.0
+
+# Core dependencies (should match main requirements.txt)
+pandas>=2.0.0
+plotly>=5.0.0
+numpy>=1.20.0
+scikit-learn>=1.0.0
+scipy>=1.7.0
+
+# Additional testing utilities
+coverage>=6.0.0
+
