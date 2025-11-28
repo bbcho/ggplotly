@@ -10,6 +10,8 @@ from .scale_fill_gradient import scale_fill_gradient
 from .scale_size import scale_size
 from .scale_fill_manual import scale_fill_manual
 from .scale_color_brewer import scale_color_brewer
+from .scale_fill_brewer import scale_fill_brewer
+from .scale_fill_viridis import scale_fill_viridis_c
 
 __all__ = [
     "Scale",
@@ -22,5 +24,7 @@ __all__ = [
     "scale_color_brewer",
     "scale_fill_gradient",
     "scale_fill_manual",
+    "scale_fill_brewer",
+    "scale_fill_viridis_c",
     "scale_size",
 ]

@@ -16,7 +16,14 @@ class geom_smooth(Geom):
     Automatically converts 'group' and 'color' columns to categorical if necessary.
 
     Parameters:
-        method (str, optional): The smoothing method ('loess', 'lm', etc.). Default is 'loess'.
+        method (str, optional): The smoothing method. Options:
+                                - 'loess': Custom LOESS with degree-2 polynomials (default, best for R compatibility)
+                                - 'lowess': statsmodels lowess with degree-1 (faster)
+                                - 'lm': Linear regression
+        span (float, optional): The smoothing span for LOESS. Controls the amount of smoothing.
+                                Larger values (closer to 1) produce smoother lines. Default is 2/3 (~0.667) to match R.
+        se (bool, optional): Whether to display confidence interval ribbon. Default is True to match R.
+        level (float, optional): Confidence level for the interval (e.g., 0.68 for 1 stdev, 0.95 for 95% CI). Default is 0.68.
         color (str, optional): Color of the smooth lines. If a categorical variable is mapped to color, different colors will be assigned.
         linetype (str, optional): Line type ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the smooth lines. Default is 1.
@@ -27,58 +34,111 @@ class geom_smooth(Geom):
         data = (
             data.copy() if data is not None else self.data.copy()
         )  # Ensuring we are working on a copy
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
+
+        # Set default line width to 3 for smooth lines if not specified
+        if "size" not in self.params:
+            self.params["size"] = 3
+
+        # Remove size from mapping if present - smooth lines can't have variable widths
+        # Only use size from params (literal values)
+        if "size" in self.mapping:
+            del self.mapping["size"]
+
+        # Get smoothing parameters
         method = self.params.get("method", "loess")  # Default to 'loess'
-        linetype = self.params.get("linetype", "solid")
-        alpha = self.params.get("alpha", 1)
+        se = self.params.get("se", True)  # Default to True to match R
+        level = self.params.get("level", 0.68)  # Default to 1 standard deviation
+        span = self.params.get("span", 2/3)  # Default to 2/3 to match R's loess
 
         # Initialize stat_smooth for statistical smoothing
-        smoother = stat_smooth(method=method)
+        smoother = stat_smooth(method=method, span=span, se=se, level=level)
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
+        # Get the actual column names from the mapping
+        x_col = self.mapping.get("x", "x")
+        y_col = self.mapping.get("y", "y")
 
-        # Compute smoothed values using stat_smooth
-        data = smoother.compute_stat(data)
+        # Handle grouping for confidence intervals
+        # If data has groups or colors, compute smooth for each group separately
+        from ..aesthetic_mapper import AestheticMapper
+        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
+        style_props = mapper.get_style_properties()
 
-        # Generate smooth traces based on groups
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-                fig.add_trace(
-                    go.Scatter(
-                        x=x[group_mask],
-                        y=data["y"][
-                            group_mask
-                        ],  # Use smoothed y-values from stat_smooth
-                        mode="lines",
-                        line=dict(
-                            color=(
-                                color_values[group_mask].iloc[0]
-                                if color_values is not None
-                                else "blue"
-                            ),
-                            dash=linetype,
-                        ),
-                        opacity=alpha,
-                        name=str(group),
-                    ),
-                    row=row,
-                    col=col,
-                )
+        group_col = None
+        if style_props['group_series'] is not None:
+            group_col = self.mapping.get('group')
+        elif style_props['color_series'] is not None:
+            group_col = self.mapping.get('color')
+
+        if group_col and group_col in data.columns:
+            # Process each group separately
+            smoothed_parts = []
+            for group_val in data[group_col].unique():
+                group_data = data[data[group_col] == group_val].copy()
+                group_smoothed = smoother.compute_stat(group_data, x_col=x_col, y_col=y_col)
+                smoothed_parts.append(group_smoothed)
+            data = pd.concat(smoothed_parts, ignore_index=True)
+
+            # Draw ribbons for each group if se=True
+            if se and 'ymin' in data.columns and 'ymax' in data.columns:
+                for group_val in data[group_col].unique():
+                    group_data = data[data[group_col] == group_val]
+                    self._add_ribbon_trace(fig, group_data, x_col, row, col, showlegend=False)
         else:
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    y=data["y"],  # Use smoothed y-values from stat_smooth
-                    mode="lines",
-                    line=dict(color="blue", dash=linetype),
-                    opacity=alpha,
-                    name=self.params.get("name", "Smooth"),
-                ),
-                row=row,
-                col=col,
-            )
+            # No grouping - process all data at once
+            data = smoother.compute_stat(data, x_col=x_col, y_col=y_col)
+
+            # Draw single ribbon if se=True
+            if se and 'ymin' in data.columns and 'ymax' in data.columns:
+                self._add_ribbon_trace(fig, data, x_col, row, col, showlegend=False)
+
+        line_dash = self.params.get("linetype", "solid")
+        name = self.params.get("name", "Smooth")
+
+        plot = go.Scatter
+        payload = dict(
+            mode="lines",
+            line_dash=line_dash,
+            name=name,
+        )
+
+        color_targets = dict(
+            color="line_color",
+            size="line_width",
+        )
+
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+
+    def _add_ribbon_trace(self, fig, data, x_col, row, col, showlegend=False):
+        """
+        Add a single ribbon trace to the figure.
+
+        Parameters:
+            fig: Plotly figure object
+            data: DataFrame with x, ymin, ymax columns
+            x_col: Name of x column
+            row: Subplot row
+            col: Subplot column
+            showlegend: Whether to show in legend
+        """
+        x = data[x_col]
+        ymin = data['ymin']
+        ymax = data['ymax']
+
+        # Create ribbon using filled area between ymin and ymax
+        # Use x concatenated with reversed x, and y as ymin + reversed ymax
+        x_ribbon = pd.concat([x, x[::-1]], ignore_index=True)
+        y_ribbon = pd.concat([ymax, ymin[::-1]], ignore_index=True)
+
+        fig.add_trace(
+            go.Scatter(
+                x=x_ribbon,
+                y=y_ribbon,
+                fill='toself',
+                fillcolor='rgba(128, 128, 128, 0.3)',  # Gray with 30% opacity
+                line=dict(color='rgba(255, 255, 255, 0)'),  # Invisible line
+                showlegend=showlegend,
+                hoverinfo='skip',
+            ),
+            row=row,
+            col=col,
+        )

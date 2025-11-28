@@ -22,50 +22,26 @@ class geom_violin(Geom):
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        if "linewidth" not in self.params:
+            self.params["linewidth"] = 1
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        alpha = self.params.get("alpha", 0.5)
-        linewidth = self.params.get("linewidth", 1)
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        outline_color = self.params.get("color", "black")
-        fill_color = color_info["fill_colors"]
+        plot = go.Violin
 
-        # Draw violin traces
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-                fig.add_trace(
-                    go.Violin(
-                        x=x[group_mask],
-                        y=y[group_mask],
-                        fillcolor=(
-                            group_values[group_mask].iloc[0]
-                            if group_values is not None
-                            else fill_color
-                        ),
-                        line=dict(color=outline_color, width=linewidth),
-                        opacity=alpha,
-                        name=str(group),
-                        box_visible=True,  # Optional: to show inner box plot
-                    ),
-                    row=row,
-                    col=col,
-                )
-        else:
-            fig.add_trace(
-                go.Violin(
-                    x=x,
-                    y=y,
-                    fillcolor=fill_color,
-                    line=dict(color=outline_color, width=linewidth),
-                    opacity=alpha,
-                    name=self.params.get("name", "Violin"),
-                    box_visible=True,  # Optional: to show inner box plot
-                ),
-                row=row,
-                col=col,
-            )
+        payload = dict(
+            name=self.params.get("name", "Violin"),
+            box_visible=True,
+        )
+
+        # Note: opacity/alpha is handled by _transform_fig via AestheticMapper
+        # Don't add it to payload to avoid duplicate keyword argument
+
+        if "linewidth" in self.params:
+            payload["line_width"] = self.params["linewidth"]
+
+        color_targets = dict(
+            fill="fillcolor",
+            color="line_color",
+        )
+
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)

@@ -16,6 +16,8 @@ class geom_vline(Geom):
     __name__ = "geom_vline"
 
     def draw(self, fig, data=None, row=1, col=1):
+        if "size" not in self.params:
+            self.params["size"] = 2
         x = data if data is not None else self.data
 
         if x is None:
@@ -24,7 +26,17 @@ class geom_vline(Geom):
         if not isinstance(x, list):
             x = [x]
 
-        color = self.params.get("color", "red")
+        # Get color from params, or use theme default
+        color = self.params.get("color", None)
+        if color is None and hasattr(self, 'theme') and self.theme:
+            # Use first color from theme palette
+            import plotly.express as px
+            palette = self.theme.color_map if hasattr(self.theme, 'color_map') and self.theme.color_map else px.colors.qualitative.Plotly
+            color = palette[0]
+        elif color is None:
+            # Default to theme's default color
+            color = '#1f77b4'
+
         linetype = self.params.get("linetype", "solid")
         alpha = self.params.get("alpha", 1)
         name = self.params.get("name", "vline")

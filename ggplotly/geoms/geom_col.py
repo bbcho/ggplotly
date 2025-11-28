@@ -20,41 +20,19 @@ class geom_col(Geom):
     """
 
     def draw(self, fig, data=None, row=1, col=1):
-        data = data.copy() if data is not None else self.data.copy()  # Ensuring a copy
-        x = data[self.mapping["x"]]
-        y = data[self.mapping["y"]]
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        alpha = self.params.get("alpha", 1)
+        data = data if data is not None else self.data
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        fill_color = color_info["fill_colors"]
+        payload = dict()
+        payload["name"] = self.params.get("name", "Column")
 
-        # Draw column traces
-        if group_values is not None:
-            fig.add_trace(
-                go.Bar(
-                    x=x,
-                    y=y,
-                    marker=dict(
-                        color=color_values if color_values is not None else fill_color
-                    ),
-                    opacity=alpha,
-                    name=self.params.get("name", "Column"),
-                ),
-                row=row,
-                col=col,
-            )
-        else:
-            fig.add_trace(
-                go.Bar(
-                    x=x,
-                    y=y,
-                    marker_color=fill_color,
-                    opacity=alpha,
-                    name=self.params.get("name", "Column"),
-                ),
-                row=row,
-                col=col,
-            )
+        # Note: opacity/alpha is handled by _transform_fig via AestheticMapper
+        # Don't add it to payload to avoid duplicate keyword argument
+
+        plot = go.Bar
+
+        color_targets = dict(
+            fill="marker_color",
+            color="marker_color",
+        )
+
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)

@@ -2,14 +2,18 @@ import plotly.graph_objects as go
 
 
 class Theme:
-    def __init__(self, template=None):
+    def __init__(self, template=None, legend_position='right', legend_show=True):
         """
         Base Theme class.
 
         Parameters:
             template (go.layout.Template, optional): Plotly template to apply to the figure.
+            legend_position (str): Position of the legend ('right', 'left', 'top', 'bottom', 'none').
+            legend_show (bool): Whether to show the legend.
         """
         self.template = template
+        self.legend_position = legend_position
+        self.legend_show = legend_show
 
     def apply(self, fig):
         """
@@ -18,13 +22,56 @@ class Theme:
         Parameters:
             fig (Figure): The Plotly figure to which the theme will be applied.
         """
-        pass  # To be implemented by subclasses
+        self._apply_legend_settings(fig)
 
+        if self.template:
+            fig.update_layout(template=self.template)
+
+    def _apply_legend_settings(self, fig):
+        """Apply legend position and visibility settings."""
+        if self.legend_position == 'none' or not self.legend_show:
+            fig.update_layout(showlegend=False)
+        else:
+            position_map = {
+                'right': dict(x=1.02, y=1, xanchor='left', yanchor='top'),
+                'left': dict(x=-0.02, y=1, xanchor='right', yanchor='top'),
+                'top': dict(x=0.5, y=1.02, xanchor='center', yanchor='bottom'),
+                'bottom': dict(x=0.5, y=-0.1, xanchor='center', yanchor='top')
+            }
+            
+            legend_settings = {'showlegend': True}
+            if self.legend_position in position_map:
+                legend_settings['legend'] = position_map[self.legend_position]
+            
+            fig.update_layout(**legend_settings)
 
 # class theme_bw(Theme):
 #     def apply(self, fig):
 #         fig.update_layout(template="simple_white")
 
+def theme(legend_position='right', legend_show=True, **kwargs):
+    """
+    Create a custom theme with legend control (ggplot2-style).
+    
+    Parameters:
+        legend_position (str): 'right', 'left', 'top', 'bottom', 'none'
+        legend_show (bool): Whether to show legend
+        **kwargs: Additional theme parameters
+    
+    Returns:
+        Theme: A theme object that can be added to ggplot
+    """
+    class CustomTheme(Theme):
+        def __init__(self):
+            super().__init__(legend_position=legend_position, legend_show=legend_show)
+        
+        def apply(self, fig):
+            super().apply(fig)
+            # Apply any additional customizations from kwargs
+            if kwargs:
+                fig.update_layout(**kwargs)
+    
+    return CustomTheme()
 
 class theme_template(Theme):
     def apply(self, fig):

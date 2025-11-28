@@ -5,6 +5,7 @@ from .ggtitle import ggtitle
 from .aes import aes
 from .themes import (
     theme_default,
+    theme,
     theme_ggplot2,
     theme_nytimes,
     theme_minimal,
@@ -46,6 +47,8 @@ from .scales import (
     scale_color_brewer,
     scale_fill_gradient,
     scale_fill_manual,
+    scale_fill_brewer,
+    scale_fill_viridis_c,
     scale_size,
     scale_x_log10,
     scale_y_log10,
@@ -63,6 +66,7 @@ __all__ = [
     "ggtitle",
     "aes",
     "theme_default",
+    "theme",
     "theme_ggplot2",
     "theme_nytimes",
     "theme_minimal",
@@ -109,6 +113,8 @@ __all__ = [
     "scale_color_brewer",
     "scale_fill_gradient",
     "scale_fill_manual",
+    "scale_fill_brewer",
+    "scale_fill_viridis_c",
     "scale_size",
     "scale_x_log10",
     "scale_y_log10",

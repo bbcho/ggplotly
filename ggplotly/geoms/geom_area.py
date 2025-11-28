@@ -27,6 +27,15 @@ class geom_area(Geom):
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
 
+        # Set default line width to 1 for area borders if not specified
+        if "size" not in self.params:
+            self.params["size"] = 1
+
+        # Remove size from mapping if present - area lines can't have variable widths
+        # Only use size from params (literal values)
+        if "size" in self.mapping:
+            del self.mapping["size"]
+
         plot = go.Scatter
         payload = dict(
             mode="lines",

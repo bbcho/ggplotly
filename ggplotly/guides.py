@@ -69,11 +69,6 @@ class Labs:
                 font=dict(size=24),
             )
 
-        if self.x is not None:
-            layout_updates["xaxis_title"] = self.x
-        if self.y is not None:
-            layout_updates["yaxis_title"] = self.y
-
         if self.color is not None:
             layout_updates["legend_title_text"] = self.color
 
@@ -96,6 +91,12 @@ class Labs:
 
         # Apply the layout updates to the figure
         fig.update_layout(**layout_updates)
+
+        # Update axis titles for all subplots (handles faceted plots)
+        if self.x is not None:
+            fig.update_xaxes(title_text=self.x)
+        if self.y is not None:
+            fig.update_yaxes(title_text=self.y)
 
 
 # guides.py continued

@@ -73,7 +73,15 @@ class facet_grid(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # geom.setup_data(facet_data, plot.mapping)
+                    # If geom has its own explicit data, use that for faceting instead of plot.data
+                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
+                        geom_facet_data = geom.data[
+                            (geom.data[self.rows] == row_value)
+                            & (geom.data[self.cols] == col_value)
+                        ]
+                        geom.setup_data(geom_facet_data, plot.mapping)
+                    else:
+                        geom.setup_data(facet_data, plot.mapping)
                     geom.draw(fig, row=row, col=col)
 
         return fig
@@ -130,7 +138,12 @@ class facet_wrap(Facet):
 
             # Draw each geom on the subplot for the current facet
             for geom in plot.layers:
-                geom.setup_data(facet_data, plot.mapping)
+                # If geom has its own explicit data, use that for faceting instead of plot.data
+                if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
+                    geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
+                    geom.setup_data(geom_facet_data, plot.mapping)
+                else:
+                    geom.setup_data(facet_data, plot.mapping)
                 geom.draw(fig, row=row, col=col)
 
         return fig

@@ -29,59 +29,40 @@ class geom_step(Geom):
         return x_sorted, y_values
 
     def draw(self, fig, data=None, row=1, col=1):
+        if "size" not in self.params:
+            self.params["size"] = 2
         data = data if data is not None else self.data
-        x = data[self.mapping["x"]]
+
+        # Remove size from mapping if present - step lines can't have variable widths
+        # Only use size from params (literal values)
+        if "size" in self.mapping:
+            del self.mapping["size"]
+
+        # Handle ECDF transformation before calling _transform_fig
         stat = self.params.get("stat", "identity")
-        linetype = self.params.get("linetype", "solid")
-        alpha = self.params.get("alpha", 1)
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-
-        # Handle ECDF calculation if stat='ecdf'
         if stat == "ecdf":
-            x, y = self.compute_ecdf(x)
-        else:
-            y = data[self.mapping["y"]]  # Default behavior expects 'y' mapping
+            x = data[self.mapping["x"]]
+            x_sorted, y_values = self.compute_ecdf(x)
+            # For ECDF, create y mapping if it doesn't exist
+            y_col = self.mapping.get("y", "ecdf_y")
+            data = pd.DataFrame({self.mapping["x"]: x_sorted, y_col: y_values})
+            # Temporarily add y mapping for _transform_fig
+            if "y" not in self.mapping:
+                self.mapping["y"] = y_col
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        step_color = color_info["fill_colors"]
+        plot = go.Scatter
+        line_dash = self.params.get("linetype", "solid")
 
-        # Draw step traces
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-                fig.add_trace(
-                    go.Scatter(
-                        x=x[group_mask],
-                        y=y[group_mask],
-                        mode="lines",
-                        line_shape="hv",
-                        line=dict(
-                            color=(
-                                color_values[group_mask].iloc[0]
-                                if color_values is not None
-                                else step_color
-                            ),
-                            dash=linetype,
-                        ),
-                        opacity=alpha,
-                        name=str(group),
-                    ),
-                    row=row,
-                    col=col,
-                )
-        else:
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    y=y,
-                    mode="lines",
-                    line_shape="hv",
-                    line=dict(color=step_color, dash=linetype),
-                    opacity=alpha,
-                    name=self.params.get("name", "Step"),
-                ),
-                row=row,
-                col=col,
-            )
+        payload = dict(
+            mode="lines",
+            line_shape="hv",
+            line_dash=line_dash,
+            name=self.params.get("name", "Step"),
+        )
+
+        color_targets = dict(
+            color="line_color",
+            size="line_width",
+        )
+
+        self._transform_fig(plot, fig, data, payload, color_targets, row, col)
