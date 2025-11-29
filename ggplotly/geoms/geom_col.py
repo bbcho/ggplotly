@@ -17,9 +17,25 @@ class geom_col(Geom):
         fill (str, optional): Fill color for the columns.
         alpha (float, optional): Transparency level for the fill color. Default is 1.
         group (str, optional): Grouping variable for the columns.
+
+    Examples:
+        >>> ggplot(df, aes(x='category', y='value')) + geom_col()
+        >>> ggplot(df, aes(x='category', y='value', fill='group')) + geom_col()
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw column(s) on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         payload = dict()

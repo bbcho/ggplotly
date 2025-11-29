@@ -1,4 +1,5 @@
 from .geom_base import Geom
+import pandas as pd
 
 
 class geom_vline(Geom):
@@ -6,14 +7,25 @@ class geom_vline(Geom):
     Geom for drawing vertical lines.
 
     Parameters:
-        x (float or list of floats): The x-coordinate(s) where the vertical line(s) should be drawn.
+        data (float or list of floats): The x-coordinate(s) where the vertical line(s) should be drawn.
+            Same as xintercept in ggplot2.
         color (str, optional): Color of the lines. Default is 'black'.
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the lines. Default is 1.
         name (str, optional): Name of the line(s) for the legend.
+
+    Examples:
+        geom_vline(data=5)
+        geom_vline(data=[1, 2, 3], color='red')
     """
 
     __name__ = "geom_vline"
+
+    def __init__(self, data=None, mapping=None, **params):
+        # data parameter is the xintercept value (matching ggplot2's data parameter)
+        if data is not None:
+            params['xintercept'] = data
+        super().__init__(None, mapping, **params)
 
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:

@@ -28,9 +28,25 @@ class geom_smooth(Geom):
         linetype (str, optional): Line type ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the smooth lines. Default is 1.
         group (str, optional): Grouping variable for the smooth lines.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth()
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth(method='lm', se=False)
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw smooth line(s) on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = (
             data.copy() if data is not None else self.data.copy()
         )  # Ensuring we are working on a copy

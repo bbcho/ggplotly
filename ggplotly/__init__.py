@@ -18,8 +18,9 @@ from .themes import (
     element_line,
     element_rect,
 )
-from .facets import Facet, facet_wrap, facet_grid
+from .facets import Facet, facet_wrap, facet_grid, label_value, label_both
 from .coords import Coord, coord_flip, coord_polar, coord_cartesian
+from .limits import xlim, ylim, lims
 from .geoms import (
     geom_point,
     geom_line,
@@ -96,10 +97,15 @@ __all__ = [
     "Facet",
     "facet_wrap",
     "facet_grid",
+    "label_value",
+    "label_both",
     "Coord",
     "coord_flip",
     "coord_polar",
     "coord_cartesian",
+    "xlim",
+    "ylim",
+    "lims",
     "labs",
     "annotate",
     "position_dodge",

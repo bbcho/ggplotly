@@ -24,7 +24,20 @@
 
 class Labs:
     """
-    Class to handle plot labels, such as title, subtitle, x-axis label, y-axis label, color legend title, and caption.
+    Set plot labels including title, subtitle, axis labels, legend titles, and caption.
+
+    Parameters:
+        title (str, optional): Main plot title.
+        subtitle (str, optional): Subtitle displayed below the title.
+        x (str, optional): X-axis label.
+        y (str, optional): Y-axis label.
+        color (str, optional): Legend title for color aesthetic.
+        fill (str, optional): Legend title for fill aesthetic.
+        caption (str, optional): Caption displayed at bottom-right of plot.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + labs(title='My Plot', x='X Axis', y='Y Axis')
+        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + labs(color='Group')
     """
 
     def __init__(
@@ -37,6 +50,18 @@ class Labs:
         fill=None,
         caption=None,
     ):
+        """
+        Initialize plot labels.
+
+        Parameters:
+            title (str, optional): Main plot title.
+            subtitle (str, optional): Subtitle displayed below the title.
+            x (str, optional): X-axis label.
+            y (str, optional): Y-axis label.
+            color (str, optional): Legend title for color aesthetic.
+            fill (str, optional): Legend title for fill aesthetic.
+            caption (str, optional): Caption displayed at bottom-right of plot.
+        """
         self.title = title
         self.subtitle = subtitle
         self.x = x
@@ -51,6 +76,9 @@ class Labs:
 
         Parameters:
             fig (Figure): Plotly figure object.
+
+        Returns:
+            None: Modifies the figure in place.
         """
         layout_updates = {}
 
@@ -156,6 +184,24 @@ class Annotate:
                  label=None, color=None, fill=None, size=None,
                  alpha=None, fontface=None, hjust=None, vjust=None,
                  arrow=None, **kwargs):
+        """
+        Initialize an annotation.
+
+        Parameters:
+            geom (str): Type of annotation ('text', 'label', 'segment', 'rect', 'point', 'curve').
+            x, y (float): Position coordinates in data space.
+            xend, yend (float, optional): End coordinates for segments.
+            xmin, xmax, ymin, ymax (float, optional): Bounds for rectangles.
+            label (str, optional): Text content for text/label annotations.
+            color (str, optional): Color of the annotation.
+            fill (str, optional): Fill color for rectangles or label backgrounds.
+            size (float, optional): Size of text or point.
+            alpha (float, optional): Transparency (0-1).
+            fontface (str, optional): Font style ('plain', 'bold', 'italic').
+            hjust, vjust (float, optional): Horizontal/vertical justification (0-1).
+            arrow (bool or dict, optional): Whether to add arrow to segment.
+            **kwargs: Additional parameters.
+        """
         self.geom = geom
         self.x = x
         self.y = y

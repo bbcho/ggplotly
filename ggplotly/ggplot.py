@@ -31,7 +31,7 @@ class ggplot:
         self.stats = []
         self.theme = Theme()
         self.facets = None
-        self.coords = Coord()
+        self.coords = []  # List of coordinate transformations
         self.labs = None  # Initialize labs
         self.size = None  # Initialize size
         self.annotations = []  # Initialize annotations list
@@ -168,12 +168,12 @@ class ggplot:
 
     def set_coords(self, coords):
         """
-        Set the coordinate system for the plot.
+        Add a coordinate transformation to the plot.
 
         Parameters:
             coords (Coord): The coordinate system to apply.
         """
-        self.coords = coords
+        self.coords.append(coords)
 
     def draw(self):
         """
@@ -190,9 +190,6 @@ class ggplot:
             # No faceting; create a single-subplot figure
             self.fig = sp.make_subplots(rows=1, cols=1)
 
-            # Apply coordinate transformations before plotting
-            self.coords.apply(self.fig)
-
             # Draw all geoms on the main figure
             for geom in self.layers:
                 geom.draw(self.fig, row=1, col=1)
@@ -200,6 +197,10 @@ class ggplot:
         # Apply scales after plotting the geoms
         for scale in self.scales:
             scale.apply(self.fig)
+
+        # Apply coordinate transformations (xlim, ylim, etc.) after scales
+        for coord in self.coords:
+            coord.apply(self.fig)
 
         # Apply theme
         self.theme.apply(self.fig)

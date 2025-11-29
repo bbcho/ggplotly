@@ -36,26 +36,31 @@ SHAPE_PALETTE = [
 class AestheticMapper:
     """
     Handles the resolution and mapping of aesthetics to visual properties.
-    
+
     This class distinguishes between:
     - Column references (strings that map to DataFrame columns)
     - Literal values (colors, sizes, etc. to be used directly)
     """
-    
-    def __init__(self, data: pd.DataFrame, mapping: Dict[str, Any], params: Dict[str, Any], theme=None):
+
+    def __init__(self, data: pd.DataFrame, mapping: Dict[str, Any], params: Dict[str, Any], theme=None,
+                 global_color_map: Dict[Any, str] = None, global_shape_map: Dict[Any, str] = None):
         """
         Initialize the aesthetic mapper.
-        
+
         Parameters:
             data: The DataFrame containing the plot data
             mapping: Dictionary of aesthetic mappings from aes()
             params: Dictionary of parameters passed to the geom
             theme: Optional theme object for default color palettes
+            global_color_map: Optional pre-computed color map (for faceting)
+            global_shape_map: Optional pre-computed shape map (for faceting)
         """
         self.data = data
         self.mapping = mapping
         self.params = params
         self.theme = theme
+        self.global_color_map = global_color_map
+        self.global_shape_map = global_shape_map
         
     def get_color_palette(self) -> list:
         """Get the color palette from theme or use default."""
@@ -88,25 +93,29 @@ class AestheticMapper:
     def resolve_aesthetic(self, aesthetic: str) -> Tuple[Any, Optional[pd.Series], Optional[Dict]]:
         """
         Resolve an aesthetic from both mapping and params.
-        
+
         Returns a tuple of:
         - The aesthetic value (column name or literal)
         - Series of data if it's a column reference, None otherwise
         - Dictionary mapping unique values to colors (for categorical), None otherwise
-        
+
         Parameters:
             aesthetic: Name of the aesthetic to resolve (e.g., 'color', 'fill', 'size')
         """
         # First check mapping (aes), then params
         value = self.mapping.get(aesthetic) or self.params.get(aesthetic)
-        
+
         if value is None:
             return None, None, None
-        
+
         # Check if this is a column reference
         if self.is_column_reference(aesthetic, value):
             series = self.data[value]
-            color_map = self._create_color_map(series)
+            # Use global color map if provided (for faceting), otherwise create from local data
+            if aesthetic in ('color', 'fill') and self.global_color_map is not None:
+                color_map = self.global_color_map
+            else:
+                color_map = self._create_color_map(series)
             return value, series, color_map
         else:
             # It's a literal value
@@ -183,7 +192,11 @@ class AestheticMapper:
         shape_map = None
         if shape_value is not None and self.is_column_reference('shape', shape_value):
             shape_series = self.data[shape_value]
-            shape_map = self._create_shape_map(shape_series)
+            # Use global shape map if provided (for faceting), otherwise create from local data
+            if self.global_shape_map is not None:
+                shape_map = self.global_shape_map
+            else:
+                shape_map = self._create_shape_map(shape_series)
             shape = shape_value  # column name
         else:
             shape = shape_value  # literal value (Plotly symbol name) or None

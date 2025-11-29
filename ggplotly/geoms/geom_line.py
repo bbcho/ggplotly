@@ -33,6 +33,18 @@ class geom_line(Geom):
     __name__ = "geom_line"
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw line(s) on the figure, sorted by x-axis values.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         # Sort data by x-axis (key difference from geom_path)

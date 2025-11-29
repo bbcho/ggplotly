@@ -64,6 +64,14 @@ class geom_range(Geom):
     __name__ = "geom_range"
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Initialize the range geom.
+
+        Parameters:
+            data (DataFrame, optional): Data for this geom.
+            mapping (aes, optional): Aesthetic mappings.
+            **params: Additional parameters (years, freq, colors, etc.).
+        """
         super().__init__(data, mapping, **params)
         self.years = params.get('years', 5)
         self.freq = params.get('freq', None)
@@ -190,6 +198,18 @@ class geom_range(Geom):
             return resampled[['_date', '_value']].sort_values('_date')
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw range plot on the figure with historical context.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         x_col = self.mapping.get('x')

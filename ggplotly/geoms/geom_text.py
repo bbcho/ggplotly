@@ -18,9 +18,25 @@ class geom_text(Geom):
         color (str, optional): Color of the text labels.
         alpha (float, optional): Transparency level for the text labels. Default is 1.
         group (str, optional): Grouping variable for the text labels.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y', label='name')) + geom_text()
+        >>> ggplot(df, aes(x='x', y='y', label='name')) + geom_text(textposition='top right')
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw text labels on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         # Create aesthetic mapper for this geom

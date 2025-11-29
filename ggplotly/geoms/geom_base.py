@@ -10,10 +10,32 @@ import copy
 
 class Geom:
     """
-    Base class for all geoms.
+    Base class for all geoms (geometric objects).
+
+    Geoms are the visual elements that represent data on a plot, such as
+    points, lines, bars, etc. Each geom subclass implements a specific
+    visual representation.
+
+    Parameters:
+        data (DataFrame, optional): Data to use for this geom. If None,
+            uses the data from the ggplot object.
+        mapping (aes, optional): Aesthetic mappings for this geom.
+        **params: Additional parameters passed to the geom.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point()
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point(color='red', size=3)
     """
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Initialize the geom.
+
+        Parameters:
+            data (DataFrame or aes, optional): Data for this geom, or an aes object.
+            mapping (aes, optional): Aesthetic mappings for this geom.
+            **params: Additional visual parameters (color, size, alpha, etc.).
+        """
         # check to see if data was passed first or if aes was passed first
         if isinstance(data, aes):
             self.mapping = data.mapping
@@ -27,6 +49,9 @@ class Geom:
         self.layers = []
         # Track whether this geom has explicit data or inherited from plot
         self._has_explicit_data = data is not None and not isinstance(data, aes)
+        # Global color/shape maps for consistent colors across facets
+        self._global_color_map = None
+        self._global_shape_map = None
 
     # def __add__(self, other):
     #     if isinstance(other, Geom):
@@ -37,6 +62,12 @@ class Geom:
     # raise ValueError("Only Geom and Stat objects can be added to Geom objects.")
 
     def copy(self):
+        """
+        Create a deep copy of this geom.
+
+        Returns:
+            Geom: A new geom instance with copied data and stats.
+        """
         new = copy.deepcopy(self)
         new.stats = [*self.stats.copy()]
         return new
@@ -48,6 +79,9 @@ class Geom:
         Parameters:
             data (DataFrame): The dataset to use.
             plot_mapping (dict): The global aesthetic mappings from the plot.
+
+        Returns:
+            None: Modifies the geom in place.
         """
         # Merge plot mapping and geom mapping, with geom mapping taking precedence
         combined_mapping = {**plot_mapping, **self.mapping}
@@ -60,9 +94,15 @@ class Geom:
 
         Parameters:
             fig (Figure): Plotly figure object.
-            data (DataFrame): Optional data subset for faceting.
-            row (int): Row position in subplot (for faceting).
-            col (int): Column position in subplot (for faceting).
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot (for faceting). Default is 1.
+            col (int): Column position in subplot (for faceting). Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
         """
         raise NotImplementedError("The draw method must be implemented by subclasses.")
 
@@ -132,8 +172,12 @@ class Geom:
     def _transform_fig(
         self, plot, fig, data, payload, color_targets, row, col, **layout
     ):
-        # Create aesthetic mapper for this geom
-        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
+        # Create aesthetic mapper for this geom, passing global maps for faceting
+        mapper = AestheticMapper(
+            data, self.mapping, self.params, self.theme,
+            global_color_map=self._global_color_map,
+            global_shape_map=self._global_shape_map
+        )
         style_props = mapper.get_style_properties()
 
         # Extract commonly used values
@@ -145,6 +189,23 @@ class Geom:
         # Get x and y data
         x = data[self.mapping["x"]] if "x" in self.mapping else None
         y = data[self.mapping["y"]] if "y" in self.mapping else None
+
+        # For faceted plots, track which legend groups have been shown
+        # to avoid duplicates while ensuring all groups appear
+        base_showlegend = self.params.get("showlegend", True)
+
+        # Get or create a set to track shown legend groups on this figure
+        if not hasattr(fig, '_shown_legendgroups'):
+            fig._shown_legendgroups = set()
+
+        def should_show_legend(legendgroup):
+            """Show legend only the first time this group appears."""
+            if not base_showlegend:
+                return False
+            if legendgroup in fig._shown_legendgroups:
+                return False
+            fig._shown_legendgroups.add(legendgroup)
+            return True
 
         # Determine the grouping strategy
         # Priority: explicit group > color/fill mapping > shape mapping
@@ -183,13 +244,15 @@ class Geom:
                     value_key=color_key, data_mask=group_mask, shape_key=shape_key
                 )
 
+                legend_name = str(group)
                 fig.add_trace(
                     plot(
                         x=x[group_mask],
                         y=y[group_mask],
-                        showlegend=self.params.get("showlegend", True),
+                        showlegend=should_show_legend(legend_name),
+                        legendgroup=legend_name,
                         opacity=alpha,
-                        name=str(group),
+                        name=legend_name,
                         **payload_copy,
                         **trace_props,
                     ),
@@ -235,7 +298,8 @@ class Geom:
                             y=y_subset,
                             opacity=alpha,
                             name=legend_name,
-                            showlegend=self.params.get("showlegend", True),
+                            showlegend=should_show_legend(legend_name),
+                            legendgroup=legend_name,
                             **payload_copy,
                             **trace_props,
                         ),
@@ -247,6 +311,11 @@ class Geom:
         elif has_color_grouping:
             for cat_value in cat_map.keys():
                 cat_mask = data[cat_col] == cat_value
+
+                # Skip if no data for this category (can happen when faceting)
+                if not cat_mask.any():
+                    continue
+
                 x_subset = x[cat_mask] if x is not None else None
                 y_subset = y[cat_mask] if y is not None else None
 
@@ -255,13 +324,15 @@ class Geom:
                     value_key=cat_value, data_mask=cat_mask, shape_key=None
                 )
 
+                legend_name = str(cat_value)
                 fig.add_trace(
                     plot(
                         x=x_subset,
                         y=y_subset,
                         opacity=alpha,
-                        name=str(cat_value),
-                        showlegend=self.params.get("showlegend", True),
+                        name=legend_name,
+                        showlegend=should_show_legend(legend_name),
+                        legendgroup=legend_name,
                         **payload_copy,
                         **trace_props,
                     ),
@@ -273,6 +344,11 @@ class Geom:
         elif has_shape_grouping:
             for shape_val in shape_map.keys():
                 shape_mask = data[shape_col] == shape_val
+
+                # Skip if no data for this shape value (can happen when faceting)
+                if not shape_mask.any():
+                    continue
+
                 x_subset = x[shape_mask] if x is not None else None
                 y_subset = y[shape_mask] if y is not None else None
 
@@ -281,13 +357,15 @@ class Geom:
                     value_key=None, data_mask=shape_mask, shape_key=shape_val
                 )
 
+                legend_name = str(shape_val)
                 fig.add_trace(
                     plot(
                         x=x_subset,
                         y=y_subset,
                         opacity=alpha,
-                        name=str(shape_val),
-                        showlegend=self.params.get("showlegend", True),
+                        name=legend_name,
+                        showlegend=should_show_legend(legend_name),
+                        legendgroup=legend_name,
                         **payload_copy,
                         **trace_props,
                     ),
@@ -302,12 +380,16 @@ class Geom:
                 data_mask=None, shape_key=None
             )
 
+            # Get the trace name for legendgroup
+            trace_name = payload.get('name', 'trace')
+
             fig.add_trace(
                 plot(
                     x=x,
                     y=y,
                     opacity=alpha,
-                    showlegend=self.params.get("showlegend", True),
+                    showlegend=should_show_legend(trace_name),
+                    legendgroup=trace_name,
                     **payload,
                     **trace_props,
                 ),

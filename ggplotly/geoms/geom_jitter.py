@@ -25,15 +25,39 @@ class geom_jitter(Geom):
         shape (str, optional): Shape of the points. If a column name, maps categories to shapes.
         seed (int, optional): Random seed for reproducibility. Default is None.
         group (str, optional): Grouping variable for the points.
+
+    Examples:
+        >>> ggplot(df, aes(x='category', y='value')) + geom_jitter()
+        >>> ggplot(df, aes(x='category', y='value', color='group')) + geom_jitter(width=0.3)
     """
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Initialize the jitter geom.
+
+        Parameters:
+            data (DataFrame, optional): Data for this geom.
+            mapping (aes, optional): Aesthetic mappings.
+            **params: Additional parameters (width, height, seed, etc.).
+        """
         super().__init__(data, mapping, **params)
         self.width = params.get('width', 0.2)
         self.height = params.get('height', 0)
         self.seed = params.get('seed', None)
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw jittered points on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         # Set default point size to 8 if not specified

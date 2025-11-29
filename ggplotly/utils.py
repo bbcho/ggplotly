@@ -1,4 +1,13 @@
 class Utils:
+    """
+    Base class for utility functions that modify ggplot objects.
+
+    Utilities are applied after the plot is constructed to modify its
+    appearance or save it to a file.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + ggsize(800, 600)
+    """
 
     def apply(self, plot):
         """
@@ -6,9 +15,11 @@ class Utils:
 
         Parameters:
             plot (ggplot): The ggplot object to apply the utility to.
-        """
 
-    pass
+        Returns:
+            None: Modifies the plot in place.
+        """
+        pass
 
 
 class ggsize:
