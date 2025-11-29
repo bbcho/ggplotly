@@ -18,10 +18,16 @@ class geom_hline(Geom):
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:
             self.params["size"] = 2
-        y = data if data is not None else self.data
+
+        # Get yintercept from params (ggplot2 convention)
+        y = self.params.get("yintercept", None)
+
+        # Fallback to y param if yintercept not provided
+        if y is None:
+            y = self.params.get("y", None)
 
         if y is None:
-            raise ValueError("Parameter 'y' must be provided for geom_hline")
+            raise ValueError("Parameter 'yintercept' must be provided for geom_hline")
 
         if not isinstance(y, list):
             y = [y]

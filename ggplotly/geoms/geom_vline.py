@@ -18,10 +18,16 @@ class geom_vline(Geom):
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:
             self.params["size"] = 2
-        x = data if data is not None else self.data
+
+        # Get xintercept from params (ggplot2 convention)
+        x = self.params.get("xintercept", None)
+
+        # Fallback to x param if xintercept not provided
+        if x is None:
+            x = self.params.get("x", None)
 
         if x is None:
-            raise ValueError("Parameter 'x' must be provided for geom_vline")
+            raise ValueError("Parameter 'xintercept' must be provided for geom_vline")
 
         if not isinstance(x, list):
             x = [x]

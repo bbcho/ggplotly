@@ -28,6 +28,7 @@ from .geom_contour import geom_contour
 from .geom_contour_filled import geom_contour_filled
 from .geom_map import geom_map
 from .geom_point_map import geom_point_map
+from .geom_range import geom_range
 
 __all__ = [
     "Geom",
@@ -58,4 +59,5 @@ __all__ = [
     "geom_contour_filled",
     "geom_map",
     "geom_point_map",
+    "geom_range",
 ]

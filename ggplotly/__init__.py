@@ -48,6 +48,7 @@ from .geoms import (
     geom_contour_filled,
     geom_map,
     geom_point_map,
+    geom_range,
 )
 from .scales import (
     scale_x_continuous,
@@ -131,6 +132,7 @@ __all__ = [
     "geom_contour_filled",
     "geom_map",
     "geom_point_map",
+    "geom_range",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",
