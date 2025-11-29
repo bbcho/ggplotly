@@ -3,6 +3,7 @@
 from .geom_base import Geom
 from .geom_point import geom_point
 from .geom_line import geom_line
+from .geom_path import geom_path
 from .geom_bar import geom_bar
 from .geom_histogram import geom_histogram
 from .geom_boxplot import geom_boxplot
@@ -20,11 +21,19 @@ from .geom_step import geom_step
 from .geom_vline import geom_vline
 from .geom_hline import geom_hline
 from .geom_edgebundle import geom_edgebundle
+from .geom_jitter import geom_jitter
+from .geom_rug import geom_rug
+from .geom_abline import geom_abline
+from .geom_contour import geom_contour
+from .geom_contour_filled import geom_contour_filled
+from .geom_map import geom_map
+from .geom_point_map import geom_point_map
 
 __all__ = [
     "Geom",
     "geom_point",
     "geom_line",
+    "geom_path",
     "geom_bar",
     "geom_histogram",
     "geom_boxplot",
@@ -42,4 +51,11 @@ __all__ = [
     "geom_vline",
     "geom_hline",
     "geom_edgebundle",
+    "geom_jitter",
+    "geom_rug",
+    "geom_abline",
+    "geom_contour",
+    "geom_contour_filled",
+    "geom_map",
+    "geom_point_map",
 ]

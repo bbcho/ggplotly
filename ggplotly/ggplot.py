@@ -9,7 +9,7 @@ from .scales.scale_base import Scale
 from .themes import Theme
 from .facets import Facet
 from .coords.coord_base import Coord
-from .guides import Labs
+from .guides import Labs, Annotate
 from .utils import Utils, ggsize
 from .stats.stat_base import Stat
 import copy
@@ -34,9 +34,11 @@ class ggplot:
         self.coords = Coord()
         self.labs = None  # Initialize labs
         self.size = None  # Initialize size
+        self.annotations = []  # Initialize annotations list
         self.fig = go.Figure()
         self.auto_draw = True  # Automatically draw after adding components by default
         self.color_map = None
+        self.is_geo = False  # Track if plot uses geographic coordinates
 
     def copy(self):
         """
@@ -66,6 +68,8 @@ class ggplot:
             self.set_coords(component)
         elif isinstance(component, Labs):
             self.labs = component
+        elif isinstance(component, Annotate):
+            self.annotations.append(component)
         elif isinstance(component, Utils):
             component.apply(self)
         elif isinstance(component, ggsize):
@@ -203,6 +207,10 @@ class ggplot:
         # Apply labels
         if self.labs:
             self.labs.apply(self.fig)
+
+        # Apply annotations
+        for annotation in self.annotations:
+            annotation.apply(self.fig)
 
         # Apply resizing
         if self.size:

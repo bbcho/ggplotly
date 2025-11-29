@@ -23,6 +23,7 @@ from .coords import Coord, coord_flip, coord_polar, coord_cartesian
 from .geoms import (
     geom_point,
     geom_line,
+    geom_path,
     geom_bar,
     geom_col,
     geom_histogram,
@@ -40,6 +41,13 @@ from .geoms import (
     geom_vline,
     geom_hline,
     geom_edgebundle,
+    geom_jitter,
+    geom_rug,
+    geom_abline,
+    geom_contour,
+    geom_contour_filled,
+    geom_map,
+    geom_point_map,
 )
 from .scales import (
     scale_x_continuous,
@@ -50,15 +58,20 @@ from .scales import (
     scale_fill_manual,
     scale_fill_brewer,
     scale_fill_viridis_c,
+    scale_shape_manual,
     scale_size,
     scale_x_log10,
     scale_y_log10,
+    scale_x_date,
+    scale_x_datetime,
     scale_color_gradient,
 )
-from .guides import labs
+from .guides import labs, annotate
 from .positions import position_dodge, position_jitter, position_stack
 from .utils import ggsave, ggsize
 from .stats import *
+from .datasets import mpg
+from .map_data import map_data
 
 __all__ = [
     "ggplot",
@@ -87,11 +100,13 @@ __all__ = [
     "coord_polar",
     "coord_cartesian",
     "labs",
+    "annotate",
     "position_dodge",
     "position_jitter",
     "position_stack",
     "geom_point",
     "geom_line",
+    "geom_path",
     "geom_vline",
     "geom_hline",
     "geom_bar",
@@ -109,6 +124,13 @@ __all__ = [
     "geom_segment",
     "geom_step",
     "geom_edgebundle",
+    "geom_jitter",
+    "geom_rug",
+    "geom_abline",
+    "geom_contour",
+    "geom_contour_filled",
+    "geom_map",
+    "geom_point_map",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",
@@ -117,10 +139,15 @@ __all__ = [
     "scale_fill_manual",
     "scale_fill_brewer",
     "scale_fill_viridis_c",
+    "scale_shape_manual",
     "scale_size",
     "scale_x_log10",
     "scale_y_log10",
+    "scale_x_date",
+    "scale_x_datetime",
     "scale_color_gradient",
     "stat_count",
     "stat_bin",
+    "mpg",
+    "map_data",
 ]

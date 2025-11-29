@@ -8,22 +8,37 @@ import pandas as pd
 
 class geom_line(Geom):
     """
-    Geom for drawing line plots.
+    Geom for drawing line plots, sorted by x-axis values.
 
-    Automatically handles categorical variables for color and group.
-    Automatically converts 'group' and 'color' columns to categorical if necessary.
+    Connects points in order of x-axis values (sorted). For connecting points
+    in data order (unsorted), use geom_path instead.
 
     Parameters:
         color (str, optional): Color of the lines. If not provided, will use the theme's color palette.
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the lines. Default is 1.
+        size (float, optional): Line width. Default is 2.
         group (str, optional): Grouping variable for the lines.
+
+    Aesthetics:
+        - x: x-axis values (data will be sorted by this)
+        - y: y-axis values
+        - color: Grouping variable for colored lines
+        - group: Grouping variable for separate lines
+
+    See Also:
+        geom_path: Connect points in data order (no sorting)
     """
 
     __name__ = "geom_line"
 
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
+
+        # Sort data by x-axis (key difference from geom_path)
+        x_col = self.mapping.get("x")
+        if x_col and x_col in data.columns:
+            data = data.sort_values(by=x_col).reset_index(drop=True)
 
         # Set default line width to 2 if not specified
         if "size" not in self.params:

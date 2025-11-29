@@ -16,6 +16,7 @@ class geom_tile(Geom):
     Parameters:
         fill (str, optional): Fill color for the tiles.
         alpha (float, optional): Transparency level for the fill color. Default is 1.
+        palette (str, optional): Color palette name for continuous fill. Default is 'Viridis'.
         group (str, optional): Grouping variable for the tiles.
     """
 
@@ -36,7 +37,7 @@ class geom_tile(Geom):
                         x=x,
                         y=y,
                         z=z,
-                        colorscale=self.params.get("colorscale", "Viridis"),
+                        colorscale=self.params.get("palette", "Viridis"),
                         opacity=alpha,
                         colorbar=dict(title=self.params.get("name", "Intensity")),
                     ),

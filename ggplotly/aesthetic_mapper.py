@@ -11,6 +11,28 @@ import plotly.express as px
 from typing import Any, Dict, Optional, Union, Tuple
 
 
+# Default shape palette matching ggplot2's defaults
+# Maps to Plotly marker symbols
+# See: https://plotly.com/python/marker-style/
+SHAPE_PALETTE = [
+    'circle',         # 0 - ggplot2 default
+    'triangle-up',    # 1
+    'square',         # 2
+    'cross',          # 3 (plus in ggplot2)
+    'diamond',        # 4
+    'triangle-down',  # 5
+    'star',           # 6
+    'hexagon',        # 7
+    'circle-open',    # 8
+    'triangle-up-open',  # 9
+    'square-open',    # 10
+    'diamond-open',   # 11
+    'x',              # 12
+    'star-open',      # 13
+    'hexagon-open',   # 14
+]
+
+
 class AestheticMapper:
     """
     Handles the resolution and mapping of aesthetics to visual properties.
@@ -93,21 +115,39 @@ class AestheticMapper:
     def _create_color_map(self, series: pd.Series) -> Dict[Any, str]:
         """
         Create a mapping from unique values to colors.
-        
+
         Parameters:
             series: The data series to map
-            
+
         Returns:
             Dictionary mapping each unique value to a color
         """
         palette = self.get_color_palette()
         unique_values = series.dropna().unique()
-        
+
         color_map = {}
         for i, val in enumerate(unique_values):
             color_map[val] = palette[i % len(palette)]
-        
+
         return color_map
+
+    def _create_shape_map(self, series: pd.Series) -> Dict[Any, str]:
+        """
+        Create a mapping from unique values to marker shapes.
+
+        Parameters:
+            series: The data series to map
+
+        Returns:
+            Dictionary mapping each unique value to a Plotly marker symbol
+        """
+        unique_values = series.dropna().unique()
+
+        shape_map = {}
+        for i, val in enumerate(unique_values):
+            shape_map[val] = SHAPE_PALETTE[i % len(SHAPE_PALETTE)]
+
+        return shape_map
     
     def get_style_properties(self) -> Dict[str, Any]:
         """
@@ -122,6 +162,9 @@ class AestheticMapper:
         - fill_map: Dict mapping values to colors, None otherwise
         - size: The size value (literal or series if mapped to column)
         - size_series: Series if size is a column, None otherwise
+        - shape: The shape aesthetic (column name or literal Plotly symbol)
+        - shape_series: Series if shape is a column, None otherwise
+        - shape_map: Dict mapping values to Plotly symbols, None otherwise
         - alpha: The transparency value
         - linetype: The line type
         - group: The grouping variable
@@ -133,6 +176,17 @@ class AestheticMapper:
         size, size_series, _ = self.resolve_aesthetic('size')
         alpha = self.params.get('alpha', 1.0)
         linetype = self.params.get('linetype', 'solid')
+
+        # Resolve shape aesthetic
+        shape_value = self.mapping.get('shape') or self.params.get('shape')
+        shape_series = None
+        shape_map = None
+        if shape_value is not None and self.is_column_reference('shape', shape_value):
+            shape_series = self.data[shape_value]
+            shape_map = self._create_shape_map(shape_series)
+            shape = shape_value  # column name
+        else:
+            shape = shape_value  # literal value (Plotly symbol name) or None
 
         # Group is special - it's always a column reference if provided
         group = self.mapping.get('group')
@@ -155,6 +209,9 @@ class AestheticMapper:
             'fill_map': fill_map,
             'size': size if size is not None else 10,
             'size_series': size_series,
+            'shape': shape,
+            'shape_series': shape_series,
+            'shape_map': shape_map,
             'alpha': alpha,
             'linetype': linetype,
             'group': group,
