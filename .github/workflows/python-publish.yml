@@ -65,6 +65,9 @@ jobs:
           path: dist/
 
       - name: Publish release distributions to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
