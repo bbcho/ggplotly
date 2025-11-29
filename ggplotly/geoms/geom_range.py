@@ -163,9 +163,14 @@ class geom_range(Geom):
         # For weekly or finer frequencies, align by week number
         # For monthly or coarser, align by shifting year
         if self._is_weekly_or_finer(freq):
-            # Use week of year for alignment (1-52), exclude week 53
+            # Use week of year for alignment (1-52)
             resampled['_period'] = resampled[x_col].dt.isocalendar().week
-            resampled = resampled[resampled['_period'] <= 52]  # Exclude week 53
+            resampled['_month'] = resampled[x_col].dt.month
+            # Exclude week 53, and week 52 in January (belongs to prev year)
+            resampled = resampled[
+                (resampled['_period'] <= 52) &
+                ~((resampled['_period'] == 52) & (resampled['_month'] == 1))
+            ]
             resampled = resampled.rename(columns={y_col: '_value'})
             return resampled[['_period', '_value']].sort_values('_period')
         else:
@@ -240,6 +245,10 @@ class geom_range(Geom):
             if len(resampled) > 0:
                 hist_resampled.append(resampled)
 
+        # For faceted plots, only show legend on first facet
+        is_first_facet = (row == 1 and col == 1)
+        show_legend_here = self.show_legend and is_first_facet
+
         if hist_resampled:
             # Combine all historical data (each year's period/monthly means)
             hist_combined = pd.concat(hist_resampled, ignore_index=True)
@@ -258,6 +267,7 @@ class geom_range(Geom):
                     line=dict(width=0),
                     showlegend=False,
                     hoverinfo='skip',
+                    legendgroup='range',
                 ),
                 row=row, col=col
             )
@@ -270,7 +280,8 @@ class geom_range(Geom):
                     fill='tonexty',
                     fillcolor=f'rgba(128, 128, 128, {self.ribbon_alpha})',
                     name=f'{self.years}-Year Range',
-                    showlegend=self.show_legend,
+                    showlegend=show_legend_here,
+                    legendgroup='range',
                     hovertemplate='%{x}<br>Min: %{customdata[0]:.2f}<br>Max: %{y:.2f}<extra></extra>',
                     customdata=hist_stats[['_min']].values,
                 ),
@@ -285,7 +296,8 @@ class geom_range(Geom):
                     mode='lines',
                     line=dict(color=self.avg_color, dash=self.avg_linetype, width=2),
                     name=f'{self.years}-Year Avg',
-                    showlegend=self.show_legend,
+                    showlegend=show_legend_here,
+                    legendgroup='avg',
                     hovertemplate='%{x}<br>Avg: %{y:.2f}<extra></extra>',
                 ),
                 row=row, col=col
@@ -302,7 +314,8 @@ class geom_range(Geom):
                     mode='lines',
                     line=dict(color=self.prior_color, width=2),
                     name=str(prior_year),
-                    showlegend=self.show_legend,
+                    showlegend=show_legend_here,
+                    legendgroup='prior',
                     hovertemplate=f'{prior_year}<br>%{{x}}<br>Value: %{{y:.2f}}<extra></extra>',
                 ),
                 row=row, col=col
@@ -319,7 +332,8 @@ class geom_range(Geom):
                     mode='lines',
                     line=dict(color=self.current_color, width=2.5),
                     name=str(current_year),
-                    showlegend=self.show_legend,
+                    showlegend=show_legend_here,
+                    legendgroup='current',
                     hovertemplate=f'{current_year}<br>%{{x}}<br>Value: %{{y:.2f}}<extra></extra>',
                 ),
                 row=row, col=col
@@ -347,7 +361,8 @@ class geom_range(Geom):
                             mode='lines',
                             line=dict(color=year_color, width=2),
                             name=str(year),
-                            showlegend=self.show_legend,
+                            showlegend=show_legend_here,
+                            legendgroup=f'year_{year}',
                             hovertemplate=f'{year}<br>%{{x}}<br>Value: %{{y:.2f}}<extra></extra>',
                         ),
                         row=row, col=col
