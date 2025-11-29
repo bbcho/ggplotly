@@ -39,6 +39,7 @@ from .geoms import (
     geom_step,
     geom_vline,
     geom_hline,
+    geom_edgebundle,
 )
 from .scales import (
     scale_x_continuous,
@@ -107,6 +108,7 @@ __all__ = [
     "geom_errorbar",
     "geom_segment",
     "geom_step",
+    "geom_edgebundle",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",

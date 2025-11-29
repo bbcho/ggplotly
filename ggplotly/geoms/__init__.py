@@ -19,6 +19,7 @@ from .geom_segment import geom_segment
 from .geom_step import geom_step
 from .geom_vline import geom_vline
 from .geom_hline import geom_hline
+from .geom_edgebundle import geom_edgebundle
 
 __all__ = [
     "Geom",
@@ -40,4 +41,5 @@ __all__ = [
     "geom_step",
     "geom_vline",
     "geom_hline",
+    "geom_edgebundle",
 ]

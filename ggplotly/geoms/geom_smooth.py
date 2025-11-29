@@ -82,14 +82,20 @@ class geom_smooth(Geom):
             if se and 'ymin' in data.columns and 'ymax' in data.columns:
                 for group_val in data[group_col].unique():
                     group_data = data[data[group_col] == group_val]
-                    self._add_ribbon_trace(fig, group_data, x_col, row, col, showlegend=False)
+                    # Get the color for this group using unified color resolution
+                    group_color = mapper.get_color_for_value(group_val, style_props, prefer_fill=False)
+                    self._add_ribbon_trace(fig, group_data, x_col, row, col, showlegend=False,
+                                         fillcolor=group_color, alpha=0.3)
         else:
             # No grouping - process all data at once
             data = smoother.compute_stat(data, x_col=x_col, y_col=y_col)
 
             # Draw single ribbon if se=True
             if se and 'ymin' in data.columns and 'ymax' in data.columns:
-                self._add_ribbon_trace(fig, data, x_col, row, col, showlegend=False)
+                # Use the same color as the line with reduced alpha
+                ribbon_color = style_props.get('color') or style_props.get('fill') or style_props['default_color']
+                self._add_ribbon_trace(fig, data, x_col, row, col, showlegend=False,
+                                     fillcolor=ribbon_color, alpha=0.3)
 
         line_dash = self.params.get("linetype", "solid")
         name = self.params.get("name", "Smooth")
@@ -108,7 +114,8 @@ class geom_smooth(Geom):
 
         self._transform_fig(plot, fig, data, payload, color_targets, row, col)
 
-    def _add_ribbon_trace(self, fig, data, x_col, row, col, showlegend=False):
+    def _add_ribbon_trace(self, fig, data, x_col, row, col, showlegend=False,
+                         fillcolor=None, alpha=0.3):
         """
         Add a single ribbon trace to the figure.
 
@@ -119,6 +126,8 @@ class geom_smooth(Geom):
             row: Subplot row
             col: Subplot column
             showlegend: Whether to show in legend
+            fillcolor: Color for the ribbon fill (if None, uses gray)
+            alpha: Alpha transparency for the ribbon (default 0.3)
         """
         x = data[x_col]
         ymin = data['ymin']
@@ -129,12 +138,21 @@ class geom_smooth(Geom):
         x_ribbon = pd.concat([x, x[::-1]], ignore_index=True)
         y_ribbon = pd.concat([ymax, ymin[::-1]], ignore_index=True)
 
+        # Convert color to RGBA if provided
+        if fillcolor:
+            from ..aesthetic_mapper import AestheticMapper
+            # Create a temporary mapper just for color conversion
+            temp_mapper = AestheticMapper(data, {}, {}, None)
+            fillcolor_rgba = temp_mapper._color_to_rgba(fillcolor, alpha)
+        else:
+            fillcolor_rgba = f'rgba(128, 128, 128, {alpha})'  # Default gray
+
         fig.add_trace(
             go.Scatter(
                 x=x_ribbon,
                 y=y_ribbon,
                 fill='toself',
-                fillcolor='rgba(128, 128, 128, 0.3)',  # Gray with 30% opacity
+                fillcolor=fillcolor_rgba,
                 line=dict(color='rgba(255, 255, 255, 0)'),  # Invisible line
                 showlegend=showlegend,
                 hoverinfo='skip',

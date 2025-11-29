@@ -162,18 +162,144 @@ class AestheticMapper:
             'default_color': default_color,
         }
     
-    def apply_style_to_trace(self, trace_kwargs: dict, style_props: dict, 
+    def get_color_for_value(self, value_key: Any, style_props: Dict[str, Any] = None,
+                            prefer_fill: bool = False) -> str:
+        """
+        Get the resolved color for a specific value/group.
+
+        This is the unified method for color resolution across all geoms.
+
+        Parameters:
+            value_key: The group/category value to get color for
+            style_props: Style properties dict (if None, will call get_style_properties())
+            prefer_fill: If True, prefer fill over color when both are mapped
+
+        Returns:
+            Color string (hex or named color)
+        """
+        if style_props is None:
+            style_props = self.get_style_properties()
+
+        # Determine which aesthetic to use for color
+        if prefer_fill:
+            # Prefer fill for area/ribbon/bar geoms
+            if style_props['fill_series'] is not None:
+                return style_props['fill_map'].get(value_key, style_props['default_color'])
+            elif style_props['color_series'] is not None:
+                return style_props['color_map'].get(value_key, style_props['default_color'])
+            elif style_props['fill'] is not None:
+                return style_props['fill']
+            elif style_props['color'] is not None:
+                return style_props['color']
+        else:
+            # Prefer color for line/point geoms
+            if style_props['color_series'] is not None:
+                return style_props['color_map'].get(value_key, style_props['default_color'])
+            elif style_props['fill_series'] is not None:
+                return style_props['fill_map'].get(value_key, style_props['default_color'])
+            elif style_props['color'] is not None:
+                return style_props['color']
+            elif style_props['fill'] is not None:
+                return style_props['fill']
+
+        return style_props['default_color']
+
+    def get_color_with_alpha(self, value_key: Any = None, style_props: Dict[str, Any] = None,
+                            prefer_fill: bool = False, alpha_override: float = None) -> str:
+        """
+        Get color with alpha channel as RGBA string.
+
+        Parameters:
+            value_key: The group/category value to get color for (None for literal colors)
+            style_props: Style properties dict (if None, will call get_style_properties())
+            prefer_fill: If True, prefer fill over color when both are mapped
+            alpha_override: Override alpha value (if None, uses style_props['alpha'])
+
+        Returns:
+            RGBA color string like 'rgba(255, 0, 0, 0.5)'
+        """
+        if style_props is None:
+            style_props = self.get_style_properties()
+
+        if value_key is not None:
+            color = self.get_color_for_value(value_key, style_props, prefer_fill)
+        else:
+            # No specific value - use literal or default
+            if prefer_fill:
+                color = style_props.get('fill') or style_props.get('color') or style_props['default_color']
+            else:
+                color = style_props.get('color') or style_props.get('fill') or style_props['default_color']
+
+        alpha = alpha_override if alpha_override is not None else style_props['alpha']
+
+        return self._color_to_rgba(color, alpha)
+
+    def _color_to_rgba(self, color: str, alpha: float) -> str:
+        """
+        Convert color to RGBA string with alpha.
+
+        Parameters:
+            color: Color as hex (#RRGGBB) or named color
+            alpha: Alpha value (0-1)
+
+        Returns:
+            RGBA string like 'rgba(255, 0, 0, 0.5)'
+        """
+        import plotly.colors as pc
+
+        # Handle hex colors
+        if color.startswith('#'):
+            # Convert hex to RGB
+            color = color.lstrip('#')
+            if len(color) == 6:
+                r, g, b = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
+                return f'rgba({r},{g},{b},{alpha})'
+
+        # Try to use plotly's color conversion
+        try:
+            # Convert named color to RGB via plotly
+            rgb_str = pc.convert_colors_to_same_type([color], colortype='rgb')[0][0]
+            # rgb_str is like 'rgb(255, 0, 0)'
+            if rgb_str.startswith('rgb('):
+                rgb_values = rgb_str[4:-1]  # Remove 'rgb(' and ')'
+                return f'rgba({rgb_values},{alpha})'
+        except:
+            pass
+
+        # Fallback: common color names
+        common_colors = {
+            'red': (255, 0, 0),
+            'blue': (0, 0, 255),
+            'green': (0, 128, 0),
+            'yellow': (255, 255, 0),
+            'orange': (255, 165, 0),
+            'purple': (128, 0, 128),
+            'black': (0, 0, 0),
+            'white': (255, 255, 255),
+            'gray': (128, 128, 128),
+            'grey': (128, 128, 128),
+            'steelblue': (70, 130, 180),
+        }
+
+        if color.lower() in common_colors:
+            r, g, b = common_colors[color.lower()]
+            return f'rgba({r},{g},{b},{alpha})'
+
+        # Ultimate fallback - assume it's already in right format or use default
+        return f'rgba(31, 119, 180, {alpha})'  # Default plotly blue
+
+    def apply_style_to_trace(self, trace_kwargs: dict, style_props: dict,
                             target_mapping: dict, value_key: Optional[Any] = None) -> dict:
         """
         Apply style properties to a trace dictionary based on target mapping.
-        
+
         Parameters:
             trace_kwargs: Dictionary of trace keyword arguments to update
             style_props: Style properties from get_style_properties()
             target_mapping: Maps aesthetic names to trace property paths
                            e.g., {'color': 'marker_color', 'size': 'marker_size'}
             value_key: If provided, use this key to look up color/fill from color_map
-            
+
         Returns:
             Updated trace_kwargs dictionary
         """
@@ -189,7 +315,7 @@ class AestheticMapper:
         else:
             # Use literal color/fill or default
             color_value = style_props.get('color') or style_props.get('fill') or style_props['default_color']
-        
+
         # Apply to trace based on target mapping
         for aesthetic, target_path in target_mapping.items():
             if aesthetic == 'color' or aesthetic == 'fill':
@@ -198,7 +324,7 @@ class AestheticMapper:
                 trace_kwargs[target_path] = style_props['size']
             elif aesthetic == 'alpha':
                 trace_kwargs['opacity'] = style_props['alpha']
-        
+
         return trace_kwargs
 
 
