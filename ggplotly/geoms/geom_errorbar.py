@@ -23,7 +23,15 @@ class geom_errorbar(Geom):
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        if "size" not in self.params:
+            self.params["size"] = 2
         data = data if data is not None else self.data
+
+        # Create aesthetic mapper for this geom
+        from ..aesthetic_mapper import AestheticMapper
+        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
+        style_props = mapper.get_style_properties()
+
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
 
@@ -36,19 +44,23 @@ class geom_errorbar(Geom):
             ymin = data[self.mapping["ymin"]]
             ymax = data[self.mapping["ymax"]]
 
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-        alpha = self.params.get("alpha", 1)
         linetype = self.params.get("linetype", "solid")
+        alpha = style_props['alpha']
+        group_values = style_props['group_series']
 
-        # Get shared color logic from the parent Geom class
-        color_info = self.handle_colors(data, self.mapping, self.params)
-        color_values = color_info["color_values"]
-        fill_color = color_info["fill_colors"]
+        color_targets = dict(color="marker_color")
 
-        # Draw error bar traces
+        # Handle grouped or colored error bars
         if group_values is not None:
+            # Case 1: Grouped by 'group' aesthetic
             for group in group_values.unique():
                 group_mask = group_values == group
+                # If color is also mapped to a column, use the group value as the key for color lookup
+                if style_props['color_series'] is not None:
+                    trace_props = self._apply_color_targets(color_targets, style_props, value_key=group)
+                else:
+                    trace_props = self._apply_color_targets(color_targets, style_props)
+
                 fig.add_trace(
                     go.Scatter(
                         x=x[group_mask],
@@ -58,31 +70,61 @@ class geom_errorbar(Geom):
                             array=ymax[group_mask] - y[group_mask],
                             arrayminus=y[group_mask] - ymin[group_mask],
                         ),
-                        mode="lines",
-                        line=dict(
-                            color=(
-                                color_values[group_mask].iloc[0]
-                                if color_values is not None
-                                else fill_color
-                            ),
-                            dash=linetype,
-                        ),
+                        mode="markers",
+                        line_dash=linetype,
                         opacity=alpha,
                         name=str(group),
+                        **trace_props,
+                    ),
+                    row=row,
+                    col=col,
+                )
+        elif style_props['color_series'] is not None:
+            # Case 2: Colored by categorical variable
+            cat_series = style_props['color_series']
+            cat_map = style_props['color_map']
+            cat_col = style_props['color']
+
+            for cat_value in cat_map.keys():
+                cat_mask = data[cat_col] == cat_value
+                trace_props = self._apply_color_targets(color_targets, style_props, value_key=cat_value)
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=x[cat_mask],
+                        y=y[cat_mask],
+                        error_y=dict(
+                            type="data",
+                            array=ymax[cat_mask] - y[cat_mask],
+                            arrayminus=y[cat_mask] - ymin[cat_mask],
+                        ),
+                        mode="markers",
+                        line_dash=linetype,
+                        opacity=alpha,
+                        name=str(cat_value),
+                        **trace_props,
                     ),
                     row=row,
                     col=col,
                 )
         else:
+            # Case 3: No grouping or categorical coloring
+            trace_props = self._apply_color_targets(color_targets, style_props)
+
             fig.add_trace(
                 go.Scatter(
                     x=x,
                     y=y,
-                    error_y=dict(type="data", array=ymax - y, arrayminus=y - ymin),
-                    mode="lines",
-                    line=dict(color=fill_color, dash=linetype),
+                    error_y=dict(
+                        type="data",
+                        array=ymax - y,
+                        arrayminus=y - ymin,
+                    ),
+                    mode="markers",
+                    line_dash=linetype,
                     opacity=alpha,
                     name=self.params.get("name", "Errorbar"),
+                    **trace_props,
                 ),
                 row=row,
                 col=col,

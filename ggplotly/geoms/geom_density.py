@@ -8,12 +8,6 @@ import plotly.express as px
 import pandas as pd
 
 
-# geoms/geom_density.py
-
-import plotly.graph_objects as go
-import plotly.express as px
-
-
 class geom_density(Geom):
     """
     Geom for drawing density plots.
@@ -29,70 +23,53 @@ class geom_density(Geom):
     """
 
     def draw(self, fig, data=None, row=1, col=1):
-        payload = dict()
+        if "size" not in self.params:
+            self.params["size"] = 2
         data = data if data is not None else self.data
 
-        # transform data into inputs to produce a density plot
-        # using go.Scatter
+        # Remove size from mapping if present - density lines can't have variable widths
+        # Only use size from params (literal values)
+        if "size" in self.mapping:
+            del self.mapping["size"]
+
+        # Transform data into inputs to produce a density plot using go.Scatter
         x = data[self.mapping["x"]]
         kde = gaussian_kde(x)
         x_grid = np.linspace(x.min(), x.max(), 1000)
         y = kde(x_grid)
 
         self.mapping["y"] = "density"
-
         data = pd.DataFrame({self.mapping["x"]: x_grid, self.mapping["y"]: y})
 
-        plot = go.Scatter
-
-        payload["name"] = self.params.get("name", "Density")
+        # Handle Plotly's fill parameter (tonexty, tozeroy, etc.) separately from fill aesthetic
+        fill_param = self.params.get("fill", None)
+        plotly_fill = None
+        if fill_param in ['tonexty', 'tozeroy', 'tonextx', 'tozerox', 'toself', 'tonext']:
+            # This is a Plotly fill mode, not a color aesthetic
+            plotly_fill = fill_param
+            # Temporarily remove from params so AestheticMapper doesn't treat it as a fill aesthetic
+            self.params.pop("fill", None)
 
         line_dash = self.params.get("linetype", "solid")
-        self.params.pop("linetype", None)
-        name = self.params.get("name", "Line")
-        self.params.pop("name", None)
-        fill = self.params.get("fill", None)
-        self.params.pop("fill", None)
+        name = self.params.get("name", "Density")
 
         plot = go.Scatter
         payload = dict(
             mode="lines",
             line_dash=line_dash,
             name=name,
-            fill=fill,
+            fill=plotly_fill,
         )
 
+        # Restore fill parameter if it was removed
+        if plotly_fill is not None:
+            self.params["fill"] = plotly_fill
+
         color_targets = dict(
-            fill="line_fill",
+            fill="fillcolor",
             color="line_color",
-            # size="line",
-            # marker=dict(color=fill, size=size),
         )
 
-        self._transform_fig(
-            plot,
-            fig,
-            data,
-            payload,
-            color_targets,
-            row,
-            col,
-        )
-        payload = {}
-
-        # payload["name"] = self.params.get("name", "Histogram")
-        # payload["nbinsx"] = self.bin
-
-        color_targets = dict(
-            # fill="marker_fill",
-            # fill="fillcolor",
-            color="marker_color",
-            # size="line",
-            # marker=dict(color=fill, size=size),
-        )
-
-        data = pd.DataFrame({self.mapping["x"]: y})
-        plot = go.Histogram
         self._transform_fig(
             plot,
             fig,

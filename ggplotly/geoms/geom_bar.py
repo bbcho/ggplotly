@@ -45,10 +45,7 @@ class geom_bar(Geom):
         data = pd.DataFrame(data)
 
         if self.stats == []:
-            try:
-                stat = self.params["stat"]
-            except:
-                stat = "count"
+            stat = self.params.get("stat", "count")
 
             if stat == "count":
                 self = self + stat_count()

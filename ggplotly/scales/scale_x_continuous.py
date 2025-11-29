@@ -5,7 +5,7 @@ import numpy as np
 
 
 class scale_x_continuous(Scale):
-    def __init__(self, name=None, limits=None, breaks=None, labels=None, trans=None):
+    def __init__(self, name=None, limits=None, breaks=None, labels=None, trans=None, format=None):
         """
         Continuous position scale for the x-axis.
 
@@ -15,12 +15,14 @@ class scale_x_continuous(Scale):
             breaks (list): List of positions at which to place ticks.
             labels (list): List of labels corresponding to the breaks.
             trans (str): Transformation to apply ('log', 'sqrt', etc.).
+            format (str): Format string for tick labels.
         """
         self.name = name
         self.limits = limits
         self.breaks = breaks
         self.labels = labels
         self.trans = trans
+        self.format = format
 
     def apply(self, fig):
         """
@@ -53,5 +55,8 @@ class scale_x_continuous(Scale):
                 fig.data[0].x = [np.sqrt(val) for val in fig.data[0].x]
             else:
                 raise ValueError(f"Unsupported transformation: {self.trans}")
+        
+        if self.format is not None:
+            xaxis_update["tickformat"] = self.format
 
         fig.update_xaxes(**xaxis_update)

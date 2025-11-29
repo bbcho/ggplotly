@@ -2,16 +2,45 @@ from .stat_base import Stat
 
 
 class stat_count(Stat):
+    """
+    Count the number of observations in each group.
+
+    This stat is used internally by geom_bar when you want to display
+    counts of categorical data.
+
+    Parameters:
+        data (DataFrame, optional): Data to use for this stat.
+        mapping (dict, optional): Aesthetic mappings.
+        **params: Additional parameters.
+
+    Examples:
+        >>> ggplot(df, aes(x='category')) + geom_bar(stat='count')
+    """
+
     __name__ = "count"
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Initialize the stat_count.
+
+        Parameters:
+            data (DataFrame, optional): Data to use for this stat.
+            mapping (dict, optional): Aesthetic mappings.
+            **params: Additional parameters.
+        """
         super().__init__(data, mapping, **params)
-        # self.data = data
-        # self.mapping = mapping if mapping else {}
-        # self.params = params if params else {}
         self.aggregator = "count"
 
     def compute(self, data):
+        """
+        Compute counts for each group in the data.
+
+        Parameters:
+            data (DataFrame): The input data.
+
+        Returns:
+            tuple: (transformed DataFrame, updated mapping dict)
+        """
 
         data = data.copy()
         stat = self.aggregator

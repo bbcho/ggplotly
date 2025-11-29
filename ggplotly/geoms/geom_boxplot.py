@@ -17,9 +17,25 @@ class geom_boxplot(Geom):
         color (str, optional): Outline color of the boxplot.
         fill (str, optional): Fill color for the boxplots.
         alpha (float, optional): Transparency level for the fill color. Default is 1.
+
+    Examples:
+        >>> ggplot(df, aes(x='category', y='value')) + geom_boxplot()
+        >>> ggplot(df, aes(x='category', y='value', fill='group')) + geom_boxplot()
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw boxplot(s) on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
 
         plot = go.Box
@@ -34,46 +50,3 @@ class geom_boxplot(Geom):
             size="marker_size",
         )
         self._transform_fig(plot, fig, data, payload, color_targets, row, col)
-
-        # x = data[self.mapping["x"]]
-        # y = data[self.mapping["y"]]
-        # group_values = data[self.mapping["group"]] if "group" in self.mapping else None
-
-        # alpha = self.params.get("alpha", 1)
-
-        # # Get shared color logic from the parent Geom class
-        # color_info = self.handle_colors(data, self.mapping, self.params)
-        # color_values = color_info["color_values"]
-        # fill_color = color_info["fill_colors"]
-
-        # # Draw boxplot traces
-        # if group_values is not None:
-        #     for group in group_values.unique():
-        #         group_mask = group_values == group
-        #         fig.add_trace(
-        #             go.Box(
-        #                 x=x[group_mask],
-        #                 y=y[group_mask],
-        #                 marker_color=(
-        #                     color_values[group_mask].iloc[0]
-        #                     if color_values is not None
-        #                     else fill_color
-        #                 ),
-        #                 opacity=alpha,
-        #                 name=str(group),
-        #             ),
-        #             row=row,
-        #             col=col,
-        #         )
-        # else:
-        #     fig.add_trace(
-        #         go.Box(
-        #             x=x,
-        #             y=y,
-        #             marker_color=fill_color,
-        #             opacity=alpha,
-        #             name=self.params.get("name", "Boxplot"),
-        #         ),
-        #         row=row,
-        #         col=col,
-        #     )

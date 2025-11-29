@@ -22,10 +22,35 @@ class geom_area(Geom):
         fill (str, optional): Fill color for the area. Default is 'lightblue'.
         alpha (float, optional): Transparency level for the fill color. Default is 0.5.
         showlegend (bool, optional): Whether to show legend entries. Default is True.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_area()
+        >>> ggplot(df, aes(x='x', y='y', fill='group')) + geom_area(alpha=0.5)
     """
 
     def draw(self, fig, data=None, row=1, col=1):
+        """
+        Draw area plot(s) on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame, optional): Data subset for faceting.
+            row (int): Row position in subplot. Default is 1.
+            col (int): Column position in subplot. Default is 1.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         data = data if data is not None else self.data
+
+        # Set default line width to 1 for area borders if not specified
+        if "size" not in self.params:
+            self.params["size"] = 1
+
+        # Remove size from mapping if present - area lines can't have variable widths
+        # Only use size from params (literal values)
+        if "size" in self.mapping:
+            del self.mapping["size"]
 
         plot = go.Scatter
         payload = dict(

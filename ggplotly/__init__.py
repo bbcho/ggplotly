@@ -5,6 +5,7 @@ from .ggtitle import ggtitle
 from .aes import aes
 from .themes import (
     theme_default,
+    theme,
     theme_ggplot2,
     theme_nytimes,
     theme_minimal,
@@ -17,11 +18,13 @@ from .themes import (
     element_line,
     element_rect,
 )
-from .facets import Facet, facet_wrap, facet_grid
+from .facets import Facet, facet_wrap, facet_grid, label_value, label_both
 from .coords import Coord, coord_flip, coord_polar, coord_cartesian
+from .limits import xlim, ylim, lims
 from .geoms import (
     geom_point,
     geom_line,
+    geom_path,
     geom_bar,
     geom_col,
     geom_histogram,
@@ -38,6 +41,15 @@ from .geoms import (
     geom_step,
     geom_vline,
     geom_hline,
+    geom_edgebundle,
+    geom_jitter,
+    geom_rug,
+    geom_abline,
+    geom_contour,
+    geom_contour_filled,
+    geom_map,
+    geom_point_map,
+    geom_range,
 )
 from .scales import (
     scale_x_continuous,
@@ -46,15 +58,22 @@ from .scales import (
     scale_color_brewer,
     scale_fill_gradient,
     scale_fill_manual,
+    scale_fill_brewer,
+    scale_fill_viridis_c,
+    scale_shape_manual,
     scale_size,
     scale_x_log10,
     scale_y_log10,
+    scale_x_date,
+    scale_x_datetime,
     scale_color_gradient,
 )
-from .guides import labs
+from .guides import labs, annotate
 from .positions import position_dodge, position_jitter, position_stack
 from .utils import ggsave, ggsize
 from .stats import *
+from .datasets import mpg
+from .map_data import map_data
 
 __all__ = [
     "ggplot",
@@ -63,6 +82,7 @@ __all__ = [
     "ggtitle",
     "aes",
     "theme_default",
+    "theme",
     "theme_ggplot2",
     "theme_nytimes",
     "theme_minimal",
@@ -77,16 +97,23 @@ __all__ = [
     "Facet",
     "facet_wrap",
     "facet_grid",
+    "label_value",
+    "label_both",
     "Coord",
     "coord_flip",
     "coord_polar",
     "coord_cartesian",
+    "xlim",
+    "ylim",
+    "lims",
     "labs",
+    "annotate",
     "position_dodge",
     "position_jitter",
     "position_stack",
     "geom_point",
     "geom_line",
+    "geom_path",
     "geom_vline",
     "geom_hline",
     "geom_bar",
@@ -103,16 +130,32 @@ __all__ = [
     "geom_errorbar",
     "geom_segment",
     "geom_step",
+    "geom_edgebundle",
+    "geom_jitter",
+    "geom_rug",
+    "geom_abline",
+    "geom_contour",
+    "geom_contour_filled",
+    "geom_map",
+    "geom_point_map",
+    "geom_range",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",
     "scale_color_brewer",
     "scale_fill_gradient",
     "scale_fill_manual",
+    "scale_fill_brewer",
+    "scale_fill_viridis_c",
+    "scale_shape_manual",
     "scale_size",
     "scale_x_log10",
     "scale_y_log10",
+    "scale_x_date",
+    "scale_x_datetime",
     "scale_color_gradient",
     "stat_count",
     "stat_bin",
+    "mpg",
+    "map_data",
 ]

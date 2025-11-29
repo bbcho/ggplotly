@@ -10,6 +10,7 @@ setup(
         "numpy",
         "scikit-learn",
         "scipy",
+        "statsmodels",
     ],
     author="Ben Cho",
     description="An advanced ggplot2-like plotting system for Python built on top of Plotly",
