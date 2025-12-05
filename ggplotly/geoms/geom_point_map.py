@@ -26,6 +26,13 @@ class geom_point_map(Geom):
             - 'world': World map
             - 'europe', 'asia', 'africa', 'north america', 'south america'
         projection (str, optional): Map projection type. Default depends on map type.
+        landcolor (str, optional): Color of land areas. Default is 'rgb(243, 243, 243)'.
+        oceancolor (str, optional): Color of ocean areas. Default is 'rgb(204, 229, 255)'.
+        lakecolor (str, optional): Color of lakes. Default is 'rgb(204, 229, 255)'.
+        countrycolor (str, optional): Color of country borders. Default is 'rgb(204, 204, 204)'.
+        coastlinecolor (str, optional): Color of coastlines. Default is 'rgb(204, 204, 204)'.
+        subunitcolor (str, optional): Color of subunit borders (e.g., US states). Default is 'rgb(204, 204, 204)'.
+        bgcolor (str, optional): Background color of the geo plot. Default is None (transparent).
 
     Aesthetics:
         - x: Column containing longitude values
@@ -175,19 +182,25 @@ class geom_point_map(Geom):
         )
 
         # Update geo layout
-        fig.update_geos(
+        geo_update = dict(
             scope=scope,
             projection_type=projection,
             showland=True,
-            landcolor='rgb(243, 243, 243)',
+            landcolor=self.params.get('landcolor', 'rgb(243, 243, 243)'),
             showocean=True,
-            oceancolor='rgb(204, 229, 255)',
+            oceancolor=self.params.get('oceancolor', 'rgb(204, 229, 255)'),
             showlakes=self.params.get('showlakes', True),
-            lakecolor='rgb(204, 229, 255)',
+            lakecolor=self.params.get('lakecolor', 'rgb(204, 229, 255)'),
             showcountries=self.params.get('showcountries', True),
-            countrycolor='rgb(204, 204, 204)',
+            countrycolor=self.params.get('countrycolor', 'rgb(204, 204, 204)'),
             showcoastlines=self.params.get('showcoastlines', True),
-            coastlinecolor='rgb(204, 204, 204)',
+            coastlinecolor=self.params.get('coastlinecolor', 'rgb(204, 204, 204)'),
             showsubunits=self.params.get('showsubunits', True),
-            subunitcolor='rgb(204, 204, 204)',
+            subunitcolor=self.params.get('subunitcolor', 'rgb(204, 204, 204)'),
         )
+
+        # Add bgcolor if specified
+        if 'bgcolor' in self.params:
+            geo_update['bgcolor'] = self.params['bgcolor']
+
+        fig.update_geos(**geo_update)

@@ -90,6 +90,51 @@ class Theme:
             for scene_key in scene_keys:
                 fig.update_layout(**{scene_key: scene_style})
 
+    def _apply_geo_style(self, fig, bgcolor=None, landcolor=None, oceancolor=None,
+                         lakecolor=None, countrycolor=None, coastlinecolor=None,
+                         subunitcolor=None):
+        """
+        Apply styling to geographic maps in the figure.
+
+        Parameters:
+            fig (Figure): The Plotly figure to modify.
+            bgcolor (str): Background color for the geo plot.
+            landcolor (str): Color of land areas.
+            oceancolor (str): Color of ocean areas.
+            lakecolor (str): Color of lakes.
+            countrycolor (str): Color of country borders.
+            coastlinecolor (str): Color of coastlines.
+            subunitcolor (str): Color of subunit borders (e.g., US states).
+        """
+        # Check if figure has geo traces
+        geo_types = ('scattergeo', 'choropleth', 'scattermapbox', 'choroplethmapbox')
+        has_geo = any(
+            hasattr(trace, 'type') and trace.type in geo_types
+            for trace in fig.data
+        )
+        if not has_geo:
+            return
+
+        # Build geo style update
+        geo_style = {}
+        if bgcolor:
+            geo_style['bgcolor'] = bgcolor
+        if landcolor:
+            geo_style['landcolor'] = landcolor
+        if oceancolor:
+            geo_style['oceancolor'] = oceancolor
+        if lakecolor:
+            geo_style['lakecolor'] = lakecolor
+        if countrycolor:
+            geo_style['countrycolor'] = countrycolor
+        if coastlinecolor:
+            geo_style['coastlinecolor'] = coastlinecolor
+        if subunitcolor:
+            geo_style['subunitcolor'] = subunitcolor
+
+        if geo_style:
+            fig.update_geos(**geo_style)
+
 # class theme_bw(Theme):
 #     def apply(self, fig):
 #         fig.update_layout(template="simple_white")
@@ -143,6 +188,11 @@ class theme_dark(Theme):
     """
     Dark theme with dark background and light text.
 
+    Automatically applies dark styling to:
+    - Standard 2D plots (via plotly_dark template)
+    - 3D scenes (dark background with subtle grid)
+    - Geographic maps (dark land, ocean, and borders)
+
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_dark()
     """
@@ -165,6 +215,17 @@ class theme_dark(Theme):
             gridcolor='rgb(60, 60, 60)',
             linecolor='rgb(60, 60, 60)'
         )
+        # Apply dark styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='rgb(17, 17, 17)',
+            landcolor='rgb(40, 40, 40)',
+            oceancolor='rgb(17, 17, 17)',
+            lakecolor='rgb(30, 30, 30)',
+            countrycolor='rgb(80, 80, 80)',
+            coastlinecolor='rgb(80, 80, 80)',
+            subunitcolor='rgb(60, 60, 60)'
+        )
 
 
 class theme_classic(Theme):
@@ -172,6 +233,11 @@ class theme_classic(Theme):
     Classic theme with white background and no gridlines.
 
     Similar to ggplot2's theme_classic().
+
+    Automatically applies classic styling to:
+    - Standard 2D plots (white background, no gridlines)
+    - 3D scenes (white background)
+    - Geographic maps (light, clean appearance)
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_classic()
@@ -198,9 +264,28 @@ class theme_classic(Theme):
             bgcolor='white',
             gridcolor='white',
         )
+        # Apply classic styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='white',
+            landcolor='rgb(243, 243, 243)',
+            oceancolor='rgb(230, 240, 250)',
+            lakecolor='rgb(230, 240, 250)',
+            countrycolor='rgb(180, 180, 180)',
+            coastlinecolor='rgb(180, 180, 180)',
+            subunitcolor='rgb(200, 200, 200)'
+        )
 
 
 class theme_default(Theme):
+    """
+    Default theme with light background and gridlines.
+
+    Automatically applies default styling to:
+    - Standard 2D plots (white background, light gridlines)
+    - Geographic maps (standard light appearance)
+    """
+
     def apply(self, fig):
         """
         Default theme that applies a light background with gridlines using the go.layout.Template.
@@ -238,9 +323,27 @@ class theme_default(Theme):
 
         # Apply the theme to the figure
         fig.update_layout(template=default_template)
+        # Apply default styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='white',
+            landcolor='rgb(243, 243, 243)',
+            oceancolor='rgb(204, 229, 255)',
+            lakecolor='rgb(204, 229, 255)',
+            countrycolor='rgb(204, 204, 204)',
+            coastlinecolor='rgb(204, 204, 204)',
+            subunitcolor='rgb(204, 204, 204)'
+        )
 
 
 class theme_bbc(Theme):
+    """
+    BBC-style theme with clean white background and distinctive colors.
+
+    Automatically applies BBC styling to:
+    - Standard 2D plots (white background, BBC color palette)
+    - Geographic maps (clean, professional appearance)
+    """
 
     def __init__(self):
         # Define a template for Plotly to apply globally
@@ -282,12 +385,28 @@ class theme_bbc(Theme):
         Apply the theme's template to the Plotly figure.
         """
         fig.update_layout(template=self.template)
+        # Apply BBC styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='#FFFFFF',
+            landcolor='#F0F0F0',
+            oceancolor='#E8F4F8',
+            lakecolor='#E8F4F8',
+            countrycolor='#CBCBCB',
+            coastlinecolor='#999999',
+            subunitcolor='#CBCBCB'
+        )
 
 
 class theme_ggplot2(Theme):
     """
     A theme that replicates the default ggplot2 style from R, including color palette and other global settings.
     This theme uses Plotly's template system to apply the style across all geoms.
+
+    Automatically applies ggplot2 styling to:
+    - Standard 2D plots (grey background, white gridlines)
+    - 3D scenes (grey background)
+    - Geographic maps (grey-toned appearance matching ggplot2)
     """
 
     def __init__(self):
@@ -335,11 +454,26 @@ class theme_ggplot2(Theme):
             gridcolor='white',
             linecolor='black'
         )
+        # Apply ggplot2 styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='#E5E5E5',
+            landcolor='#FFFFFF',
+            oceancolor='#D5E4EB',
+            lakecolor='#D5E4EB',
+            countrycolor='#969696',
+            coastlinecolor='#969696',
+            subunitcolor='#B0B0B0'
+        )
 
 
 class theme_nytimes(Theme):
     """
     A theme inspired by New York Times charts, using Plotly's template system to apply style globally.
+
+    Automatically applies NYT styling to:
+    - Standard 2D plots (clean white background, subtle gridlines)
+    - Geographic maps (clean, professional appearance)
     """
 
     def __init__(self):
@@ -383,9 +517,29 @@ class theme_nytimes(Theme):
         Apply the theme's template to the Plotly figure.
         """
         fig.update_layout(template=self.template)
+        # Apply NYT styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='white',
+            landcolor='#F5F5F5',
+            oceancolor='#E8F0F5',
+            lakecolor='#E8F0F5',
+            countrycolor='#CCCCCC',
+            coastlinecolor='#999999',
+            subunitcolor='#DDDDDD'
+        )
 
 
 class theme_minimal(Theme):
+    """
+    Minimal theme that removes background and gridlines for a cleaner look.
+
+    Automatically applies minimal styling to:
+    - Standard 2D plots (white background, no gridlines)
+    - 3D scenes (white background, subtle grid)
+    - Geographic maps (clean, minimal appearance)
+    """
+
     def apply(self, fig):
         """
         Minimal theme that removes background and gridlines for a cleaner look, using go.layout.Template.
@@ -422,6 +576,17 @@ class theme_minimal(Theme):
             fig,
             bgcolor='white',
             gridcolor='#eee',
+        )
+        # Apply minimal styling to geographic maps
+        self._apply_geo_style(
+            fig,
+            bgcolor='white',
+            landcolor='#FAFAFA',
+            oceancolor='#F0F5F8',
+            lakecolor='#F0F5F8',
+            countrycolor='#E0E0E0',
+            coastlinecolor='#D0D0D0',
+            subunitcolor='#E8E8E8'
         )
 
 
