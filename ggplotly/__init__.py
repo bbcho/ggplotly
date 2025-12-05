@@ -50,6 +50,11 @@ from .geoms import (
     geom_map,
     geom_point_map,
     geom_range,
+    geom_point_3d,
+    geom_surface,
+    geom_wireframe,
+    geom_candlestick,
+    geom_ohlc,
 )
 from .scales import (
     scale_x_continuous,
@@ -139,6 +144,11 @@ __all__ = [
     "geom_map",
     "geom_point_map",
     "geom_range",
+    "geom_point_3d",
+    "geom_surface",
+    "geom_wireframe",
+    "geom_candlestick",
+    "geom_ohlc",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",

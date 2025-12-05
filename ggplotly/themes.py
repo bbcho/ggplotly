@@ -41,12 +41,54 @@ class Theme:
                 'top': dict(x=0.5, y=1.02, xanchor='center', yanchor='bottom'),
                 'bottom': dict(x=0.5, y=-0.1, xanchor='center', yanchor='top')
             }
-            
+
             legend_settings = {'showlegend': True}
             if self.legend_position in position_map:
                 legend_settings['legend'] = position_map[self.legend_position]
-            
+
             fig.update_layout(**legend_settings)
+
+    def _apply_3d_scene_style(self, fig, bgcolor=None, gridcolor=None, linecolor=None):
+        """
+        Apply styling to all 3D scenes in the figure.
+
+        Parameters:
+            fig (Figure): The Plotly figure to modify.
+            bgcolor (str): Background color for the 3D scene.
+            gridcolor (str): Grid line color.
+            linecolor (str): Axis line color.
+        """
+        # Check if figure has 3D traces
+        has_3d = any(hasattr(trace, 'type') and trace.type == 'scatter3d' for trace in fig.data)
+        if not has_3d:
+            return
+
+        # Find all scene keys
+        layout_dict = fig.layout.to_plotly_json()
+        scene_keys = [k for k in layout_dict.keys() if k.startswith('scene')]
+        if not scene_keys:
+            scene_keys = ['scene']
+
+        # Build scene style
+        axis_style = {}
+        if gridcolor:
+            axis_style['gridcolor'] = gridcolor
+            axis_style['showgrid'] = True
+        if linecolor:
+            axis_style['linecolor'] = linecolor
+
+        scene_style = {}
+        if bgcolor:
+            scene_style['bgcolor'] = bgcolor
+        if axis_style:
+            scene_style['xaxis'] = axis_style
+            scene_style['yaxis'] = axis_style
+            scene_style['zaxis'] = axis_style
+
+        # Apply to all scenes
+        if scene_style:
+            for scene_key in scene_keys:
+                fig.update_layout(**{scene_key: scene_style})
 
 # class theme_bw(Theme):
 #     def apply(self, fig):
@@ -116,6 +158,13 @@ class theme_dark(Theme):
             None: Modifies the figure in place.
         """
         fig.update_layout(template="plotly_dark")
+        # Apply dark styling to 3D scenes
+        self._apply_3d_scene_style(
+            fig,
+            bgcolor='rgb(17, 17, 17)',
+            gridcolor='rgb(60, 60, 60)',
+            linecolor='rgb(60, 60, 60)'
+        )
 
 
 class theme_classic(Theme):
@@ -142,6 +191,12 @@ class theme_classic(Theme):
             template="simple_white",
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=False),
+        )
+        # Apply classic styling to 3D scenes (white background, no grid)
+        self._apply_3d_scene_style(
+            fig,
+            bgcolor='white',
+            gridcolor='white',
         )
 
 
@@ -273,6 +328,13 @@ class theme_ggplot2(Theme):
         Apply the theme's template to the Plotly figure.
         """
         fig.update_layout(template=self.template)
+        # Apply ggplot2 styling to 3D scenes
+        self._apply_3d_scene_style(
+            fig,
+            bgcolor='#E5E5E5',
+            gridcolor='white',
+            linecolor='black'
+        )
 
 
 class theme_nytimes(Theme):
@@ -355,6 +417,12 @@ class theme_minimal(Theme):
 
         # Apply the minimal theme to the figure
         fig.update_layout(template=minimal_template)
+        # Apply minimal styling to 3D scenes
+        self._apply_3d_scene_style(
+            fig,
+            bgcolor='white',
+            gridcolor='#eee',
+        )
 
 
 class theme_custom(Theme):

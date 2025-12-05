@@ -130,6 +130,14 @@ class facet_grid(Facet):
         else:
             return f"{row_val}/{col_val}"
 
+    def _has_3d_geoms(self, plot):
+        """Check if any geom requires 3D layout."""
+        geom_3d_types = ('geom_point_3d', 'geom_surface', 'geom_wireframe')
+        for geom in plot.layers:
+            if geom.__class__.__name__ in geom_3d_types:
+                return True
+        return False
+
     def apply(self, plot):
         """
         Apply facet grid to the plot.
@@ -189,15 +197,27 @@ class facet_grid(Facet):
                 if total > 0:
                     row_heights = [r / total for r in row_ranges]
 
+        # Check if we need 3D subplots
+        is_3d = self._has_3d_geoms(plot)
+
+        # Build specs for subplots (3D needs type='scene')
+        if is_3d:
+            specs = [[{"type": "scene"} for _ in range(ncols)] for _ in range(nrows)]
+        else:
+            specs = None
+
         # Create a subplot figure with the required number of rows and columns
         fig = make_subplots(
             rows=nrows,
             cols=ncols,
             subplot_titles=labels,
-            shared_xaxes=shared_x,
-            shared_yaxes=shared_y,
+            shared_xaxes=shared_x if not is_3d else False,
+            shared_yaxes=shared_y if not is_3d else False,
             column_widths=column_widths,
             row_heights=row_heights,
+            specs=specs,
+            horizontal_spacing=0.05 if is_3d else 0.2,
+            vertical_spacing=0.1 if is_3d else 0.3,
         )
 
         # Compute global color/shape maps from full dataset for consistent colors across facets
@@ -208,6 +228,13 @@ class facet_grid(Facet):
             for col_idx, col_value in enumerate(col_facets):
                 row = row_idx + 1
                 col = col_idx + 1
+
+                # For 3D, determine the scene key
+                if is_3d:
+                    scene_idx = row_idx * ncols + col_idx + 1
+                    scene_key = f"scene{scene_idx}" if scene_idx > 1 else "scene"
+                else:
+                    scene_key = None
 
                 # Subset data for the current facet (row and column combination)
                 facet_data = plot.data[
@@ -229,6 +256,11 @@ class facet_grid(Facet):
                         geom.setup_data(geom_facet_data, plot.mapping)
                     else:
                         geom.setup_data(facet_data, plot.mapping)
+
+                    # Pass scene key for 3D geoms
+                    if scene_key:
+                        geom.params['_scene_key'] = scene_key
+
                     geom.draw(fig, row=row, col=col)
 
         return fig
@@ -304,6 +336,14 @@ class facet_wrap(Facet):
                 return True
         return False
 
+    def _has_3d_geoms(self, plot):
+        """Check if any geom requires 3D layout."""
+        geom_3d_types = ('geom_point_3d', 'geom_surface', 'geom_wireframe')
+        for geom in plot.layers:
+            if geom.__class__.__name__ in geom_3d_types:
+                return True
+        return False
+
     def _get_geo_specs(self, plot):
         """Get map type info from the first geo geom."""
         for geom in plot.layers:
@@ -336,13 +376,62 @@ class facet_wrap(Facet):
         elif self.nrow is None:
             self.nrow = -(-n_facets // self.ncol)  # Ceiling division
 
-        # Check if we need geo subplots
+        # Check if we need special subplot types
         is_geo = self._has_geo_geoms(plot)
+        is_3d = self._has_3d_geoms(plot)
 
         # Compute global color/shape maps from full dataset for consistent colors across facets
         global_color_map, global_shape_map = self._compute_global_aesthetic_maps(plot)
 
-        if is_geo:
+        if is_3d:
+            # For 3D subplots, we need to create specs with type='scene'
+            from plotly.graph_objects import Figure
+
+            # Generate labels for all facets
+            labels = [self._get_label(f) for f in unique_facets]
+
+            # Build specs for 3D subplots
+            specs = [[{"type": "scene"} for _ in range(self.ncol)] for _ in range(self.nrow)]
+
+            fig = make_subplots(
+                rows=self.nrow,
+                cols=self.ncol,
+                subplot_titles=labels,
+                specs=specs,
+                horizontal_spacing=0.05,
+                vertical_spacing=0.1,
+            )
+
+            # Iterate through each unique facet
+            for idx, facet_value in enumerate(unique_facets):
+                row, col = self._get_row_col(idx, n_facets)
+                row += 1  # Convert to 1-indexed for plotly
+                col += 1
+
+                # Determine scene key for this subplot
+                scene_idx = (row - 1) * self.ncol + col
+                scene_key = f"scene{scene_idx}" if scene_idx > 1 else "scene"
+
+                # Subset the data for the current facet
+                facet_data = plot.data[plot.data[self.facet_var] == facet_value]
+
+                # Draw each geom on the subplot for the current facet
+                for geom in plot.layers:
+                    # Apply global aesthetic maps for consistent colors across facets
+                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
+
+                    # If geom has its own explicit data, use that for faceting
+                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
+                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
+                        geom.setup_data(geom_facet_data, plot.mapping)
+                    else:
+                        geom.setup_data(facet_data, plot.mapping)
+
+                    # Pass scene key for 3D geoms
+                    geom.params['_scene_key'] = scene_key
+                    geom.draw(fig, row=row, col=col)
+
+        elif is_geo:
             # For geo subplots, we need to manually position each geo
             # Plotly doesn't auto-position geo subplots like xy subplots
             from plotly.graph_objects import Figure
