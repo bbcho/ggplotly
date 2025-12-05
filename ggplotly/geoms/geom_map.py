@@ -49,93 +49,61 @@ def _extract_geojson(data):
 
 
 class geom_map(Geom):
-    """
-    Geom for drawing geographic maps.
-
-    Combines the functionality of ggplot2's geom_map and geom_sf:
-    - **Base map mode**: When used without fill/map_id aesthetics, creates a base map
-      that other geoms (like geom_point) can overlay on.
-    - **Choropleth mode**: When fill is provided with map_id, colors regions by data values.
-    - **GeoJSON/sf mode**: When a GeoDataFrame or GeoJSON is passed, renders arbitrary
-      geometries (polygons, lines, points) like ggplot2's geom_sf.
-
-    Parameters:
-        map (DataFrame, optional): A dataframe containing map region data with an 'id' column.
-            Use map_data() to get pre-defined map data:
-            - map_data('state'): US state abbreviations
-            - map_data('world'): ISO-3 country codes
-        geojson (dict or GeoDataFrame, optional): GeoJSON dict or GeoDataFrame with geometry.
-            When provided, renders arbitrary geometries like geom_sf.
-        featureidkey (str, optional): Path to feature ID in GeoJSON properties.
-            Default is 'properties.id'. Used to match data to GeoJSON features.
-        geometry (str, optional): Column name containing geometry (for GeoDataFrame).
-            If not specified, uses the active geometry column.
-        map_type (str, optional): The type of map scope. Options:
-            - 'state': US states map (default)
-            - 'world': World countries map
-            - 'usa': Alias for 'state'
-            - 'europe', 'asia', 'africa', 'north america', 'south america'
-        region (str, optional): How regions are specified. Options:
-            - 'USA-states': US state abbreviations (e.g., 'CA', 'NY') - default for state map
-            - 'ISO-3': ISO 3-letter country codes (e.g., 'USA', 'CAN') - default for world map
-            - 'country names': Full country names
-            - 'geojson-id': Use with geojson parameter
-        color (str, optional): Border color of the regions. Default is 'white'.
-        linewidth (float, optional): Border line width. Default is 0.5.
-        alpha (float, optional): Transparency level. Default is 1.
-        palette (str, optional): Color palette for continuous fill. Default is 'Viridis'.
-        projection (str, optional): Map projection type. Default depends on map type.
-            Options: 'albers usa', 'mercator', 'natural earth', 'orthographic', etc.
-        landcolor (str, optional): Color of land areas. Default is 'rgb(243, 243, 243)'.
-        oceancolor (str, optional): Color of ocean areas. Default is 'rgb(204, 229, 255)'.
-        lakecolor (str, optional): Color of lakes. Default is 'rgb(204, 229, 255)'.
-        countrycolor (str, optional): Color of country borders. Default is 'rgb(204, 204, 204)'.
-        coastlinecolor (str, optional): Color of coastlines. Default is 'rgb(204, 204, 204)'.
-        subunitcolor (str, optional): Color of subunit borders (e.g., US states). Default is 'rgb(204, 204, 204)'.
-        bgcolor (str, optional): Background color of the geo plot. Default is None (transparent).
-        fitbounds (str, optional): How to fit the map bounds. Options: 'locations', 'geojson', False.
-            Default is 'locations' when using geojson.
-
-    Aesthetics:
-        - map_id: Column containing region identifiers (required for choropleth)
-        - fill: Column containing values to map to fill color (triggers choropleth mode)
-        - geometry: Column containing geometry objects (for sf-like usage)
-
-    Examples:
-        # Base map layer (no data, just the map) + points overlay
-        ggplot(cities, aes(x='lon', y='lat')) + geom_map(map_type='usa') + geom_point()
-
-        # US states choropleth (ggplot2 style with map_data)
-        from ggplotly import map_data
-        states = map_data('state')
-        ggplot(data, aes(map_id='state', fill='population')) + geom_map(map=states)
-
-        # World map choropleth
-        countries = map_data('world')
-        ggplot(data, aes(map_id='country', fill='gdp')) + geom_map(map=countries, map_type='world')
-
-        # GeoJSON/sf mode - render arbitrary geometries (like geom_sf)
-        import geopandas as gpd
-        gdf = gpd.read_file('counties.geojson')
-        ggplot(gdf, aes(fill='population')) + geom_map()
-
-        # GeoJSON with separate data
-        ggplot(data, aes(fill='value')) + geom_map(
-            geojson=geojson_dict,
-            featureidkey='properties.FIPS',
-            map_id='fips_code'
-        )
-
-        # Custom styled map
-        ggplot(data, aes(x='lon', y='lat')) + geom_map(
-            map_type='usa',
-            landcolor='rgb(40, 40, 40)',
-            oceancolor='rgb(17, 17, 17)',
-            bgcolor='rgb(17, 17, 17)'
-        ) + geom_point(color='red')
-    """
+    """Geom for drawing geographic maps (base maps, choropleths, and GeoJSON/sf)."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Create a geographic map layer.
+
+        Supports base maps, choropleths, and GeoJSON/sf-style rendering.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Key aesthetics:
+            - map_id: Region identifiers (for choropleth)
+            - fill: Values to map to fill color (triggers choropleth)
+        map : DataFrame, optional
+            Map region data with 'id' column. Use map_data('state') or map_data('world').
+        geojson : dict or GeoDataFrame, optional
+            GeoJSON dict or GeoDataFrame for sf-like rendering.
+        featureidkey : str, default='properties.id'
+            Path to feature ID in GeoJSON properties.
+        map_type : str, default='state'
+            Map scope: 'state', 'usa', 'world', 'europe', 'asia', 'africa', etc.
+        region : str, optional
+            Region format: 'USA-states', 'ISO-3', 'country names', 'geojson-id'.
+        color : str, default='white'
+            Border color.
+        linewidth : float, default=0.5
+            Border line width.
+        alpha : float, default=1
+            Transparency (0-1).
+        palette : str, default='Viridis'
+            Color palette for fill.
+        projection : str, optional
+            Map projection: 'albers usa', 'mercator', 'natural earth', etc.
+        landcolor : str, optional
+            Land area color.
+        oceancolor : str, optional
+            Ocean color.
+        lakecolor : str, optional
+            Lake color.
+        bgcolor : str, optional
+            Background color.
+        fitbounds : str, optional
+            How to fit bounds: 'locations', 'geojson', False.
+
+        Examples
+        --------
+        >>> # Base map with points
+        >>> ggplot(cities, aes(x='lon', y='lat')) + geom_map(map_type='usa') + geom_point()
+
+        >>> # Choropleth
+        >>> ggplot(data, aes(map_id='state', fill='pop')) + geom_map(map=map_data('state'))
+        """
         super().__init__(data, mapping, **params)
         self.map_df = params.pop('map', None)  # The map dataframe (like ggplot2)
         self.geojson = params.pop('geojson', None)  # GeoJSON for sf-like mode

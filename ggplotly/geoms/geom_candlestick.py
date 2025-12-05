@@ -7,53 +7,48 @@ from .geom_base import Geom
 
 
 class geom_candlestick(Geom):
-    """
-    Geom for drawing candlestick charts for financial data.
-
-    Creates interactive candlestick charts using Plotly's Candlestick trace.
-    Candlestick charts are used to visualize price movements over time,
-    showing open, high, low, and close (OHLC) values for each time period.
-
-    Required Aesthetics:
-        x: Date/time column (typically datetime).
-        open: Opening price for each period.
-        high: Highest price during each period.
-        low: Lowest price during each period.
-        close: Closing price for each period.
-
-    Parameters:
-        increasing_color (str): Color for candles where close > open.
-            Default is '#26A69A' (green).
-        decreasing_color (str): Color for candles where close < open.
-            Default is '#EF5350' (red).
-        increasing_line_color (str): Line/wick color for increasing candles.
-            Default is same as increasing_color.
-        decreasing_line_color (str): Line/wick color for decreasing candles.
-            Default is same as decreasing_color.
-        line_width (float): Width of the wick lines. Default is 1.
-        whisker_width (float): Width of whisker lines (0-1). Default is 0
-            (whiskers same width as body).
-        opacity (float): Opacity of candlesticks. Default is 1.
-        name (str): Name for legend. Default is 'Candlestick'.
-        showlegend (bool): Whether to show in legend. Default is True.
-
-    Examples:
-        >>> # Basic candlestick chart
-        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_candlestick()
-
-        >>> # Custom colors (blue/orange theme)
-        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_candlestick(
-        ...     increasing_color='#2196F3',
-        ...     decreasing_color='#FF9800'
-        ... )
-
-        >>> # With title and labels
-        >>> (ggplot(df, aes(x='date', open='open', high='high', low='low', close='close'))
-        ...  + geom_candlestick()
-        ...  + labs(title='Stock Price', x='Date', y='Price ($)'))
-    """
+    """Geom for drawing candlestick charts for financial OHLC data."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Create a candlestick chart for financial data.
+
+        Visualizes price movements with open, high, low, close (OHLC) values.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, open, high, low, close.
+        increasing_color : str, default='#26A69A'
+            Color for candles where close > open (green).
+        decreasing_color : str, default='#EF5350'
+            Color for candles where close < open (red).
+        increasing_line_color : str, optional
+            Wick color for increasing candles. Default same as increasing_color.
+        decreasing_line_color : str, optional
+            Wick color for decreasing candles. Default same as decreasing_color.
+        line_width : float, default=1
+            Width of wick lines.
+        whisker_width : float, default=0
+            Width of whisker lines (0-1). 0 = same as body.
+        opacity : float, default=1
+            Candlestick opacity (0-1).
+        name : str, default='Candlestick'
+            Name for legend.
+        showlegend : bool, default=True
+            Show in legend.
+
+        Examples
+        --------
+        >>> # Basic candlestick
+        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_candlestick()
+
+        >>> # Custom colors
+        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_candlestick(
+        ...     increasing_color='#2196F3', decreasing_color='#FF9800')
+        """
         super().__init__(data, mapping, **params)
         # Set default colors (standard financial chart colors)
         if 'increasing_color' not in self.params:
@@ -134,43 +129,42 @@ class geom_candlestick(Geom):
 
 
 class geom_ohlc(Geom):
-    """
-    Geom for drawing OHLC (Open-High-Low-Close) bar charts.
-
-    Similar to candlestick but uses bars instead of filled bodies.
-    The left tick shows the opening price, the right tick shows
-    the closing price, and the vertical line shows the high-low range.
-
-    Required Aesthetics:
-        x: Date/time column (typically datetime).
-        open: Opening price for each period.
-        high: Highest price during each period.
-        low: Lowest price during each period.
-        close: Closing price for each period.
-
-    Parameters:
-        increasing_color (str): Color for bars where close > open.
-            Default is '#26A69A' (green).
-        decreasing_color (str): Color for bars where close < open.
-            Default is '#EF5350' (red).
-        line_width (float): Width of the lines. Default is 2.
-        tickwidth (float): Width of open/close ticks. Default is 0.05.
-        opacity (float): Opacity of bars. Default is 1.
-        name (str): Name for legend. Default is 'OHLC'.
-        showlegend (bool): Whether to show in legend. Default is True.
-
-    Examples:
-        >>> # Basic OHLC chart
-        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_ohlc()
-
-        >>> # Custom colors
-        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_ohlc(
-        ...     increasing_color='blue',
-        ...     decreasing_color='orange'
-        ... )
-    """
+    """Geom for drawing OHLC (Open-High-Low-Close) bar charts."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw OHLC bar charts for financial data.
+
+        Similar to candlestick but uses bars instead of filled bodies.
+        The left tick shows the opening price, the right tick shows
+        the closing price, and the vertical line shows the high-low range.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, open, high, low, close.
+        increasing_color : str, default='#26A69A'
+            Color for bars where close > open (green).
+        decreasing_color : str, default='#EF5350'
+            Color for bars where close < open (red).
+        line_width : float, default=2
+            Width of the lines.
+        tickwidth : float, default=0.05
+            Width of open/close ticks.
+        opacity : float, default=1
+            Opacity of bars (0-1).
+        name : str, default='OHLC'
+            Name for legend.
+        showlegend : bool, default=True
+            Whether to show in legend.
+
+        Examples
+        --------
+        >>> ggplot(df, aes(x='date', open='open', high='high', low='low', close='close')) + geom_ohlc()
+        >>> geom_ohlc(increasing_color='blue', decreasing_color='orange')
+        """
         super().__init__(data, mapping, **params)
         if 'increasing_color' not in self.params:
             self.params['increasing_color'] = '#26A69A'

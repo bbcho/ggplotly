@@ -4,77 +4,7 @@ from .coord_base import Coord
 
 
 class coord_sf(Coord):
-    """
-    Coordinate system for sf (simple features) geographic data.
-
-    This coordinate system is designed for use with geographic data,
-    particularly with geom_map/geom_sf. It provides control over:
-    - Map projection
-    - Geographic bounds (xlim/ylim as longitude/latitude)
-    - Map scope and center
-    - Aspect ratio (equal scaling for lat/lon)
-
-    Following ggplot2's coord_sf, this ensures proper display of
-    geographic data with appropriate projections and bounds.
-
-    Parameters:
-        xlim (tuple, optional): Longitude limits as (min, max).
-            For example, (-125, -65) for continental US.
-        ylim (tuple, optional): Latitude limits as (min, max).
-            For example, (25, 50) for continental US.
-        expand (bool, optional): Whether to expand limits slightly
-            to prevent data from touching edges. Default is True.
-        crs (str, optional): Coordinate reference system / projection.
-            For Plotly geo maps, this maps to projection type:
-            - 'mercator': Mercator projection
-            - 'natural earth': Natural Earth projection (default for world)
-            - 'albers usa': Albers USA projection (default for USA)
-            - 'orthographic': Orthographic (globe) projection
-            - 'equirectangular': Equirectangular projection
-            - 'robinson': Robinson projection
-            - 'miller': Miller projection
-            - 'kavrayskiy7': Kavrayskiy VII projection
-            - 'winkel tripel': Winkel Tripel projection
-            - 'aitoff': Aitoff projection
-            - 'sinusoidal': Sinusoidal projection
-            - 'mollweide': Mollweide projection
-            - 'conic equal area': Conic Equal Area projection
-            - 'conic conformal': Conic Conformal projection
-            - 'stereographic': Stereographic projection
-            - 'transverse mercator': Transverse Mercator projection
-            Or an EPSG code string like 'EPSG:4326' (WGS84, default).
-        datum (str, optional): CRS for graticules. Default is 'EPSG:4326' (WGS84).
-            Currently used for documentation compatibility with ggplot2.
-        default_crs (str, optional): Default CRS for non-sf layers.
-            When None, coordinates are assumed to be in the projection CRS.
-            Set to 'EPSG:4326' to interpret x/y as lon/lat.
-        label_graticule (str, optional): Which graticule lines to label.
-            Accepts compass directions like 'NESW', 'NS', 'EW'.
-        ndiscr (int, optional): Number of segments for discretizing lines.
-            Higher values give smoother curves. Default is 100.
-        clip (str, optional): Whether to clip to panel. 'on' or 'off'.
-            Default is 'on'.
-
-    Examples:
-        # Basic usage with geom_sf
-        ggplot(gdf, aes(fill='population')) + geom_sf() + coord_sf()
-
-        # Set geographic bounds (continental US)
-        ggplot(data) + geom_map(map_type='usa') + coord_sf(
-            xlim=(-125, -65),
-            ylim=(25, 50)
-        )
-
-        # Use specific projection
-        ggplot(data) + geom_map(map_type='world') + coord_sf(
-            crs='robinson'
-        )
-
-        # Orthographic (globe) projection centered on a location
-        ggplot(data) + geom_map(map_type='world') + coord_sf(
-            crs='orthographic'
-        )
-    """
+    """Coordinate system for sf (simple features) geographic data."""
 
     # Map common CRS strings to Plotly projection types
     PROJECTION_MAP = {
@@ -127,6 +57,42 @@ class coord_sf(Coord):
         ndiscr=100,
         clip='on',
     ):
+        """
+        Configure geographic coordinate system for maps.
+
+        Designed for use with geom_map/geom_sf. Provides control over
+        projection, geographic bounds, and map display settings.
+
+        Parameters
+        ----------
+        xlim : tuple, optional
+            Longitude limits as (min, max). E.g., (-125, -65) for continental US.
+        ylim : tuple, optional
+            Latitude limits as (min, max). E.g., (25, 50) for continental US.
+        expand : bool, default=True
+            Whether to expand limits slightly to prevent data touching edges.
+        crs : str, optional
+            Coordinate reference system / projection. Options:
+            - 'mercator', 'natural earth', 'albers usa', 'orthographic'
+            - 'equirectangular', 'robinson', 'miller', 'mollweide'
+            - EPSG codes like 'EPSG:4326' (WGS84)
+        datum : str, default='EPSG:4326'
+            CRS for graticules (ggplot2 compatibility).
+        default_crs : str, optional
+            Default CRS for non-sf layers. Set to 'EPSG:4326' for lon/lat.
+        label_graticule : str, optional
+            Which graticule lines to label. E.g., 'NESW', 'NS', 'EW'.
+        ndiscr : int, default=100
+            Number of segments for discretizing lines (smoother curves).
+        clip : str, default='on'
+            Whether to clip to panel: 'on' or 'off'.
+
+        Examples
+        --------
+        >>> coord_sf(xlim=(-125, -65), ylim=(25, 50))  # continental US bounds
+        >>> coord_sf(crs='robinson')  # Robinson projection
+        >>> coord_sf(crs='orthographic')  # Globe projection
+        """
         self.xlim = xlim
         self.ylim = ylim
         self.expand = expand

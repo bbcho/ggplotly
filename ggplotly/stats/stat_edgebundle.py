@@ -138,6 +138,110 @@ def _edge_visibility(edge_p, edge_q):
     return max(0.0, visibility)
 
 
+def _compute_visibility_batch(edges, candidate_pairs):
+    """
+    Compute visibility for a batch of candidate edge pairs (vectorized).
+
+    Parameters
+    ----------
+    edges : np.ndarray
+        Shape (n_edges, 4) - [x1, y1, x2, y2] for each edge
+    candidate_pairs : np.ndarray
+        Shape (n_pairs, 2) - pairs of edge indices to compute
+
+    Returns
+    -------
+    np.ndarray
+        Shape (n_pairs,) - visibility values for each pair
+    """
+    if len(candidate_pairs) == 0:
+        return np.array([])
+
+    i_indices = candidate_pairs[:, 0]
+    j_indices = candidate_pairs[:, 1]
+
+    # Get edge data for all pairs
+    edges_i = edges[i_indices]  # (n_pairs, 4)
+    edges_j = edges[j_indices]  # (n_pairs, 4)
+
+    # Compute visibility i->j
+    vis_ij = _visibility_directed_batch(edges_i, edges_j)
+
+    # Compute visibility j->i
+    vis_ji = _visibility_directed_batch(edges_j, edges_i)
+
+    # Return minimum
+    return np.minimum(vis_ij, vis_ji)
+
+
+def _visibility_directed_batch(edges_p, edges_q):
+    """Compute directed visibility from edges_p to edges_q (vectorized)."""
+    # edges_p, edges_q: shape (n_pairs, 4)
+
+    # Extract points
+    p_source = edges_p[:, 0:2]  # (n, 2)
+    p_target = edges_p[:, 2:4]  # (n, 2)
+    q_source = edges_q[:, 0:2]  # (n, 2)
+    q_target = edges_q[:, 2:4]  # (n, 2)
+
+    # Project q endpoints onto p
+    I0 = _project_points_on_lines_batch(q_source, edges_p)  # (n, 2)
+    I1 = _project_points_on_lines_batch(q_target, edges_p)  # (n, 2)
+
+    mid_I = (I0 + I1) / 2.0
+    mid_P = (p_source + p_target) / 2.0
+
+    dist_mids = np.sqrt(((mid_P - mid_I) ** 2).sum(axis=1))
+    dist_I = np.sqrt(((I0 - I1) ** 2).sum(axis=1))
+
+    # Handle small distances
+    visibility = np.where(
+        dist_I < 1e-8,
+        0.0,
+        1.0 - 2.0 * dist_mids / dist_I
+    )
+
+    return np.maximum(0.0, visibility)
+
+
+def _project_points_on_lines_batch(points, lines):
+    """
+    Project multiple points onto multiple lines (vectorized).
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Shape (n, 2) - points to project
+    lines : np.ndarray
+        Shape (n, 4) - lines as [x1, y1, x2, y2]
+
+    Returns
+    -------
+    np.ndarray
+        Shape (n, 2) - projected points
+    """
+    x1 = lines[:, 0]
+    y1 = lines[:, 1]
+    x2 = lines[:, 2]
+    y2 = lines[:, 3]
+    px = points[:, 0]
+    py = points[:, 1]
+
+    L_sq = (x2 - x1) ** 2 + (y2 - y1) ** 2
+
+    # Handle degenerate lines
+    r = np.where(
+        L_sq < 1e-10,
+        0.0,
+        ((y1 - py) * (y1 - y2) - (x1 - px) * (x2 - x1)) / L_sq
+    )
+
+    proj_x = x1 + r * (x2 - x1)
+    proj_y = y1 + r * (y2 - y1)
+
+    return np.stack([proj_x, proj_y], axis=1)
+
+
 def _compute_compatibility_matrix(edges, compatibility_threshold=0.6, verbose=True):
     """
     Compute full compatibility matrix and return as sparse matrix.
@@ -166,12 +270,10 @@ def _compute_compatibility_matrix(edges, compatibility_threshold=0.6, verbose=Tr
                  (scale_compat >= compatibility_threshold) & \
                  (position_compat >= compatibility_threshold)
 
-    # Count candidates
-    n_candidates = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            if candidates[i, j]:
-                n_candidates += 1
+    # Get candidate pairs as array of indices
+    candidate_i, candidate_j = np.where(np.triu(candidates, k=1))
+    candidate_pairs = np.column_stack([candidate_i, candidate_j])
+    n_candidates = len(candidate_pairs)
 
     total_pairs = n * (n - 1) // 2
     if verbose:
@@ -179,17 +281,13 @@ def _compute_compatibility_matrix(edges, compatibility_threshold=0.6, verbose=Tr
         if total_pairs > 0:
             print(f"Filtered out {total_pairs - n_candidates:,} pairs ({(1 - n_candidates/total_pairs)*100:.1f}%)")
 
-    # Compute visibility only for candidate pairs
+    # Compute visibility for all candidate pairs at once (vectorized)
     visibility_compat = np.ones((n, n))
 
-    for i in range(n):
-        for j in range(i + 1, n):
-            if candidates[i, j]:
-                vis_ij = _edge_visibility(edges[i], edges[j])
-                vis_ji = _edge_visibility(edges[j], edges[i])
-                vis = min(vis_ij, vis_ji)
-                visibility_compat[i, j] = vis
-                visibility_compat[j, i] = vis
+    if n_candidates > 0:
+        vis_values = _compute_visibility_batch(edges, candidate_pairs)
+        visibility_compat[candidate_i, candidate_j] = vis_values
+        visibility_compat[candidate_j, candidate_i] = vis_values
 
     np.fill_diagonal(visibility_compat, 1.0)
 
@@ -275,22 +373,39 @@ def _apply_spring_forces_vectorized(edge_points, kP):
     return forces
 
 
-def _apply_electrostatic_force(edge_list, compatibility_matrix, edge_idx, point_idx, eps=1e-8):
-    """Apply electrostatic force from compatible edges (vectorized)."""
-    compatible_indices = compatibility_matrix[edge_idx].nonzero()[1]
+def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, edge_idx, n_points, eps=1e-8):
+    """Apply electrostatic forces to all internal points of an edge at once."""
+    compatible_indices = compatible_indices_list[edge_idx]
+
+    # Pre-allocate result for all internal points
+    forces = np.zeros((n_points, 2))
 
     if len(compatible_indices) == 0:
-        return np.zeros(2)
+        return forces
 
-    curr_point = edge_list[edge_idx][point_idx]
+    edge_points = edge_list[edge_idx]
 
-    other_points = np.array([edge_list[idx][point_idx] for idx in compatible_indices])
+    # Process all internal points (1 to n_points-1)
+    for i in range(1, n_points - 1):
+        curr_point = edge_points[i]
+        other_points = np.array([edge_list[idx][i] for idx in compatible_indices])
 
-    forces = other_points - curr_point
-    dists = np.linalg.norm(forces, axis=1, keepdims=True)
-    dists = np.maximum(dists, eps)
+        diff = other_points - curr_point
+        dists = np.linalg.norm(diff, axis=1, keepdims=True)
+        dists = np.maximum(dists, eps)
 
-    return (forces / dists).sum(axis=0)
+        forces[i] = (diff / dists).sum(axis=0)
+
+    return forces
+
+
+def _precompute_compatible_indices(compatibility_matrix, n_edges):
+    """Pre-compute compatible indices for each edge to avoid repeated sparse lookups."""
+    compatible_indices_list = []
+    for i in range(n_edges):
+        indices = compatibility_matrix[i].nonzero()[1]
+        compatible_indices_list.append(indices)
+    return compatible_indices_list
 
 
 class stat_edgebundle:
@@ -430,6 +545,9 @@ class stat_edgebundle:
         if self.verbose:
             print(f"Compatibility matrix: {compatibility_matrix.nnz} compatible pairs")
 
+        # Pre-compute compatible indices once (avoids repeated sparse matrix lookups)
+        compatible_indices_list = _precompute_compatible_indices(compatibility_matrix, n_edges)
+
         # Main bundling loop
         S = self.S
         I = self.I
@@ -443,19 +561,16 @@ class stat_edgebundle:
                 for e_idx in range(n_edges):
                     edge_points = edge_list[e_idx]
                     n_points = len(edge_points)
-                    forces = np.zeros_like(edge_points)
 
                     edge_len = _edge_length(edge_points[0], edge_points[-1], eps)
                     kP = self.K / (edge_len * (P + 1))
 
                     spring_forces = _apply_spring_forces_vectorized(edge_points, kP)
+                    electro_forces = _apply_electrostatic_forces_all_points(
+                        edge_list, compatible_indices_list, e_idx, n_points, eps
+                    )
 
-                    for i in range(1, n_points - 1):
-                        electro_force = _apply_electrostatic_force(
-                            edge_list, compatibility_matrix, e_idx, i, eps
-                        )
-                        forces[i] = S * (spring_forces[i] + electro_force)
-
+                    forces = S * (spring_forces + electro_forces)
                     forces_list.append(forces)
 
                 for e_idx in range(n_edges):

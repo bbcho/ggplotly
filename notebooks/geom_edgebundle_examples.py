@@ -554,11 +554,11 @@ if us_flights_df is not None:
         )
         + geom_edgebundle(
             K=1,
-            C=2,
+            C=6,
             P=1,
             S=0.04,
             P_rate=2,
-            I=50,
+            I=90,
             I_rate=2/3,
             compatibility_threshold=0.6,
             color="#01169d",

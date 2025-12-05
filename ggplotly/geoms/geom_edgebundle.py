@@ -15,98 +15,7 @@ from ..stats.stat_edgebundle import stat_edgebundle
 
 
 class geom_edgebundle(Geom):
-    """
-    Bundled edges for graph visualization.
-
-    This geom applies force-directed edge bundling to create smooth, bundled
-    paths between nodes, reducing visual clutter in dense graphs.
-
-    Automatically detects if a map context exists (geom_map or geom_point_map)
-    and switches to Scattergeo for geographic rendering.
-
-    Parameters
-    ----------
-    mapping : aes, optional
-        Aesthetic mappings. Required aesthetics:
-        - x, y: start coordinates (or longitude/latitude for maps)
-        - xend, yend: end coordinates
-
-    K : float, default=1.0
-        Spring constant controlling bundling strength.
-        Higher values = tighter bundling.
-
-    C : int, default=6
-        Number of refinement cycles.
-        More cycles = more subdivision points = smoother curves.
-
-    P : int, default=1
-        Initial number of edge subdivisions.
-
-    S : float, default=0.04
-        Initial step size for force simulation.
-
-    P_rate : int, default=2
-        Rate of subdivision increase per cycle.
-
-    I : int, default=50
-        Initial iterations per cycle.
-
-    I_rate : float, default=2/3
-        Rate of iteration decrease per cycle.
-
-    compatibility_threshold : float, default=0.6
-        Minimum compatibility for edges to interact (0-1).
-        Higher values = more selective bundling.
-
-    color : str, default='#9d0191'
-        Edge color (magenta by default, matching R edgebundle style).
-
-    alpha : float, default=0.8
-        Edge transparency (0-1).
-
-    linewidth : float, default=0.5
-        Edge line width.
-
-    show_highlight : bool, default=True
-        Add thin highlight lines on top of edges.
-
-    highlight_color : str, default='white'
-        Color of highlight lines.
-
-    highlight_alpha : float, default=0.3
-        Transparency of highlight lines (0-1).
-
-    highlight_width : float, default=0.1
-        Width of highlight lines.
-
-    verbose : bool, default=True
-        Print progress messages during bundling.
-
-    Examples
-    --------
-    Basic usage with edge data:
-
-    >>> edges_df = pd.DataFrame({
-    ...     'x': [0, 1, 2],
-    ...     'y': [0, 1, 0],
-    ...     'xend': [2, 3, 3],
-    ...     'yend': [2, 2, 1]
-    ... })
-    >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
-    ...  + geom_edgebundle())
-
-    With geographic data (auto-detects map context):
-
-    >>> (ggplot(flights_df, aes(x='src_lon', y='src_lat', xend='dst_lon', yend='dst_lat'))
-    ...  + geom_point_map(data=airports_df, mapping=aes(x='lon', y='lat'), map='usa')
-    ...  + geom_edgebundle(compatibility_threshold=0.6)
-    ...  + theme_dark())
-
-    Adjust bundling parameters:
-
-    >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
-    ...  + geom_edgebundle(K=1.0, C=6, compatibility_threshold=0.5))
-    """
+    """Bundled edges for graph visualization using force-directed edge bundling."""
 
     def __init__(
         self,
@@ -130,6 +39,57 @@ class geom_edgebundle(Geom):
         verbose: bool = True,
         **kwargs
     ):
+        """
+        Create bundled edges for graph visualization.
+
+        Applies force-directed edge bundling to create smooth, bundled paths
+        between nodes, reducing visual clutter in dense graphs. Automatically
+        detects map context and uses Scattergeo for geographic rendering.
+
+        Parameters
+        ----------
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, y (start), xend, yend (end).
+        data : DataFrame, optional
+            Data to use for this geom (overrides plot data).
+        K : float, default=1.0
+            Spring constant. Higher = tighter bundling.
+        C : int, default=6
+            Number of cycles. More = smoother curves.
+        P : int, default=1
+            Initial edge subdivisions.
+        S : float, default=0.04
+            Initial step size for force simulation.
+        P_rate : int, default=2
+            Subdivision increase rate per cycle.
+        I : int, default=50
+            Initial iterations per cycle.
+        I_rate : float, default=2/3
+            Iteration decrease rate per cycle.
+        compatibility_threshold : float, default=0.6
+            Min compatibility (0-1). Higher = more selective bundling.
+        color : str, default='#9d0191'
+            Edge color.
+        alpha : float, default=0.8
+            Edge transparency (0-1).
+        linewidth : float, default=0.5
+            Edge line width.
+        show_highlight : bool, default=True
+            Add highlight lines on top of edges.
+        highlight_color : str, default='white'
+            Highlight line color.
+        highlight_alpha : float, default=0.3
+            Highlight transparency (0-1).
+        highlight_width : float, default=0.1
+            Highlight line width.
+        verbose : bool, default=True
+            Print progress messages.
+
+        Examples
+        --------
+        >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
+        ...  + geom_edgebundle(compatibility_threshold=0.6))
+        """
         super().__init__(data=data, mapping=mapping, **kwargs)
 
         # Bundling parameters

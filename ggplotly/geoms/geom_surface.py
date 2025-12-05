@@ -8,53 +8,44 @@ import numpy as np
 
 
 class geom_surface(Geom):
-    """
-    Geom for drawing 3D surface plots.
-
-    Creates interactive 3D surface plots using Plotly's Surface trace.
-    Surface plots are useful for visualizing functions of two variables z = f(x, y)
-    or for displaying matrix/grid data as a continuous surface.
-
-    The data can be provided in two formats:
-    1. Grid format: x, y as 1D arrays defining the grid, z as a 2D matrix
-    2. Long format: x, y, z as columns in a DataFrame (will be pivoted to grid)
-
-    Parameters:
-        x (str): Column name for x-axis values (via aes mapping).
-        y (str): Column name for y-axis values (via aes mapping).
-        z (str): Column name for z-axis values (via aes mapping).
-        fill (str, optional): Column for surface coloring. If not specified, uses z values.
-        colorscale (str, optional): Plotly colorscale name. Default is 'Viridis'.
-            Options: 'Viridis', 'Plasma', 'Inferno', 'Magma', 'Cividis', 'Blues',
-            'Greens', 'Reds', 'YlOrRd', 'RdBu', 'Picnic', 'Rainbow', etc.
-        alpha (float, optional): Surface opacity. Default is 1.
-        showscale (bool, optional): Whether to show the colorbar. Default is True.
-        contours (dict, optional): Contour settings for x, y, z projections.
-        hidesurface (bool, optional): If True, hides surface and shows only contours. Default is False.
-        reversescale (bool, optional): Reverse the colorscale. Default is False.
-        lighting (dict, optional): Lighting settings for 3D effect.
-
-    Examples:
-        >>> # Basic surface from function
-        >>> x = np.linspace(-5, 5, 50)
-        >>> y = np.linspace(-5, 5, 50)
-        >>> X, Y = np.meshgrid(x, y)
-        >>> Z = np.sin(np.sqrt(X**2 + Y**2))
-        >>> df = pd.DataFrame({'x': X.flatten(), 'y': Y.flatten(), 'z': Z.flatten()})
-        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_surface()
-
-        >>> # Surface with custom colorscale
-        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_surface(colorscale='Plasma')
-
-        >>> # Surface with contour projections
-        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_surface(
-        ...     contours=dict(
-        ...         z=dict(show=True, project=dict(z=True))
-        ...     )
-        ... )
-    """
+    """Geom for drawing 3D surface plots."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Create a 3D surface plot.
+
+        Visualizes functions z = f(x, y) or grid data as continuous surfaces.
+        Data can be long format (x, y, z columns) or grid format.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, y, z.
+        colorscale : str, default='Viridis'
+            Plotly colorscale: 'Viridis', 'Plasma', 'Inferno', 'Blues', 'RdBu', etc.
+        alpha : float, default=1
+            Surface opacity (0-1).
+        showscale : bool, default=True
+            Show the colorbar.
+        contours : dict, optional
+            Contour settings for x, y, z projections.
+        hidesurface : bool, default=False
+            Hide surface and show only contours.
+        reversescale : bool, default=False
+            Reverse the colorscale.
+        lighting : dict, optional
+            Lighting settings for 3D effect.
+
+        Examples
+        --------
+        >>> # Basic surface
+        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_surface()
+
+        >>> # Custom colorscale
+        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_surface(colorscale='Plasma')
+        """
         super().__init__(data, mapping, **params)
         # Set default colorscale
         if 'colorscale' not in self.params:
