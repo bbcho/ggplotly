@@ -1,15 +1,11 @@
+import warnings
 import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
 from plotly.graph_objects import Figure
 
-
-# Default shape palette matching ggplot2's defaults
-SHAPE_PALETTE = [
-    'circle', 'triangle-up', 'square', 'cross', 'diamond',
-    'triangle-down', 'star', 'hexagon', 'circle-open', 'triangle-up-open',
-    'square-open', 'diamond-open', 'x', 'star-open', 'hexagon-open',
-]
+from .constants import SHAPE_PALETTE, get_color_palette
+from .exceptions import FacetColumnNotFoundError, TooManyFacetsWarning
 
 
 # facets.py
@@ -39,11 +35,8 @@ class Facet:
         data = plot.data
         mapping = plot.mapping
 
-        # Get color palette from theme or default
-        if plot.theme and hasattr(plot.theme, 'color_map') and plot.theme.color_map:
-            palette = plot.theme.color_map
-        else:
-            palette = px.colors.qualitative.Plotly
+        # Get color palette from theme or default (using shared function)
+        palette = get_color_palette(plot.theme)
 
         # Compute global color map
         global_color_map = None
@@ -147,13 +140,41 @@ class facet_grid(Facet):
 
         Returns:
             Figure: A Plotly figure with facets applied in a grid.
+
+        Raises:
+            FacetColumnNotFoundError: If row or column variable doesn't exist in the data.
         """
+        # Validate row facet column exists
+        if self.rows not in plot.data.columns:
+            raise FacetColumnNotFoundError(
+                self.rows,
+                list(plot.data.columns),
+                facet_type="facet_grid rows"
+            )
+
+        # Validate column facet column exists
+        if self.cols not in plot.data.columns:
+            raise FacetColumnNotFoundError(
+                self.cols,
+                list(plot.data.columns),
+                facet_type="facet_grid cols"
+            )
+
         # Get unique values for the row and column variables
         row_facets = plot.data[self.rows].unique()
         col_facets = plot.data[self.cols].unique()
 
         nrows = len(row_facets)
         ncols = len(col_facets)
+
+        # Warn if too many facets
+        total_facets = nrows * ncols
+        if total_facets > 25:
+            warnings.warn(
+                f"facet_grid will create {total_facets} subplots ({nrows} rows x {ncols} cols). "
+                f"This may be slow to render. Consider filtering your data.",
+                TooManyFacetsWarning
+            )
 
         # Determine axis sharing based on scales parameter
         shared_x = self.scales in ('fixed', 'free_y')
@@ -362,10 +383,30 @@ class facet_wrap(Facet):
 
         Returns:
             Figure: A Plotly figure with facets applied.
+
+        Raises:
+            FacetColumnNotFoundError: If the facet variable doesn't exist in the data.
         """
+        # Validate facet column exists
+        if self.facet_var not in plot.data.columns:
+            raise FacetColumnNotFoundError(
+                self.facet_var,
+                list(plot.data.columns),
+                facet_type="facet_wrap"
+            )
+
         # Determine unique facets and layout
         unique_facets = plot.data[self.facet_var].unique()
         n_facets = len(unique_facets)
+
+        # Warn if too many facets
+        if n_facets > 25:
+            warnings.warn(
+                f"Facet variable '{self.facet_var}' has {n_facets} unique values. "
+                f"This will create {n_facets} subplots which may be slow to render. "
+                f"Consider filtering your data or using a different faceting variable.",
+                TooManyFacetsWarning
+            )
 
         # Calculate number of columns and rows
         if self.ncol is None and self.nrow is None:
