@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import os
 from ggplotly import (
-    ggplot, aes, geom_edgebundle, geom_point, geom_point_map,
+    ggplot, aes, geom_edgebundle, geom_point, geom_map,
     theme_dark, theme_minimal, theme_classic,
     labs, ggsize
 )
@@ -376,8 +376,9 @@ flights_sample = pd.DataFrame({
 
 example_11 = (
     ggplot(flights_sample, aes(x='src_lon', y='src_lat', xend='dst_lon', yend='dst_lat'))
-    + geom_point_map(data=airports_df, mapping=aes(x='lon', y='lat'),
-                     map='usa', color='white', size=8)
+    + geom_map(map_type='usa')
+    + geom_point(data=airports_df, mapping=aes(x='lon', y='lat'),
+                 color='white', size=8)
     + geom_edgebundle(C=4, compatibility_threshold=0.5, verbose=False)
     + labs(title='US Flights with Edge Bundling')
     + theme_dark()
@@ -544,11 +545,10 @@ if us_flights_df is not None:
     # Uses same parameters as R example: compatibility_threshold=0.6
     example_16_geo = (
         ggplot(us_flights_df, aes(x='x', y='y', xend='xend', yend='yend'))
-        + geom_point_map(
+        + geom_map(map_type='usa', projection='albers usa')
+        + geom_point(
             data=us_airports_df,
             mapping=aes(x='lon', y='lat'),
-            map='usa',
-            projection='albers usa',
             color='#9d0191',
             size=3
         )
@@ -599,6 +599,8 @@ if us_flights_df is not None:
     )
 else:
     example_16_xy = None
+
+example_16_xy
 
 # %% [markdown]
 """

@@ -5,56 +5,141 @@ import plotly.express as px
 from .geom_base import Geom
 from ..aesthetic_mapper import AestheticMapper
 import pandas as pd
+import json
+
+
+def _has_geopandas():
+    """Check if geopandas is available."""
+    try:
+        import geopandas
+        return True
+    except ImportError:
+        return False
+
+
+def _is_geodataframe(data):
+    """Check if data is a GeoDataFrame."""
+    if not _has_geopandas():
+        return False
+    import geopandas as gpd
+    return isinstance(data, gpd.GeoDataFrame)
+
+
+def _extract_geojson(data):
+    """Extract GeoJSON from various input formats.
+
+    Supports:
+    - GeoDataFrame (geopandas)
+    - dict with 'type' key (GeoJSON dict)
+    - object with __geo_interface__ attribute
+    """
+    # GeoDataFrame
+    if _is_geodataframe(data):
+        return json.loads(data.to_json())
+
+    # GeoJSON dict
+    if isinstance(data, dict) and 'type' in data:
+        return data
+
+    # __geo_interface__ (shapely, etc.)
+    if hasattr(data, '__geo_interface__'):
+        return data.__geo_interface__
+
+    return None
 
 
 class geom_map(Geom):
     """
-    Geom for drawing choropleth maps.
+    Geom for drawing geographic maps.
 
-    Creates geographic maps where regions are colored based on data values.
-    Supports both US states and world countries. Like ggplot2, you can provide
-    map data via the `map` parameter.
+    Combines the functionality of ggplot2's geom_map and geom_sf:
+    - **Base map mode**: When used without fill/map_id aesthetics, creates a base map
+      that other geoms (like geom_point) can overlay on.
+    - **Choropleth mode**: When fill is provided with map_id, colors regions by data values.
+    - **GeoJSON/sf mode**: When a GeoDataFrame or GeoJSON is passed, renders arbitrary
+      geometries (polygons, lines, points) like ggplot2's geom_sf.
 
     Parameters:
         map (DataFrame, optional): A dataframe containing map region data with an 'id' column.
             Use map_data() to get pre-defined map data:
             - map_data('state'): US state abbreviations
             - map_data('world'): ISO-3 country codes
+        geojson (dict or GeoDataFrame, optional): GeoJSON dict or GeoDataFrame with geometry.
+            When provided, renders arbitrary geometries like geom_sf.
+        featureidkey (str, optional): Path to feature ID in GeoJSON properties.
+            Default is 'properties.id'. Used to match data to GeoJSON features.
+        geometry (str, optional): Column name containing geometry (for GeoDataFrame).
+            If not specified, uses the active geometry column.
         map_type (str, optional): The type of map scope. Options:
             - 'state': US states map (default)
             - 'world': World countries map
+            - 'usa': Alias for 'state'
+            - 'europe', 'asia', 'africa', 'north america', 'south america'
         region (str, optional): How regions are specified. Options:
             - 'USA-states': US state abbreviations (e.g., 'CA', 'NY') - default for state map
             - 'ISO-3': ISO 3-letter country codes (e.g., 'USA', 'CAN') - default for world map
             - 'country names': Full country names
+            - 'geojson-id': Use with geojson parameter
         color (str, optional): Border color of the regions. Default is 'white'.
         linewidth (float, optional): Border line width. Default is 0.5.
         alpha (float, optional): Transparency level. Default is 1.
         palette (str, optional): Color palette for continuous fill. Default is 'Viridis'.
         projection (str, optional): Map projection type. Default depends on map type.
             Options: 'albers usa', 'mercator', 'natural earth', 'orthographic', etc.
+        landcolor (str, optional): Color of land areas. Default is 'rgb(243, 243, 243)'.
+        oceancolor (str, optional): Color of ocean areas. Default is 'rgb(204, 229, 255)'.
+        lakecolor (str, optional): Color of lakes. Default is 'rgb(204, 229, 255)'.
+        countrycolor (str, optional): Color of country borders. Default is 'rgb(204, 204, 204)'.
+        coastlinecolor (str, optional): Color of coastlines. Default is 'rgb(204, 204, 204)'.
+        subunitcolor (str, optional): Color of subunit borders (e.g., US states). Default is 'rgb(204, 204, 204)'.
+        bgcolor (str, optional): Background color of the geo plot. Default is None (transparent).
+        fitbounds (str, optional): How to fit the map bounds. Options: 'locations', 'geojson', False.
+            Default is 'locations' when using geojson.
 
     Aesthetics:
-        - map_id: Column containing region identifiers (state codes, country codes, etc.)
-        - fill: Column containing values to map to fill color
+        - map_id: Column containing region identifiers (required for choropleth)
+        - fill: Column containing values to map to fill color (triggers choropleth mode)
+        - geometry: Column containing geometry objects (for sf-like usage)
 
     Examples:
+        # Base map layer (no data, just the map) + points overlay
+        ggplot(cities, aes(x='lon', y='lat')) + geom_map(map_type='usa') + geom_point()
+
         # US states choropleth (ggplot2 style with map_data)
         from ggplotly import map_data
         states = map_data('state')
         ggplot(data, aes(map_id='state', fill='population')) + geom_map(map=states)
 
-        # World map
+        # World map choropleth
         countries = map_data('world')
         ggplot(data, aes(map_id='country', fill='gdp')) + geom_map(map=countries, map_type='world')
 
-        # Custom projection
-        ggplot(data, aes(map_id='state', fill='value')) + geom_map(map=states, projection='albers usa')
+        # GeoJSON/sf mode - render arbitrary geometries (like geom_sf)
+        import geopandas as gpd
+        gdf = gpd.read_file('counties.geojson')
+        ggplot(gdf, aes(fill='population')) + geom_map()
+
+        # GeoJSON with separate data
+        ggplot(data, aes(fill='value')) + geom_map(
+            geojson=geojson_dict,
+            featureidkey='properties.FIPS',
+            map_id='fips_code'
+        )
+
+        # Custom styled map
+        ggplot(data, aes(x='lon', y='lat')) + geom_map(
+            map_type='usa',
+            landcolor='rgb(40, 40, 40)',
+            oceancolor='rgb(17, 17, 17)',
+            bgcolor='rgb(17, 17, 17)'
+        ) + geom_point(color='red')
     """
 
     def __init__(self, data=None, mapping=None, **params):
         super().__init__(data, mapping, **params)
         self.map_df = params.pop('map', None)  # The map dataframe (like ggplot2)
+        self.geojson = params.pop('geojson', None)  # GeoJSON for sf-like mode
+        self.featureidkey = params.get('featureidkey', 'properties.id')
         self.map_type = params.get('map_type', 'state')
         self.palette = params.get('palette', 'Viridis')
 
@@ -64,15 +149,40 @@ class geom_map(Geom):
         if "alpha" not in self.params:
             self.params["alpha"] = 1
 
+        # Check if data is a GeoDataFrame - auto-detect sf mode
+        geojson = self.geojson
+        if geojson is None and _is_geodataframe(data):
+            # Data itself is a GeoDataFrame - extract GeoJSON
+            geojson = _extract_geojson(data)
+
+        # ggplot2 uses map_id aesthetic for choropleths
+        map_id_col = self.mapping.get("map_id") if self.mapping else None
+        fill_col = self.mapping.get("fill") if self.mapping else None
+        geometry_col = self.mapping.get("geometry") if self.mapping else None
+
+        # Determine the mode:
+        # 1. GeoJSON mode (sf-like) - when geojson is provided or data is GeoDataFrame
+        # 2. Choropleth mode - when map_id is provided
+        # 3. Base map mode - no data aesthetics
+        is_geojson_mode = geojson is not None
+        is_base_map = map_id_col is None and fill_col is None and not is_geojson_mode
+
+        if is_base_map:
+            # Just set up the geo layout - no data traces needed
+            self._setup_geo_layout(fig)
+            return
+
+        if is_geojson_mode:
+            # GeoJSON/sf mode - render arbitrary geometries
+            self._draw_geojson(fig, data, geojson, fill_col)
+            return
+
+        # Choropleth mode - require map_id
+        if map_id_col is None:
+            raise ValueError("geom_map choropleth requires a 'map_id' aesthetic")
+
         mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
         style_props = mapper.get_style_properties()
-
-        # ggplot2 uses map_id aesthetic
-        map_id_col = self.mapping.get("map_id")
-        fill_col = self.mapping.get("fill")
-
-        if map_id_col is None:
-            raise ValueError("geom_map requires a 'map_id' aesthetic")
 
         if map_id_col not in data.columns:
             available_cols = ', '.join(data.columns.tolist())
@@ -229,17 +339,371 @@ class geom_map(Geom):
 
         # Update geo layout (only if not faceting - facet_wrap handles it)
         if not geo_key:
-            fig.update_geos(
-                scope=scope,
-                projection_type=projection,
-                showland=True,
-                landcolor='rgb(243, 243, 243)',
-                showocean=True,
-                oceancolor='rgb(204, 229, 255)',
-                showlakes=self.params.get('showlakes', True),
-                lakecolor='rgb(204, 229, 255)',
-                showcountries=self.params.get('showcountries', True),
-                countrycolor='rgb(204, 204, 204)',
-                showcoastlines=self.params.get('showcoastlines', True),
-                coastlinecolor='rgb(204, 204, 204)',
+            # Don't add marker trace for choropleth - the choropleth trace itself signals geo context
+            self._setup_geo_layout(fig, scope=scope, projection=projection, add_marker_trace=False)
+
+    def _draw_geojson(self, fig, data, geojson, fill_col):
+        """Draw GeoJSON geometries like ggplot2's geom_sf.
+
+        This method renders arbitrary geometries (polygons, lines, points)
+        from GeoJSON data. It auto-detects geometry types and renders
+        them appropriately using Plotly's Choroplethmapbox or Scattermapbox.
+
+        Args:
+            fig: The plotly figure to add traces to
+            data: DataFrame with data values (can be GeoDataFrame)
+            geojson: GeoJSON dict
+            fill_col: Column name for fill values (optional)
+        """
+        border_color = self.params.get('color', 'white')
+        border_width = self.params.get('linewidth', 0.5)
+        alpha = self.params.get('alpha', 1)
+        show_colorbar = self.params.get('show_colorbar', True)
+        fitbounds = self.params.get('fitbounds', 'locations')
+
+        # Determine if we have data to join with geojson
+        map_id_col = self.mapping.get("map_id") if self.mapping else None
+
+        # For GeoDataFrame, use index as default locations
+        if _is_geodataframe(data):
+            if map_id_col is None:
+                # Use index as locations
+                locations = data.index.tolist()
+                featureidkey = 'id'
+            else:
+                locations = data[map_id_col].tolist()
+                featureidkey = self.featureidkey
+        elif data is not None and map_id_col and map_id_col in data.columns:
+            locations = data[map_id_col].tolist()
+            featureidkey = self.featureidkey
+        else:
+            # No data - extract locations from geojson features
+            locations = [f.get('id', i) for i, f in enumerate(geojson.get('features', []))]
+            featureidkey = 'id'
+
+        # Get fill values
+        if fill_col and data is not None and fill_col in data.columns:
+            fill_values = data[fill_col]
+        else:
+            fill_values = None
+
+        # Determine geometry types in GeoJSON
+        geom_types = set()
+        for feature in geojson.get('features', []):
+            geom_type = feature.get('geometry', {}).get('type', '')
+            geom_types.add(geom_type)
+
+        # Check if primarily polygons, lines, or points
+        has_polygons = 'Polygon' in geom_types or 'MultiPolygon' in geom_types
+        has_lines = 'LineString' in geom_types or 'MultiLineString' in geom_types
+        has_points = 'Point' in geom_types or 'MultiPoint' in geom_types
+
+        # Determine which trace type to use (prefer newer map types if available)
+        # Plotly deprecated *mapbox traces in favor of *map traces
+        try:
+            ChoroplethMapTrace = go.Choroplethmap
+            ScatterMapTrace = go.Scattermap
+            map_layout_key = 'map'
+        except AttributeError:
+            # Fall back to mapbox for older plotly versions
+            ChoroplethMapTrace = go.Choroplethmapbox
+            ScatterMapTrace = go.Scattermapbox
+            map_layout_key = 'mapbox'
+
+        # Use Choroplethmap for polygons (most common case)
+        if has_polygons:
+            if fill_values is not None:
+                if pd.api.types.is_numeric_dtype(fill_values):
+                    # Continuous fill
+                    trace = ChoroplethMapTrace(
+                        geojson=geojson,
+                        locations=locations,
+                        z=fill_values,
+                        featureidkey=featureidkey,
+                        colorscale=self.palette,
+                        marker=dict(
+                            line=dict(color=border_color, width=border_width),
+                            opacity=alpha,
+                        ),
+                        colorbar=dict(
+                            title=self.params.get('colorbar_title', fill_col or ''),
+                        ),
+                        showscale=show_colorbar,
+                        name=self.params.get('name', 'Map'),
+                    )
+                else:
+                    # Categorical fill
+                    categories = fill_values.unique()
+                    cat_to_num = {cat: i for i, cat in enumerate(categories)}
+                    z_values = fill_values.map(cat_to_num)
+
+                    n_cats = len(categories)
+                    colors = px.colors.qualitative.Plotly[:n_cats]
+                    if n_cats > len(colors):
+                        colors = px.colors.qualitative.Alphabet[:n_cats]
+
+                    colorscale = []
+                    for i, color in enumerate(colors[:n_cats]):
+                        colorscale.append([i / n_cats, color])
+                        colorscale.append([(i + 1) / n_cats, color])
+
+                    trace = ChoroplethMapTrace(
+                        geojson=geojson,
+                        locations=locations,
+                        z=z_values,
+                        featureidkey=featureidkey,
+                        colorscale=colorscale,
+                        marker=dict(
+                            line=dict(color=border_color, width=border_width),
+                            opacity=alpha,
+                        ),
+                        colorbar=dict(
+                            title=self.params.get('colorbar_title', fill_col or ''),
+                            tickvals=list(range(n_cats)),
+                            ticktext=list(categories),
+                        ),
+                        showscale=show_colorbar,
+                        name=self.params.get('name', 'Map'),
+                    )
+            else:
+                # No fill - uniform color
+                default_color = self.params.get('fill_color', 'steelblue')
+                trace = ChoroplethMapTrace(
+                    geojson=geojson,
+                    locations=locations,
+                    z=[1] * len(locations),
+                    featureidkey=featureidkey,
+                    colorscale=[[0, default_color], [1, default_color]],
+                    marker=dict(
+                        line=dict(color=border_color, width=border_width),
+                        opacity=alpha,
+                    ),
+                    showscale=False,
+                    name=self.params.get('name', 'Map'),
+                )
+
+            fig.add_trace(trace)
+
+        # Handle lines with Scattermap
+        if has_lines and not has_polygons:
+            # Extract line coordinates from GeoJSON
+            lats, lons = [], []
+            for feature in geojson.get('features', []):
+                geom = feature.get('geometry', {})
+                if geom.get('type') == 'LineString':
+                    coords = geom.get('coordinates', [])
+                    for lon, lat in coords:
+                        lons.append(lon)
+                        lats.append(lat)
+                    lons.append(None)  # Break between lines
+                    lats.append(None)
+                elif geom.get('type') == 'MultiLineString':
+                    for line in geom.get('coordinates', []):
+                        for lon, lat in line:
+                            lons.append(lon)
+                            lats.append(lat)
+                        lons.append(None)
+                        lats.append(None)
+
+            line_color = self.params.get('color', 'steelblue')
+            trace = ScatterMapTrace(
+                lat=lats,
+                lon=lons,
+                mode='lines',
+                line=dict(color=line_color, width=border_width),
+                opacity=alpha,
+                name=self.params.get('name', 'Lines'),
             )
+            fig.add_trace(trace)
+
+        # Handle points with Scattermap
+        if has_points and not has_polygons and not has_lines:
+            lats, lons = [], []
+            for feature in geojson.get('features', []):
+                geom = feature.get('geometry', {})
+                if geom.get('type') == 'Point':
+                    lon, lat = geom.get('coordinates', [0, 0])
+                    lons.append(lon)
+                    lats.append(lat)
+                elif geom.get('type') == 'MultiPoint':
+                    for lon, lat in geom.get('coordinates', []):
+                        lons.append(lon)
+                        lats.append(lat)
+
+            point_color = self.params.get('color', 'steelblue')
+            point_size = self.params.get('size', 8)
+            trace = ScatterMapTrace(
+                lat=lats,
+                lon=lons,
+                mode='markers',
+                marker=dict(color=point_color, size=point_size, opacity=alpha),
+                name=self.params.get('name', 'Points'),
+            )
+            fig.add_trace(trace)
+
+        # Store map layout key for later use
+        self._map_layout_key = map_layout_key
+
+        # Set up mapbox layout for GeoJSON mode
+        self._setup_mapbox_layout(fig, geojson, fitbounds)
+
+    def _setup_mapbox_layout(self, fig, geojson, fitbounds='locations'):
+        """Set up map layout for GeoJSON rendering.
+
+        Args:
+            fig: The plotly figure
+            geojson: GeoJSON dict for bounds calculation
+            fitbounds: How to fit bounds ('locations', 'geojson', or False)
+        """
+        mapbox_style = self.params.get('mapbox_style', 'carto-positron')
+        map_layout_key = getattr(self, '_map_layout_key', 'map')
+
+        # Calculate center from GeoJSON bounds
+        if geojson and 'features' in geojson:
+            all_lons, all_lats = [], []
+            for feature in geojson['features']:
+                coords = self._extract_coords(feature.get('geometry', {}))
+                for lon, lat in coords:
+                    all_lons.append(lon)
+                    all_lats.append(lat)
+
+            if all_lons and all_lats:
+                center_lat = (min(all_lats) + max(all_lats)) / 2
+                center_lon = (min(all_lons) + max(all_lons)) / 2
+
+                # Estimate zoom based on bounds
+                lat_range = max(all_lats) - min(all_lats)
+                lon_range = max(all_lons) - min(all_lons)
+                max_range = max(lat_range, lon_range)
+                if max_range > 100:
+                    zoom = 2
+                elif max_range > 50:
+                    zoom = 3
+                elif max_range > 20:
+                    zoom = 4
+                elif max_range > 10:
+                    zoom = 5
+                elif max_range > 5:
+                    zoom = 6
+                else:
+                    zoom = 7
+            else:
+                center_lat, center_lon, zoom = 0, 0, 1
+        else:
+            center_lat, center_lon, zoom = 0, 0, 1
+
+        # Override with params if provided
+        center_lat = self.params.get('center_lat', center_lat)
+        center_lon = self.params.get('center_lon', center_lon)
+        zoom = self.params.get('zoom', zoom)
+
+        map_config = dict(
+            style=mapbox_style,
+            center=dict(lat=center_lat, lon=center_lon),
+            zoom=zoom,
+        )
+
+        # Use the appropriate layout key (map or mapbox)
+        fig.update_layout(**{map_layout_key: map_config})
+
+    def _extract_coords(self, geometry):
+        """Extract all coordinates from a GeoJSON geometry."""
+        coords = []
+        geom_type = geometry.get('type', '')
+        coordinates = geometry.get('coordinates', [])
+
+        if geom_type == 'Point':
+            coords.append(tuple(coordinates[:2]))
+        elif geom_type == 'MultiPoint':
+            for c in coordinates:
+                coords.append(tuple(c[:2]))
+        elif geom_type == 'LineString':
+            for c in coordinates:
+                coords.append(tuple(c[:2]))
+        elif geom_type == 'MultiLineString':
+            for line in coordinates:
+                for c in line:
+                    coords.append(tuple(c[:2]))
+        elif geom_type == 'Polygon':
+            for ring in coordinates:
+                for c in ring:
+                    coords.append(tuple(c[:2]))
+        elif geom_type == 'MultiPolygon':
+            for polygon in coordinates:
+                for ring in polygon:
+                    for c in ring:
+                        coords.append(tuple(c[:2]))
+
+        return coords
+
+    def _setup_geo_layout(self, fig, scope=None, projection=None, add_marker_trace=True):
+        """Set up the geographic layout for the map.
+
+        This method configures the geo subplot with appropriate styling.
+        It's used both for base maps and choropleth maps.
+
+        Args:
+            fig: The plotly figure to configure
+            scope: Geographic scope (usa, world, europe, etc.)
+            projection: Map projection type
+            add_marker_trace: If True, adds an invisible scattergeo trace so other
+                geoms can detect the geo context
+        """
+        # Determine scope based on map type if not provided
+        if scope is None:
+            if self.map_type in ('state', 'usa'):
+                scope = 'usa'
+            elif self.map_type == 'world':
+                scope = 'world'
+            else:
+                scope = self.map_type
+
+        # Determine projection if not provided
+        if projection is None:
+            if self.map_type in ('state', 'usa'):
+                projection = self.params.get('projection', 'albers usa')
+            else:
+                projection = self.params.get('projection', 'natural earth')
+
+        geo_update = dict(
+            scope=scope,
+            projection_type=projection,
+            showland=True,
+            landcolor=self.params.get('landcolor', 'rgb(243, 243, 243)'),
+            showocean=True,
+            oceancolor=self.params.get('oceancolor', 'rgb(204, 229, 255)'),
+            showlakes=self.params.get('showlakes', True),
+            lakecolor=self.params.get('lakecolor', 'rgb(204, 229, 255)'),
+            showcountries=self.params.get('showcountries', True),
+            countrycolor=self.params.get('countrycolor', 'rgb(204, 204, 204)'),
+            showcoastlines=self.params.get('showcoastlines', True),
+            coastlinecolor=self.params.get('coastlinecolor', 'rgb(204, 204, 204)'),
+            showsubunits=self.params.get('showsubunits', True),
+            subunitcolor=self.params.get('subunitcolor', 'rgb(204, 204, 204)'),
+        )
+
+        # Add bgcolor if specified
+        if 'bgcolor' in self.params:
+            geo_update['bgcolor'] = self.params['bgcolor']
+
+        fig.update_geos(**geo_update)
+
+        # Add an invisible scattergeo trace so other geoms can detect the geo context
+        # This is needed for geom_point to know it should use Scattergeo instead of Scatter
+        if add_marker_trace:
+            fig.add_trace(
+                go.Scattergeo(
+                    lat=[],
+                    lon=[],
+                    mode='markers',
+                    marker=dict(size=0, opacity=0),
+                    showlegend=False,
+                    hoverinfo='skip',
+                    name='_geo_context',  # Internal marker name
+                )
+            )
+
+
+# geom_sf is an alias for geom_map, following ggplot2 conventions
+# where geom_sf is used for rendering simple features (sf) objects
+geom_sf = geom_map

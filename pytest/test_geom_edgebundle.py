@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 from ggplotly import (
-    ggplot, aes, geom_edgebundle, geom_point, geom_point_map,
+    ggplot, aes, geom_edgebundle, geom_point, geom_map,
     theme_dark, theme_classic, theme_minimal, theme_default,
     theme_ggplot2, theme_nytimes, theme_bbc,
     labs
@@ -317,8 +317,8 @@ class TestGeoContextDetection:
         # Should use Scatter, not Scattergeo
         assert fig.data[0].type == 'scatter'
 
-    def test_geo_mode_with_point_map(self):
-        """Test that geo mode is detected when geom_point_map is present."""
+    def test_geo_mode_with_geom_map(self):
+        """Test that geo mode is detected when geom_map is present."""
         # Create airports (nodes)
         airports_df = pd.DataFrame({
             'lon': [-122.4, -73.8, -87.6],
@@ -336,7 +336,8 @@ class TestGeoContextDetection:
 
         fig = (
             ggplot(flights_df, aes(x='src_lon', y='src_lat', xend='dst_lon', yend='dst_lat'))
-            + geom_point_map(data=airports_df, mapping=aes(x='lon', y='lat'), map='usa')
+            + geom_map(map_type='usa')
+            + geom_point(data=airports_df, mapping=aes(x='lon', y='lat'))
             + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
         ).draw()
 
@@ -551,8 +552,8 @@ class TestHighlightCustomization:
         assert fig.data[0].line.width == 2.0
 
 
-class TestGeomPointMapStyling:
-    """Tests for geom_point_map color parameters."""
+class TestGeomMapStyling:
+    """Tests for geom_map color parameters."""
 
     def test_default_map_colors(self):
         """Test that default map colors are applied."""
@@ -563,7 +564,8 @@ class TestGeomPointMapStyling:
 
         fig = (
             ggplot(airports_df, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
         ).draw()
 
         # Should have geo layout
@@ -580,13 +582,14 @@ class TestGeomPointMapStyling:
 
         fig = (
             ggplot(airports_df, aes(x='lon', y='lat'))
-            + geom_point_map(
-                map='usa',
+            + geom_map(
+                map_type='usa',
                 landcolor='#333333',
                 oceancolor='#111111',
                 bgcolor='black',
                 countrycolor='#666666'
             )
+            + geom_point()
         ).draw()
 
         assert fig.layout.geo.landcolor == '#333333'
@@ -603,10 +606,11 @@ class TestGeomPointMapStyling:
 
         fig = (
             ggplot(airports_df, aes(x='lon', y='lat'))
-            + geom_point_map(
-                map='usa',
+            + geom_map(
+                map_type='usa',
                 subunitcolor='#aaaaaa'
             )
+            + geom_point()
         ).draw()
 
         assert fig.layout.geo.subunitcolor == '#aaaaaa'
@@ -628,7 +632,8 @@ class TestMapThemeStyling:
         """Test that theme_dark applies dark geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_dark()
         ).draw()
 
@@ -641,7 +646,8 @@ class TestMapThemeStyling:
         """Test that theme_classic applies classic geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_classic()
         ).draw()
 
@@ -652,7 +658,8 @@ class TestMapThemeStyling:
         """Test that theme_minimal applies minimal geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_minimal()
         ).draw()
 
@@ -663,7 +670,8 @@ class TestMapThemeStyling:
         """Test that theme_ggplot2 applies ggplot2-style geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_ggplot2()
         ).draw()
 
@@ -674,7 +682,8 @@ class TestMapThemeStyling:
         """Test that theme_nytimes applies NYT-style geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_nytimes()
         ).draw()
 
@@ -685,7 +694,8 @@ class TestMapThemeStyling:
         """Test that theme_bbc applies BBC-style geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_bbc()
         ).draw()
 
@@ -696,7 +706,8 @@ class TestMapThemeStyling:
         """Test that theme_default applies default geo styling."""
         fig = (
             ggplot(geo_figure, aes(x='lon', y='lat'))
-            + geom_point_map(map='usa')
+            + geom_map(map_type='usa')
+            + geom_point()
             + theme_default()
         ).draw()
 
@@ -737,7 +748,8 @@ class TestEdgebundleWithMapThemes:
 
         fig = (
             ggplot(flights_df, aes(x='src_lon', y='src_lat', xend='dst_lon', yend='dst_lat'))
-            + geom_point_map(data=airports_df, mapping=aes(x='lon', y='lat'), map='usa')
+            + geom_map(map_type='usa')
+            + geom_point(data=airports_df, mapping=aes(x='lon', y='lat'))
             + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
             + theme_dark()
         ).draw()
@@ -766,7 +778,8 @@ class TestEdgebundleWithMapThemes:
 
         fig = (
             ggplot(flights_df, aes(x='src_lon', y='src_lat', xend='dst_lon', yend='dst_lat'))
-            + geom_point_map(data=airports_df, mapping=aes(x='lon', y='lat'), map='usa')
+            + geom_map(map_type='usa')
+            + geom_point(data=airports_df, mapping=aes(x='lon', y='lat'))
             + geom_edgebundle(
                 C=2, I=5, verbose=False,
                 show_highlight=True,
