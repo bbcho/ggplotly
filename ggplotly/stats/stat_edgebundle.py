@@ -349,6 +349,20 @@ class stat_edgebundle:
         self.compatibility_threshold = compatibility_threshold
         self.verbose = verbose
 
+        # Cache for computed results
+        self._cached_result = None
+        self._cached_data_hash = None
+
+    def _compute_data_hash(self, data: pd.DataFrame) -> int:
+        """Compute a hash of the input data for cache invalidation."""
+        return hash((
+            data.shape,
+            data['x'].values.tobytes(),
+            data['y'].values.tobytes(),
+            data['xend'].values.tobytes(),
+            data['yend'].values.tobytes(),
+        ))
+
     def compute(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply edge bundling transformation.
@@ -369,6 +383,13 @@ class stat_edgebundle:
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
 
+        # Check cache
+        data_hash = self._compute_data_hash(data)
+        if self._cached_result is not None and self._cached_data_hash == data_hash:
+            if self.verbose:
+                print("Using cached bundling result")
+            return self._cached_result
+
         # Convert to numpy array format
         edges_xy = np.column_stack([
             data['x'].values,
@@ -377,7 +398,13 @@ class stat_edgebundle:
             data['yend'].values
         ])
 
-        return self._bundle_edges(edges_xy)
+        result = self._bundle_edges(edges_xy)
+
+        # Cache the result
+        self._cached_result = result
+        self._cached_data_hash = data_hash
+
+        return result
 
     def _bundle_edges(self, edges_xy: np.ndarray) -> pd.DataFrame:
         """Core bundling algorithm."""

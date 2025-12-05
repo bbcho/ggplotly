@@ -87,17 +87,9 @@ class ggplot:
         """Return HTML representation for Jupyter/IPython display."""
         if self.auto_draw:
             fig = self.draw()
-            # return fig.to_html(include_plotlyjs='cdn', full_html=False)
+            # return fig._repr_html_()
             fig.show()
         return ""
-
-    def _repr_mimebundle_(self, **kwargs):
-        """Return mimebundle for Jupyter display (preferred by modern Jupyter)."""
-        if self.auto_draw:
-            fig = self.draw()
-            fig.show
-            # return fig._repr_mimebundle_(**kwargs)
-        return {}
 
     def add_stat(self, stat):
         """

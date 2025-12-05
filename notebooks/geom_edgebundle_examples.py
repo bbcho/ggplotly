@@ -554,7 +554,7 @@ if us_flights_df is not None:
         )
         + geom_edgebundle(
             K=1,
-            C=6,
+            C=2,
             P=1,
             S=0.04,
             P_rate=2,
@@ -574,6 +574,7 @@ if us_flights_df is not None:
     )
 else:
     example_16_geo = None
+
 example_16_geo
 
 # %% Example 16b: US Flights Simple X-Y
