@@ -40,7 +40,7 @@ example_01 = (
     + labs(title='Parallel Edges Bundle Together')
     + theme_dark()
 )
-example_01.show()
+example_01
 
 # %% [markdown]
 """

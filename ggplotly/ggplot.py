@@ -84,10 +84,18 @@ class ggplot:
         return self.copy()
 
     def _repr_html_(self):
+        """Return HTML representation for Jupyter/IPython display."""
         if self.auto_draw:
-            self.draw().show()
+            fig = self.draw()
+            return fig.to_html(include_plotlyjs='cdn', full_html=False)
         return ""
-        # return "<ggplot object displaying the plot>"
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Return mimebundle for Jupyter display (preferred by modern Jupyter)."""
+        if self.auto_draw:
+            fig = self.draw()
+            return fig._repr_mimebundle_(**kwargs)
+        return {}
 
     def add_stat(self, stat):
         """

@@ -214,6 +214,13 @@ class coord_sf(Coord):
             projection_type = self._get_projection_type(self.crs)
             if projection_type:
                 geo_update['projection_type'] = projection_type
+                # When changing projection from 'albers usa' to something else,
+                # we need to remove the 'usa' scope restriction as it doesn't
+                # work well with other projections
+                if projection_type != 'albers usa':
+                    current_scope = getattr(fig.layout.geo, 'scope', None)
+                    if current_scope == 'usa':
+                        geo_update['scope'] = 'world'
 
         # Set geographic bounds
         if self.xlim is not None or self.ylim is not None:
@@ -245,7 +252,7 @@ class coord_sf(Coord):
             center_lat = (lat_min + lat_max) / 2
             geo_update['center'] = dict(lon=center_lon, lat=center_lat)
 
-        # Handle graticule labels
+        # Handle graticule labels and frame display
         if self.label_graticule:
             # Show lon/lat axes based on label_graticule string
             show_lon = 'E' in self.label_graticule.upper() or 'W' in self.label_graticule.upper()
@@ -255,6 +262,19 @@ class coord_sf(Coord):
                 geo_update['lonaxis_showgrid'] = True
             if show_lat:
                 geo_update['lataxis_showgrid'] = True
+
+        # When bounds are set, show frame with tick labels by default
+        if self.xlim is not None or self.ylim is not None:
+            geo_update['showframe'] = True
+            geo_update['framecolor'] = 'rgba(128, 128, 128, 0.5)'
+            geo_update['framewidth'] = 1
+            # Show longitude/latitude ticks
+            geo_update['lonaxis_showgrid'] = True
+            geo_update['lonaxis_gridwidth'] = 0.5
+            geo_update['lonaxis_gridcolor'] = 'rgba(128, 128, 128, 0.3)'
+            geo_update['lataxis_showgrid'] = True
+            geo_update['lataxis_gridwidth'] = 0.5
+            geo_update['lataxis_gridcolor'] = 'rgba(128, 128, 128, 0.3)'
 
         # Apply updates
         if geo_update:
