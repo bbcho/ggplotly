@@ -374,7 +374,12 @@ def _apply_spring_forces_vectorized(edge_points, kP):
 
 
 def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, edge_idx, n_points, eps=1e-8):
-    """Apply electrostatic forces to all internal points of an edge at once."""
+    """
+    Apply electrostatic forces to all internal points of an edge at once.
+
+    Following the FDEB paper (Holten & Van Wijk 2009), the electrostatic force
+    is the sum of unit direction vectors toward compatible edge points.
+    """
     compatible_indices = compatible_indices_list[edge_idx]
 
     # Pre-allocate result for all internal points
@@ -394,6 +399,7 @@ def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, e
         dists = np.linalg.norm(diff, axis=1, keepdims=True)
         dists = np.maximum(dists, eps)
 
+        # Sum of unit direction vectors toward compatible points
         forces[i] = (diff / dists).sum(axis=0)
 
     return forces
@@ -418,7 +424,7 @@ class stat_edgebundle:
     Parameters
     ----------
     K : float, default=1.0
-        Spring constant controlling bundling tightness
+        Spring constant controlling bundling tightness.
     C : int, default=6
         Number of iteration cycles
     P : int, default=1

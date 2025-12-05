@@ -53,7 +53,7 @@ class geom_edgebundle(Geom):
         data : DataFrame, optional
             Data to use for this geom (overrides plot data).
         K : float, default=1.0
-            Spring constant. Higher = tighter bundling.
+            Spring constant controlling bundling tightness.
         C : int, default=6
             Number of cycles. More = smoother curves.
         P : int, default=1

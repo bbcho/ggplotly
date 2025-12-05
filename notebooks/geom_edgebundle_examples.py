@@ -543,6 +543,7 @@ else:
 if us_flights_df is not None:
     # Full US flights example with geographic projection
     # Uses same parameters as R example: compatibility_threshold=0.6
+    K = 0
     example_16_geo = (
         ggplot(us_flights_df, aes(x='x', y='y', xend='xend', yend='yend'))
         + geom_map(map_type='usa', projection='albers usa')
@@ -553,12 +554,12 @@ if us_flights_df is not None:
             size=3
         )
         + geom_edgebundle(
-            K=1,
+            K=K,
             C=6,
             P=1,
             S=0.04,
             P_rate=2,
-            I=90,
+            I=50,
             I_rate=2/3,
             compatibility_threshold=0.6,
             color="#01169d",
@@ -568,7 +569,7 @@ if us_flights_df is not None:
             linewidth=0.5,
             verbose=True  # Show progress for this long computation
         )
-        + labs(title=f'US Flights Edge Bundling ({len(us_flights_df)} routes)')
+        + labs(title=f'US Flights Edge Bundling ({len(us_flights_df)} routes, K = {K})')
         + theme_dark()
         + ggsize(width=1000, height=700)
     )
