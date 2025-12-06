@@ -21,10 +21,10 @@ class ggplot:
         Initialize a ggplot object.
 
         Parameters:
-            data (DataFrame): The dataset to plot.
+            data (DataFrame): The dataset to plot. Can be None if geoms provide their own data.
             mapping (aes): Aesthetic mappings created by aes().
         """
-        self.data = data.copy()
+        self.data = data.copy() if data is not None else None
         self.mapping = mapping.mapping if mapping else {}
         self.layers = []
         self.scales = []
