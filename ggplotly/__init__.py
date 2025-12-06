@@ -77,7 +77,7 @@ from .guides import labs, annotate
 from .positions import position_dodge, position_jitter, position_stack
 from .utils import ggsave, ggsize
 from .stats import *
-from .datasets import mpg
+from .datasets import data, mpg
 from .map_data import map_data
 
 __all__ = [
@@ -167,6 +167,7 @@ __all__ = [
     "scale_color_gradient",
     "stat_count",
     "stat_bin",
+    "data",
     "mpg",
     "map_data",
 ]
