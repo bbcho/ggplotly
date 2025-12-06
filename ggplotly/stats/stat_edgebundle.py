@@ -424,7 +424,10 @@ class stat_edgebundle:
     Parameters
     ----------
     K : float, default=1.0
-        Spring constant controlling bundling tightness.
+        Spring constant controlling edge stiffness (resists bundling).
+    E : float, default=1.0
+        Electrostatic constant controlling bundling attraction strength.
+        Higher values increase bundling, lower values decrease it.
     C : int, default=6
         Number of iteration cycles
     P : int, default=1
@@ -451,6 +454,7 @@ class stat_edgebundle:
     def __init__(
         self,
         K: float = 1.0,
+        E: float = 1.0,
         C: int = 6,
         P: int = 1,
         S: float = 0.04,
@@ -461,6 +465,7 @@ class stat_edgebundle:
         verbose: bool = True
     ):
         self.K = K
+        self.E = E
         self.C = C
         self.P = P
         self.S = S
@@ -576,7 +581,7 @@ class stat_edgebundle:
                         edge_list, compatible_indices_list, e_idx, n_points, eps
                     )
 
-                    forces = S * (spring_forces + electro_forces)
+                    forces = S * (spring_forces + self.E * electro_forces)
                     forces_list.append(forces)
 
                 for e_idx in range(n_edges):

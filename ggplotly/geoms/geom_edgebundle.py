@@ -22,6 +22,7 @@ class geom_edgebundle(Geom):
         mapping=None,
         data=None,
         K: float = 1.0,
+        E: float = 1.0,
         C: int = 6,
         P: int = 1,
         S: float = 0.04,
@@ -53,7 +54,10 @@ class geom_edgebundle(Geom):
         data : DataFrame, optional
             Data to use for this geom (overrides plot data).
         K : float, default=1.0
-            Spring constant controlling bundling tightness.
+            Spring constant controlling edge stiffness (resists bundling).
+        E : float, default=1.0
+            Electrostatic constant controlling bundling attraction strength.
+            Higher values increase bundling, lower values decrease it.
         C : int, default=6
             Number of cycles. More = smoother curves.
         P : int, default=1
@@ -94,6 +98,7 @@ class geom_edgebundle(Geom):
 
         # Bundling parameters
         self.K = K
+        self.E = E
         self.C = C
         self.P = P
         self.S = S
@@ -115,6 +120,7 @@ class geom_edgebundle(Geom):
         # Initialize stat transformer
         self.stat = stat_edgebundle(
             K=K,
+            E=E,
             C=C,
             P=P,
             S=S,

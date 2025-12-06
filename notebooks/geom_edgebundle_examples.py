@@ -543,7 +543,8 @@ else:
 if us_flights_df is not None:
     # Full US flights example with geographic projection
     # Uses same parameters as R example: compatibility_threshold=0.6
-    K = 0
+    K = 1.0
+    E = 2.0
     example_16_geo = (
         ggplot(us_flights_df, aes(x='x', y='y', xend='xend', yend='yend'))
         + geom_map(map_type='usa', projection='albers usa')
@@ -555,6 +556,7 @@ if us_flights_df is not None:
         )
         + geom_edgebundle(
             K=K,
+            E=E,
             C=6,
             P=1,
             S=0.04,
