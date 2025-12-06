@@ -633,3 +633,5 @@ This notebook demonstrated:
 
 These tools provide ggplot2-style geographic visualization in Python!
 """
+
+# %%
