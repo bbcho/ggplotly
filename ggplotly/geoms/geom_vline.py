@@ -3,25 +3,36 @@ import pandas as pd
 
 
 class geom_vline(Geom):
-    """
-    Geom for drawing vertical lines.
-
-    Parameters:
-        data (float or list of floats): The x-coordinate(s) where the vertical line(s) should be drawn.
-            Same as xintercept in ggplot2.
-        color (str, optional): Color of the lines. Default is 'black'.
-        linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
-        alpha (float, optional): Transparency level for the lines. Default is 1.
-        name (str, optional): Name of the line(s) for the legend.
-
-    Examples:
-        geom_vline(data=5)
-        geom_vline(data=[1, 2, 3], color='red')
-    """
+    """Geom for drawing vertical reference lines."""
 
     __name__ = "geom_vline"
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw vertical lines at specified x-intercepts.
+
+        Parameters
+        ----------
+        data : float or list of float
+            X-coordinate(s) for vertical line(s). Same as xintercept.
+        mapping : aes, optional
+            Aesthetic mappings (typically not used for vline).
+        color : str, default='black'
+            Line color.
+        linetype : str, default='solid'
+            Line style: 'solid', 'dash', 'dot', 'dashdot'.
+        alpha : float, default=1
+            Transparency (0-1).
+        size : float, default=2
+            Line width.
+        name : str, optional
+            Legend name.
+
+        Examples
+        --------
+        >>> geom_vline(data=5)
+        >>> geom_vline(data=[1, 2, 3], color='red', linetype='dash')
+        """
         # data parameter is the xintercept value (matching ggplot2's data parameter)
         if data is not None:
             params['xintercept'] = data

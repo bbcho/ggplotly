@@ -84,10 +84,12 @@ class ggplot:
         return self.copy()
 
     def _repr_html_(self):
+        """Return HTML representation for Jupyter/IPython display."""
         if self.auto_draw:
-            self.draw().show()
+            fig = self.draw()
+            # return fig._repr_html_()
+            fig.show()
         return ""
-        # return "<ggplot object displaying the plot>"
 
     def add_stat(self, stat):
         """

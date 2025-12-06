@@ -675,26 +675,28 @@ def test_geom_map_no_fill():
     assert fig.data[0].showscale == False, "Should not show colorbar without fill"
 
 
-# ==================== geom_point_map tests ====================
+# ==================== geom_map + geom_point tests ====================
 
-def test_geom_point_map_basic():
-    """Test basic point map with x=lon, y=lat (ggplot2 style)."""
+def test_geom_map_with_points_basic():
+    """Test basic point map with geom_map + geom_point (x=lon, y=lat)."""
     df = pd.DataFrame({
         'city': ['New York', 'Los Angeles', 'Chicago'],
         'lat': [40.7128, 34.0522, 41.8781],
         'lon': [-74.0060, -118.2437, -87.6298]
     })
 
-    p = ggplot(df, aes(x='lon', y='lat')) + geom_point_map()
+    p = ggplot(df, aes(x='lon', y='lat')) + geom_map(map_type='usa') + geom_point()
     fig = p.draw()
 
     assert isinstance(fig, go.Figure), "The plot is not a Plotly figure"
-    assert len(fig.data) == 1, "Should have 1 trace (scatter geo)"
-    assert fig.data[0].type == 'scattergeo', "Should be a scattergeo trace"
+    # Should have geo context marker + points
+    assert len(fig.data) == 2, "Should have 2 traces (geo marker + points)"
+    # geom_point should auto-detect geo context and use Scattergeo
+    assert fig.data[1].type == 'scattergeo', "Points should be scattergeo trace"
 
 
-def test_geom_point_map_with_color():
-    """Test point map with color mapping."""
+def test_geom_map_with_points_color():
+    """Test point map with color mapping using geom_map + geom_point."""
     df = pd.DataFrame({
         'city': ['New York', 'Los Angeles', 'Chicago', 'Houston'],
         'lat': [40.7128, 34.0522, 41.8781, 29.7604],
@@ -702,15 +704,17 @@ def test_geom_point_map_with_color():
         'population': [8.3, 3.9, 2.7, 2.3]
     })
 
-    p = ggplot(df, aes(x='lon', y='lat', color='population')) + geom_point_map()
+    p = ggplot(df, aes(x='lon', y='lat', color='population')) + geom_map(map_type='usa') + geom_point()
     fig = p.draw()
 
     assert isinstance(fig, go.Figure), "The plot is not a Plotly figure"
-    assert fig.data[0].marker.colorscale is not None, "Should have a colorscale"
+    # Points trace should have colorscale
+    points_trace = [t for t in fig.data if t.type == 'scattergeo' and len(t.lat) > 0][0]
+    assert points_trace.marker.colorscale is not None, "Should have a colorscale"
 
 
-def test_geom_point_map_with_size():
-    """Test point map with size mapping."""
+def test_geom_map_with_points_size():
+    """Test point map with size mapping using geom_map + geom_point."""
     df = pd.DataFrame({
         'city': ['New York', 'Los Angeles', 'Chicago'],
         'lat': [40.7128, 34.0522, 41.8781],
@@ -718,42 +722,45 @@ def test_geom_point_map_with_size():
         'value': [100, 50, 75]
     })
 
-    p = ggplot(df, aes(x='lon', y='lat', size='value')) + geom_point_map()
+    p = ggplot(df, aes(x='lon', y='lat', size='value')) + geom_map(map_type='usa') + geom_point()
     fig = p.draw()
 
     assert isinstance(fig, go.Figure), "The plot is not a Plotly figure"
-    # Size should vary
-    assert len(set(fig.data[0].marker.size)) > 1, "Point sizes should vary"
+    # Points trace should have varying sizes
+    points_trace = [t for t in fig.data if t.type == 'scattergeo' and len(t.lat) > 0][0]
+    assert len(set(points_trace.marker.size)) > 1, "Point sizes should vary"
 
 
-def test_geom_point_map_world():
-    """Test point map on world map."""
+def test_geom_map_with_points_world():
+    """Test point map on world map using geom_map + geom_point."""
     df = pd.DataFrame({
         'city': ['London', 'Tokyo', 'Sydney'],
         'lat': [51.5074, 35.6762, -33.8688],
         'lon': [-0.1278, 139.6503, 151.2093]
     })
 
-    p = ggplot(df, aes(x='lon', y='lat')) + geom_point_map(map='world')
+    p = ggplot(df, aes(x='lon', y='lat')) + geom_map(map_type='world') + geom_point()
     fig = p.draw()
 
     assert isinstance(fig, go.Figure), "The plot is not a Plotly figure"
     assert fig.layout.geo.scope == 'world', "Should have world scope"
 
 
-def test_geom_point_map_with_labels():
-    """Test point map with text labels."""
+def test_geom_map_with_points_labels():
+    """Test point map with label aesthetic using geom_map + geom_point."""
     df = pd.DataFrame({
         'city': ['NYC', 'LA', 'CHI'],
         'lat': [40.7128, 34.0522, 41.8781],
         'lon': [-74.0060, -118.2437, -87.6298]
     })
 
-    p = ggplot(df, aes(x='lon', y='lat', label='city')) + geom_point_map()
+    p = ggplot(df, aes(x='lon', y='lat', label='city')) + geom_map(map_type='usa') + geom_point()
     fig = p.draw()
 
     assert isinstance(fig, go.Figure), "The plot is not a Plotly figure"
-    assert 'text' in fig.data[0].mode, "Should have text in mode"
+    # Points trace should have hovertext from label
+    points_trace = [t for t in fig.data if t.type == 'scattergeo' and len(t.lat) > 0][0]
+    assert points_trace.hovertext is not None, "Should have hovertext from labels"
 
 
 # def test_plot_with_faceting_2():

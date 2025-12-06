@@ -2,17 +2,28 @@ from .scale_base import Scale
 
 
 class scale_fill_manual(Scale):
-    """
-    Scale for manually defining fill colors based on a categorical variable.
-
-    Parameters:
-        values (dict): A dictionary that maps each level of the categorical variable to a specific color.
-        name (str, optional): The title of the legend for the fill scale.
-    """
+    """Scale for manually defining fill colors based on a categorical variable."""
 
     def __init__(self, values, name=None):
-        self.values = values  # A dictionary mapping levels to colors
-        self.name = name  # Optional name for the legend
+        """
+        Manually define fill colors for each level of a categorical variable.
+
+        Parameters
+        ----------
+        values : dict
+            Dictionary mapping each level of the categorical variable to a color.
+            Keys are the category values, values are color specifications
+            (names, hex codes, or rgb strings).
+        name : str, optional
+            Title for the legend.
+
+        Examples
+        --------
+        >>> scale_fill_manual({'A': 'red', 'B': 'blue', 'C': 'green'})
+        >>> scale_fill_manual({'low': '#FEE08B', 'high': '#D73027'}, name='Level')
+        """
+        self.values = values
+        self.name = name
 
     def apply_scale(self, data, mapping):
         """

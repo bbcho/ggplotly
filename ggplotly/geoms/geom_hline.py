@@ -3,25 +3,36 @@ import pandas as pd
 
 
 class geom_hline(Geom):
-    """
-    Geom for drawing horizontal lines.
-
-    Parameters:
-        data (float or list of floats): The y-coordinate(s) where the horizontal line(s) should be drawn.
-            Same as yintercept in ggplot2.
-        color (str, optional): Color of the lines. Default is 'black'.
-        linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
-        alpha (float, optional): Transparency level for the lines. Default is 1.
-        name (str, optional): Name of the line(s) for the legend.
-
-    Examples:
-        geom_hline(data=100)
-        geom_hline(data=[50, 100, 150], color='red')
-    """
+    """Geom for drawing horizontal reference lines."""
 
     __name__ = "geom_hline"
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw horizontal lines at specified y-intercepts.
+
+        Parameters
+        ----------
+        data : float or list of float
+            Y-coordinate(s) for horizontal line(s). Same as yintercept.
+        mapping : aes, optional
+            Aesthetic mappings (typically not used for hline).
+        color : str, default='black'
+            Line color.
+        linetype : str, default='solid'
+            Line style: 'solid', 'dash', 'dot', 'dashdot'.
+        alpha : float, default=1
+            Transparency (0-1).
+        size : float, default=2
+            Line width.
+        name : str, optional
+            Legend name.
+
+        Examples
+        --------
+        >>> geom_hline(data=100)
+        >>> geom_hline(data=[50, 100, 150], color='red', linetype='dash')
+        """
         # data parameter is the yintercept value (matching ggplot2's data parameter)
         if data is not None:
             params['yintercept'] = data

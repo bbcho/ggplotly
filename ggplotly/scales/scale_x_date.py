@@ -4,37 +4,7 @@ from .scale_base import Scale
 
 
 class scale_x_date(Scale):
-    """
-    Date scale for the x-axis.
-
-    Formats date values on the x-axis with customizable breaks and labels.
-    Similar to ggplot2's scale_x_date().
-
-    Parameters:
-        name (str): Label for the x-axis.
-        limits (tuple): Two-element tuple specifying date limits (min, max).
-            Can be date strings ('2020-01-01') or datetime objects.
-        date_breaks (str): Interval for tick marks. Examples:
-            - '1 day', '2 weeks', '1 month', '3 months', '1 year'
-        date_labels (str): strftime format string for tick labels. Examples:
-            - '%Y' for year only (2020)
-            - '%b %Y' for abbreviated month and year (Jan 2020)
-            - '%Y-%m-%d' for ISO format (2020-01-15)
-            - '%d %b' for day and month (15 Jan)
-        breaks (list): Explicit list of date positions for ticks.
-        labels (list): Explicit list of labels corresponding to breaks.
-        expand (tuple): Expansion to add to limits (mult, add). Default (0.05, 0).
-
-    Examples:
-        # Monthly breaks with year-month labels
-        scale_x_date(date_breaks='1 month', date_labels='%b %Y')
-
-        # Yearly breaks
-        scale_x_date(date_breaks='1 year', date_labels='%Y')
-
-        # Custom date range
-        scale_x_date(limits=('2020-01-01', '2023-12-31'), date_breaks='6 months')
-    """
+    """Date scale for the x-axis."""
 
     def __init__(
         self,
@@ -46,6 +16,36 @@ class scale_x_date(Scale):
         labels=None,
         expand=None,
     ):
+        """
+        Format date values on the x-axis with customizable breaks and labels.
+
+        Similar to ggplot2's scale_x_date().
+
+        Parameters
+        ----------
+        name : str, optional
+            Label for the x-axis.
+        limits : tuple, optional
+            Two-element tuple specifying date limits (min, max).
+            Can be date strings ('2020-01-01') or datetime objects.
+        date_breaks : str, optional
+            Interval for tick marks. Examples:
+            '1 day', '2 weeks', '1 month', '3 months', '1 year'.
+        date_labels : str, optional
+            strftime format string for tick labels. Examples:
+            '%Y' (2020), '%b %Y' (Jan 2020), '%Y-%m-%d' (2020-01-15).
+        breaks : list, optional
+            Explicit list of date positions for ticks.
+        labels : list, optional
+            Explicit list of labels corresponding to breaks.
+        expand : tuple, optional
+            Expansion to add to limits (mult, add). Default (0.05, 0).
+
+        Examples
+        --------
+        >>> scale_x_date(date_breaks='1 month', date_labels='%b %Y')
+        >>> scale_x_date(limits=('2020-01-01', '2023-12-31'), date_breaks='6 months')
+        """
         self.name = name
         self.limits = limits
         self.date_breaks = date_breaks
@@ -130,31 +130,49 @@ class scale_x_date(Scale):
 
 
 class scale_x_datetime(scale_x_date):
-    """
-    Datetime scale for the x-axis.
+    """Datetime scale for the x-axis with time component support."""
 
-    Like scale_x_date but for datetime data with time components.
-    Supports finer granularity like hours, minutes, seconds.
+    def __init__(
+        self,
+        name=None,
+        limits=None,
+        date_breaks=None,
+        date_labels=None,
+        breaks=None,
+        labels=None,
+        expand=None,
+    ):
+        """
+        Format datetime values on the x-axis with time component support.
 
-    Parameters:
-        name (str): Label for the x-axis.
-        limits (tuple): Two-element tuple specifying datetime limits.
-        date_breaks (str): Interval for tick marks. Examples:
-            - '1 hour', '6 hours', '1 day', '1 week'
-        date_labels (str): strftime format string. Examples:
-            - '%Y-%m-%d %H:%M' for full datetime
-            - '%H:%M' for time only
-            - '%b %d %H:%M' for month, day, and time
-        breaks (list): Explicit list of datetime positions for ticks.
-        labels (list): Explicit list of labels corresponding to breaks.
+        Like scale_x_date but for datetime data with time components.
+        Supports finer granularity like hours, minutes, seconds.
 
-    Examples:
-        # Hourly data with hour labels
-        scale_x_datetime(date_breaks='1 hour', date_labels='%H:%M')
+        Parameters
+        ----------
+        name : str, optional
+            Label for the x-axis.
+        limits : tuple, optional
+            Two-element tuple specifying datetime limits.
+        date_breaks : str, optional
+            Interval for tick marks. Examples:
+            '1 hour', '6 hours', '1 day', '1 week'.
+        date_labels : str, optional
+            strftime format string. Examples:
+            '%Y-%m-%d %H:%M' (full), '%H:%M' (time only).
+        breaks : list, optional
+            Explicit list of datetime positions for ticks.
+        labels : list, optional
+            Explicit list of labels corresponding to breaks.
+        expand : tuple, optional
+            Expansion to add to limits.
 
-        # Daily data over a month
-        scale_x_datetime(date_breaks='1 day', date_labels='%b %d')
-    """
+        Examples
+        --------
+        >>> scale_x_datetime(date_breaks='1 hour', date_labels='%H:%M')
+        >>> scale_x_datetime(date_breaks='1 day', date_labels='%b %d')
+        """
+        super().__init__(name, limits, date_breaks, date_labels, breaks, labels, expand)
 
     def _parse_date_breaks(self, date_breaks):
         """

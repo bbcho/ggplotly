@@ -6,35 +6,44 @@ import numpy as np
 
 
 class geom_abline(Geom):
-    """
-    Geom for drawing lines with specified slope and intercept.
-
-    This geom draws reference lines defined by slope and intercept (y = intercept + slope * x).
-    Useful for adding regression lines, reference lines, or theoretical relationships to plots.
-
-    Parameters:
-        slope (float or list): Slope(s) of the line(s). Default is 1.
-        intercept (float or list): Y-intercept(s) of the line(s). Default is 0.
-        color (str, optional): Color of the lines. Default is 'black'.
-        linetype (str, optional): Line style ('solid', 'dash', 'dot', 'dashdot'). Default is 'solid'.
-        size (float, optional): Line width. Default is 1.
-        alpha (float, optional): Transparency level for the lines. Default is 1.
-        name (str, optional): Name of the line(s) for the legend.
-
-    Examples:
-        # Add a diagonal line (y = x)
-        geom_abline(slope=1, intercept=0)
-
-        # Add a regression line
-        geom_abline(slope=0.5, intercept=2, color='red', linetype='dash')
-
-        # Add multiple lines
-        geom_abline(slope=[1, 2], intercept=[0, -1])
-    """
+    """Geom for drawing lines with specified slope and intercept."""
 
     __name__ = "geom_abline"
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw lines defined by slope and intercept (y = intercept + slope * x).
+
+        Useful for adding regression lines, reference lines, or theoretical
+        relationships to plots.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings (typically not used for abline).
+        slope : float or list, default=1
+            Slope(s) of the line(s).
+        intercept : float or list, default=0
+            Y-intercept(s) of the line(s).
+        color : str, default='black'
+            Line color.
+        linetype : str, default='solid'
+            Line style: 'solid', 'dash', 'dot', 'dashdot'.
+        size : float, default=1
+            Line width.
+        alpha : float, default=1
+            Transparency (0-1).
+        name : str, optional
+            Name for the legend.
+
+        Examples
+        --------
+        >>> geom_abline(slope=1, intercept=0)  # y = x line
+        >>> geom_abline(slope=0.5, intercept=2, color='red', linetype='dash')
+        >>> geom_abline(slope=[1, 2], intercept=[0, -1])  # multiple lines
+        """
         super().__init__(data, mapping, **params)
         self.slope = params.get('slope', 1)
         self.intercept = params.get('intercept', 0)

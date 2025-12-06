@@ -26,9 +26,11 @@ from .geom_rug import geom_rug
 from .geom_abline import geom_abline
 from .geom_contour import geom_contour
 from .geom_contour_filled import geom_contour_filled
-from .geom_map import geom_map
-from .geom_point_map import geom_point_map
+from .geom_map import geom_map, geom_sf
 from .geom_range import geom_range
+from .geom_point_3d import geom_point_3d
+from .geom_surface import geom_surface, geom_wireframe
+from .geom_candlestick import geom_candlestick, geom_ohlc
 
 __all__ = [
     "Geom",
@@ -58,6 +60,11 @@ __all__ = [
     "geom_contour",
     "geom_contour_filled",
     "geom_map",
-    "geom_point_map",
+    "geom_sf",
     "geom_range",
+    "geom_point_3d",
+    "geom_surface",
+    "geom_wireframe",
+    "geom_candlestick",
+    "geom_ohlc",
 ]

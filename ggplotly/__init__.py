@@ -19,7 +19,7 @@ from .themes import (
     element_rect,
 )
 from .facets import Facet, facet_wrap, facet_grid, label_value, label_both
-from .coords import Coord, coord_flip, coord_polar, coord_cartesian
+from .coords import Coord, coord_flip, coord_polar, coord_cartesian, coord_sf
 from .limits import xlim, ylim, lims
 from .geoms import (
     geom_point,
@@ -48,8 +48,13 @@ from .geoms import (
     geom_contour,
     geom_contour_filled,
     geom_map,
-    geom_point_map,
+    geom_sf,
     geom_range,
+    geom_point_3d,
+    geom_surface,
+    geom_wireframe,
+    geom_candlestick,
+    geom_ohlc,
 )
 from .scales import (
     scale_x_continuous,
@@ -103,6 +108,7 @@ __all__ = [
     "coord_flip",
     "coord_polar",
     "coord_cartesian",
+    "coord_sf",
     "xlim",
     "ylim",
     "lims",
@@ -137,8 +143,13 @@ __all__ = [
     "geom_contour",
     "geom_contour_filled",
     "geom_map",
-    "geom_point_map",
+    "geom_sf",
     "geom_range",
+    "geom_point_3d",
+    "geom_surface",
+    "geom_wireframe",
+    "geom_candlestick",
+    "geom_ohlc",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",

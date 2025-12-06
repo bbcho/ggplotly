@@ -8,31 +8,42 @@ from scipy.stats import gaussian_kde
 
 
 class geom_contour(Geom):
-    """
-    Geom for drawing contour lines from 2D data.
-
-    Can be used in two ways:
-    1. With x and y aesthetics: Computes 2D kernel density estimation and draws contours
-    2. With x, y, and z aesthetics: Draws contours from gridded z values
-
-    Parameters:
-        bins (int, optional): Number of contour levels. Default is 10.
-        color (str, optional): Color of the contour lines. Default uses theme colors.
-        size (float, optional): Line width of the contours. Default is 1.
-        alpha (float, optional): Transparency level. Default is 1.
-        linetype (str, optional): Line style ('solid', 'dash', 'dot'). Default is 'solid'.
-        gridsize (int, optional): Grid resolution for KDE. Default is 100.
-        label (bool, optional): Whether to show contour labels. Default is False.
-
-    Examples:
-        # 2D density contours
-        geom_contour()
-
-        # Custom number of levels
-        geom_contour(bins=5, color='blue')
-    """
+    """Geom for drawing contour lines from 2D data."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw contour lines from 2D data.
+
+        Can be used in two ways:
+        1. With x and y aesthetics: Computes 2D kernel density estimation
+        2. With x, y, and z aesthetics: Draws contours from gridded z values
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, y. Optional: z.
+        bins : int, default=10
+            Number of contour levels.
+        color : str, optional
+            Color of contour lines. Default uses theme colors.
+        size : float, default=1
+            Line width of contours.
+        alpha : float, default=1
+            Transparency (0-1).
+        linetype : str, default='solid'
+            Line style: 'solid', 'dash', 'dot'.
+        gridsize : int, default=100
+            Grid resolution for KDE computation.
+        label : bool, default=False
+            Whether to show contour labels.
+
+        Examples
+        --------
+        >>> geom_contour()  # 2D density contours
+        >>> geom_contour(bins=5, color='blue')
+        """
         super().__init__(data, mapping, **params)
         self.bins = params.get('bins', 10)
         self.gridsize = params.get('gridsize', 100)

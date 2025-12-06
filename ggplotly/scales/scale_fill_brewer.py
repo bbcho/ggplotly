@@ -5,15 +5,31 @@ import plotly.express as px
 
 
 class scale_fill_brewer(Scale):
-    """
-    Scale for mapping a categorical variable to a ColorBrewer palette for fill aesthetic.
-
-    Parameters:
-        type (str): The type of ColorBrewer palette ('qual', 'seq', 'div').
-        palette (str): The name of the ColorBrewer palette.
-    """
+    """Scale for mapping a categorical variable to a ColorBrewer palette for fill aesthetic."""
 
     def __init__(self, type="qual", palette="Set1"):
+        """
+        Map a categorical variable to a ColorBrewer palette for fill aesthetic.
+
+        Parameters
+        ----------
+        type : str, default='qual'
+            Type of ColorBrewer palette:
+            - 'qual': Qualitative (categorical data)
+            - 'seq': Sequential (ordered data)
+            - 'div': Diverging (data with meaningful midpoint)
+        palette : str, default='Set1'
+            Name of the ColorBrewer palette. Examples:
+            - Qualitative: 'Set1', 'Set2', 'Set3', 'Pastel1', 'Dark2'
+            - Sequential: 'Blues', 'Greens', 'Reds', 'Oranges', 'Purples'
+            - Diverging: 'RdBu', 'RdYlGn', 'BrBG', 'PiYG'
+
+        Examples
+        --------
+        >>> scale_fill_brewer()  # default: Set1 qualitative
+        >>> scale_fill_brewer(type='seq', palette='Blues')
+        >>> scale_fill_brewer(type='div', palette='RdBu')
+        """
         self.type = type
         self.palette = palette
 

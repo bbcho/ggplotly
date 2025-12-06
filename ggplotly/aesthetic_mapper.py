@@ -8,29 +8,90 @@ and determining whether aesthetic values are column references or literal values
 
 import pandas as pd
 import plotly.express as px
+from functools import lru_cache
 from typing import Any, Dict, Optional, Union, Tuple
 
+from .constants import SHAPE_PALETTE, get_color_palette as _get_color_palette
+from .exceptions import ColumnNotFoundError, InvalidColorError
 
-# Default shape palette matching ggplot2's defaults
-# Maps to Plotly marker symbols
-# See: https://plotly.com/python/marker-style/
-SHAPE_PALETTE = [
-    'circle',         # 0 - ggplot2 default
-    'triangle-up',    # 1
-    'square',         # 2
-    'cross',          # 3 (plus in ggplot2)
-    'diamond',        # 4
-    'triangle-down',  # 5
-    'star',           # 6
-    'hexagon',        # 7
-    'circle-open',    # 8
-    'triangle-up-open',  # 9
-    'square-open',    # 10
-    'diamond-open',   # 11
-    'x',              # 12
-    'star-open',      # 13
-    'hexagon-open',   # 14
-]
+
+# Module-level cache for color conversions (expensive Plotly operations)
+@lru_cache(maxsize=512)
+def _cached_color_to_rgba(color: str, alpha: float) -> str:
+    """
+    Convert color to RGBA string with alpha (cached).
+
+    This is a module-level cached function to avoid repeated expensive
+    color conversions across multiple AestheticMapper instances.
+
+    Parameters:
+        color: Color as hex (#RRGGBB) or named color
+        alpha: Alpha value (0-1)
+
+    Returns:
+        RGBA string like 'rgba(255, 0, 0, 0.5)'
+    """
+    import plotly.colors as pc
+
+    # Handle hex colors
+    if color.startswith('#'):
+        color_hex = color.lstrip('#')
+        if len(color_hex) == 6:
+            r, g, b = int(color_hex[0:2], 16), int(color_hex[2:4], 16), int(color_hex[4:6], 16)
+            return f'rgba({r},{g},{b},{alpha})'
+
+    # Handle existing rgba/rgb strings
+    if color.startswith('rgba('):
+        # Already has alpha, replace it
+        parts = color[5:-1].split(',')
+        if len(parts) >= 3:
+            return f'rgba({parts[0]},{parts[1]},{parts[2]},{alpha})'
+    if color.startswith('rgb('):
+        rgb_values = color[4:-1]
+        return f'rgba({rgb_values},{alpha})'
+
+    # Try to use plotly's color conversion
+    try:
+        rgb_str = pc.convert_colors_to_same_type([color], colortype='rgb')[0][0]
+        if rgb_str.startswith('rgb('):
+            rgb_values = rgb_str[4:-1]
+            return f'rgba({rgb_values},{alpha})'
+    except Exception:
+        pass
+
+    # Fallback: common color names
+    common_colors = {
+        'red': (255, 0, 0),
+        'blue': (0, 0, 255),
+        'green': (0, 128, 0),
+        'yellow': (255, 255, 0),
+        'orange': (255, 165, 0),
+        'purple': (128, 0, 128),
+        'black': (0, 0, 0),
+        'white': (255, 255, 255),
+        'gray': (128, 128, 128),
+        'grey': (128, 128, 128),
+        'steelblue': (70, 130, 180),
+        'forestgreen': (34, 139, 34),
+        'coral': (255, 127, 80),
+        'tomato': (255, 99, 71),
+        'gold': (255, 215, 0),
+        'navy': (0, 0, 128),
+        'teal': (0, 128, 128),
+        'maroon': (128, 0, 0),
+        'olive': (128, 128, 0),
+        'aqua': (0, 255, 255),
+        'fuchsia': (255, 0, 255),
+        'silver': (192, 192, 192),
+        'lime': (0, 255, 0),
+    }
+
+    if color.lower() in common_colors:
+        r, g, b = common_colors[color.lower()]
+        return f'rgba({r},{g},{b},{alpha})'
+
+    # Ultimate fallback - use default plotly blue
+    return f'rgba(31, 119, 180, {alpha})'
 
 
 class AestheticMapper:
@@ -43,7 +104,8 @@ class AestheticMapper:
     """
 
     def __init__(self, data: pd.DataFrame, mapping: Dict[str, Any], params: Dict[str, Any], theme=None,
-                 global_color_map: Dict[Any, str] = None, global_shape_map: Dict[Any, str] = None):
+                 global_color_map: Dict[Any, str] = None, global_shape_map: Dict[Any, str] = None,
+                 validate: bool = True):
         """
         Initialize the aesthetic mapper.
 
@@ -54,6 +116,7 @@ class AestheticMapper:
             theme: Optional theme object for default color palettes
             global_color_map: Optional pre-computed color map (for faceting)
             global_shape_map: Optional pre-computed shape map (for faceting)
+            validate: If True, validate column references and raise helpful errors
         """
         self.data = data
         self.mapping = mapping
@@ -61,34 +124,53 @@ class AestheticMapper:
         self.theme = theme
         self.global_color_map = global_color_map
         self.global_shape_map = global_shape_map
-        
+        self.validate = validate
+
+        # Cache column names as frozenset for O(1) lookups
+        self._column_set = frozenset(data.columns) if data is not None else frozenset()
+
+        # Instance-level cache for style properties
+        self._style_props_cache = None
+
     def get_color_palette(self) -> list:
         """Get the color palette from theme or use default."""
-        if self.theme and hasattr(self.theme, 'color_map') and self.theme.color_map:
-            return self.theme.color_map
-        return px.colors.qualitative.Plotly
-    
+        return _get_color_palette(self.theme)
+
     def is_column_reference(self, aesthetic: str, value: Any) -> bool:
         """
         Determine if an aesthetic value refers to a column in the data.
-        
+
         Parameters:
             aesthetic: Name of the aesthetic (e.g., 'color', 'fill')
             value: The value to check
-            
+
         Returns:
             True if value is a column reference, False otherwise
         """
         # None is not a column reference
         if value is None:
             return False
-            
+
         # Must be a string to be a column name
         if not isinstance(value, str):
             return False
-            
-        # Check if it exists as a column in the data
-        return value in self.data.columns
+
+        # O(1) lookup using cached frozenset
+        return value in self._column_set
+
+    def validate_column(self, column: str, aesthetic: str = None) -> None:
+        """
+        Validate that a column exists in the data, raising a helpful error if not.
+
+        Parameters:
+            column: The column name to validate
+            aesthetic: Optional aesthetic name for better error messages
+
+        Raises:
+            ColumnNotFoundError: If the column doesn't exist, with suggestions
+        """
+        if column not in self._column_set:
+            raise ColumnNotFoundError(column, list(self.data.columns), aesthetic)
     
     def resolve_aesthetic(self, aesthetic: str) -> Tuple[Any, Optional[pd.Series], Optional[Dict]]:
         """
@@ -162,6 +244,8 @@ class AestheticMapper:
         """
         Extract all relevant style properties for a geom.
 
+        Results are cached for the lifetime of this AestheticMapper instance.
+
         Returns a dictionary with resolved properties:
         - color: The color aesthetic (column name or literal)
         - color_series: Series if color is a column, None otherwise
@@ -179,6 +263,10 @@ class AestheticMapper:
         - group: The grouping variable
         - group_series: Series if group is a column, None otherwise
         """
+        # Return cached result if available
+        if self._style_props_cache is not None:
+            return self._style_props_cache
+
         # Resolve each aesthetic
         color, color_series, color_map = self.resolve_aesthetic('color')
         fill, fill_series, fill_map = self.resolve_aesthetic('fill')
@@ -213,7 +301,7 @@ class AestheticMapper:
         # - 'color' for line/point-based geoms
         # Individual geoms can handle this as needed
 
-        return {
+        result = {
             'color': color,
             'color_series': color_series,
             'color_map': color_map,
@@ -231,6 +319,10 @@ class AestheticMapper:
             'group_series': group_series,
             'default_color': default_color,
         }
+
+        # Cache the result for subsequent calls
+        self._style_props_cache = result
+        return result
     
     def get_color_for_value(self, value_key: Any, style_props: Dict[str, Any] = None,
                             prefer_fill: bool = False) -> str:
@@ -308,6 +400,8 @@ class AestheticMapper:
         """
         Convert color to RGBA string with alpha.
 
+        Uses module-level LRU cache for performance.
+
         Parameters:
             color: Color as hex (#RRGGBB) or named color
             alpha: Alpha value (0-1)
@@ -315,48 +409,7 @@ class AestheticMapper:
         Returns:
             RGBA string like 'rgba(255, 0, 0, 0.5)'
         """
-        import plotly.colors as pc
-
-        # Handle hex colors
-        if color.startswith('#'):
-            # Convert hex to RGB
-            color = color.lstrip('#')
-            if len(color) == 6:
-                r, g, b = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
-                return f'rgba({r},{g},{b},{alpha})'
-
-        # Try to use plotly's color conversion
-        try:
-            # Convert named color to RGB via plotly
-            rgb_str = pc.convert_colors_to_same_type([color], colortype='rgb')[0][0]
-            # rgb_str is like 'rgb(255, 0, 0)'
-            if rgb_str.startswith('rgb('):
-                rgb_values = rgb_str[4:-1]  # Remove 'rgb(' and ')'
-                return f'rgba({rgb_values},{alpha})'
-        except:
-            pass
-
-        # Fallback: common color names
-        common_colors = {
-            'red': (255, 0, 0),
-            'blue': (0, 0, 255),
-            'green': (0, 128, 0),
-            'yellow': (255, 255, 0),
-            'orange': (255, 165, 0),
-            'purple': (128, 0, 128),
-            'black': (0, 0, 0),
-            'white': (255, 255, 255),
-            'gray': (128, 128, 128),
-            'grey': (128, 128, 128),
-            'steelblue': (70, 130, 180),
-        }
-
-        if color.lower() in common_colors:
-            r, g, b = common_colors[color.lower()]
-            return f'rgba({r},{g},{b},{alpha})'
-
-        # Ultimate fallback - assume it's already in right format or use default
-        return f'rgba(31, 119, 180, {alpha})'  # Default plotly blue
+        return _cached_color_to_rgba(color, alpha)
 
     def apply_style_to_trace(self, trace_kwargs: dict, style_props: dict,
                             target_mapping: dict, value_key: Optional[Any] = None) -> dict:

@@ -1,10 +1,24 @@
+"""Identity stat - passes data through unchanged."""
+
+
 class stat_identity:
+    """
+    Identity statistical transformation (no transformation).
+
+    This stat passes data through unchanged. It's the default stat for most
+    geoms when you want to display raw data values without any aggregation
+    or transformation.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point(stat='identity')
+    """
+
     def compute(self, data):
         """
-        Returns the data unchanged.
+        Return the data unchanged.
 
         Parameters:
-            data (DataFrame): The data to be passed through.
+            data (DataFrame): The input data.
 
         Returns:
             DataFrame: The unchanged data.

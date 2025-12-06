@@ -31,6 +31,7 @@ class Labs:
         subtitle (str, optional): Subtitle displayed below the title.
         x (str, optional): X-axis label.
         y (str, optional): Y-axis label.
+        z (str, optional): Z-axis label (for 3D plots).
         color (str, optional): Legend title for color aesthetic.
         fill (str, optional): Legend title for fill aesthetic.
         caption (str, optional): Caption displayed at bottom-right of plot.
@@ -38,6 +39,7 @@ class Labs:
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + labs(title='My Plot', x='X Axis', y='Y Axis')
         >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + labs(color='Group')
+        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_point_3d() + labs(x='X', y='Y', z='Z')
     """
 
     def __init__(
@@ -46,6 +48,7 @@ class Labs:
         subtitle=None,
         x=None,
         y=None,
+        z=None,
         color=None,
         fill=None,
         caption=None,
@@ -58,6 +61,7 @@ class Labs:
             subtitle (str, optional): Subtitle displayed below the title.
             x (str, optional): X-axis label.
             y (str, optional): Y-axis label.
+            z (str, optional): Z-axis label (for 3D plots).
             color (str, optional): Legend title for color aesthetic.
             fill (str, optional): Legend title for fill aesthetic.
             caption (str, optional): Caption displayed at bottom-right of plot.
@@ -66,6 +70,7 @@ class Labs:
         self.subtitle = subtitle
         self.x = x
         self.y = y
+        self.z = z
         self.color = color  # Legend title for color aesthetic
         self.fill = fill  # Legend title for fill aesthetic
         self.caption = caption
@@ -125,6 +130,26 @@ class Labs:
             fig.update_xaxes(title_text=self.x)
         if self.y is not None:
             fig.update_yaxes(title_text=self.y)
+
+        # Check if figure has 3D scenes and update their axis labels
+        has_3d = any(trace.type in ('scatter3d', 'surface', 'mesh3d') for trace in fig.data)
+        if has_3d:
+            # Find all scene keys in the layout
+            layout_dict = fig.layout.to_plotly_json()
+            scene_keys = [k for k in layout_dict.keys() if k.startswith('scene')]
+            if not scene_keys:
+                scene_keys = ['scene']
+
+            for scene_key in scene_keys:
+                scene_updates = {}
+                if self.x is not None:
+                    scene_updates['xaxis_title'] = self.x
+                if self.y is not None:
+                    scene_updates['yaxis_title'] = self.y
+                if self.z is not None:
+                    scene_updates['zaxis_title'] = self.z
+                if scene_updates:
+                    fig.update_layout(**{scene_key: scene_updates})
 
 
 # guides.py continued

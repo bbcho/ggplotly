@@ -8,31 +8,41 @@ from scipy.stats import gaussian_kde
 
 
 class geom_contour_filled(Geom):
-    """
-    Geom for drawing filled contours from 2D data.
-
-    Can be used in two ways:
-    1. With x and y aesthetics: Computes 2D kernel density estimation and draws filled contours
-    2. With x, y, and z aesthetics: Draws filled contours from gridded z values
-
-    Parameters:
-        bins (int, optional): Number of contour levels. Default is 10.
-        palette (str, optional): Color palette name. Default is 'Viridis'.
-            Options: 'Viridis', 'Plasma', 'Inferno', 'Magma', 'Blues', 'Greens', 'Reds', etc.
-        alpha (float, optional): Transparency level. Default is 0.8.
-        gridsize (int, optional): Grid resolution for KDE. Default is 100.
-        label (bool, optional): Whether to show contour labels. Default is False.
-        show_colorbar (bool, optional): Whether to show the colorbar. Default is True.
-
-    Examples:
-        # 2D density filled contours
-        geom_contour_filled()
-
-        # Custom palette
-        geom_contour_filled(bins=15, palette='Plasma')
-    """
+    """Geom for drawing filled contours from 2D data."""
 
     def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw filled contours from 2D data.
+
+        Can be used in two ways:
+        1. With x and y aesthetics: Computes 2D kernel density estimation
+        2. With x, y, and z aesthetics: Draws filled contours from gridded z values
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x, y. Optional: z.
+        bins : int, default=10
+            Number of contour levels.
+        palette : str, default='Viridis'
+            Color palette name. Options: 'Viridis', 'Plasma', 'Inferno',
+            'Magma', 'Blues', 'Greens', 'Reds', etc.
+        alpha : float, default=0.8
+            Transparency (0-1).
+        gridsize : int, default=100
+            Grid resolution for KDE computation.
+        label : bool, default=False
+            Whether to show contour labels.
+        show_colorbar : bool, default=True
+            Whether to show the colorbar.
+
+        Examples
+        --------
+        >>> geom_contour_filled()  # 2D density filled contours
+        >>> geom_contour_filled(bins=15, palette='Plasma')
+        """
         super().__init__(data, mapping, **params)
         self.bins = params.get('bins', 10)
         self.gridsize = params.get('gridsize', 100)

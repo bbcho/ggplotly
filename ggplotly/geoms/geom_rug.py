@@ -7,26 +7,42 @@ import numpy as np
 
 
 class geom_rug(Geom):
-    """
-    Geom for drawing rug plots (marginal tick marks on axes).
+    """Geom for drawing rug plots (marginal tick marks on axes)."""
 
-    Rug plots display individual data points as tick marks along the axes,
-    useful for showing the marginal distribution of data in scatter plots.
+    def __init__(self, data=None, mapping=None, **params):
+        """
+        Draw rug plots (marginal tick marks) along axes.
 
-    Parameters:
-        sides (str, optional): Which sides to draw rugs on. Default is 'bl' (bottom and left).
+        Rug plots display individual data points as tick marks along the axes,
+        useful for showing the marginal distribution of data in scatter plots.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for the geom (overrides plot data).
+        mapping : aes, optional
+            Aesthetic mappings. Required: x and/or y.
+        sides : str, default='bl'
+            Which sides to draw rugs on:
             - 'b' = bottom (x-axis)
             - 't' = top (x-axis at top)
             - 'l' = left (y-axis)
             - 'r' = right (y-axis at right)
-            Can combine, e.g., 'bl' for bottom and left, 'tr' for top and right.
-        length (float, optional): Length of the rug ticks as fraction of plot area. Default is 0.03.
-        color (str, optional): Color of the rug lines. Default is 'black'.
-        alpha (float, optional): Transparency level for the rug lines. Default is 0.5.
-        size (float, optional): Line width of the rug ticks. Default is 1.
-    """
+            Can combine, e.g., 'bl' for bottom and left.
+        length : float, default=0.03
+            Length of rug ticks as fraction of plot area.
+        color : str, default='black'
+            Color of the rug lines.
+        alpha : float, default=0.5
+            Transparency (0-1).
+        size : float, default=1
+            Line width of the rug ticks.
 
-    def __init__(self, data=None, mapping=None, **params):
+        Examples
+        --------
+        >>> geom_rug()  # default: bottom and left rugs
+        >>> geom_rug(sides='b', color='red')  # bottom only
+        """
         super().__init__(data, mapping, **params)
         self.sides = params.get('sides', 'bl')
         self.length = params.get('length', 0.03)

@@ -1,5 +1,5 @@
 """
-Tests for ggplotly map geoms (geom_map, geom_point_map) and map_data.
+Tests for ggplotly map geoms (geom_map, geom_sf) and map_data.
 """
 import pytest
 import pandas as pd
@@ -11,7 +11,7 @@ sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
 from ggplotly import (
     ggplot, aes,
-    geom_map, geom_point_map, geom_point,
+    geom_map, geom_sf, geom_point,
     map_data,
     facet_wrap,
     labs, scale_fill_viridis_c, scale_fill_gradient
@@ -218,34 +218,40 @@ class TestGeomMapFaceting:
         assert isinstance(fig, Figure)
 
 
-class TestGeomPointMap:
-    """Tests for geom_point_map."""
+class TestGeomMapWithPoints:
+    """Tests for geom_map + geom_point (replaces deprecated geom_point_map)."""
 
     def test_basic_point_map(self, point_location_data):
-        """Test basic points on a map."""
+        """Test basic points on a map using geom_map + geom_point."""
         p = (ggplot(point_location_data, aes(x='lon', y='lat'))
-             + geom_point_map())
+             + geom_map(map_type='usa')
+             + geom_point())
         fig = p.draw()
         assert isinstance(fig, Figure)
+        # geom_point should auto-detect geo context and use Scattergeo
+        assert any(t.type == 'scattergeo' for t in fig.data)
 
     def test_point_map_with_size(self, point_location_data):
         """Test points on map with size aesthetic."""
         p = (ggplot(point_location_data, aes(x='lon', y='lat', size='population'))
-             + geom_point_map())
+             + geom_map(map_type='usa')
+             + geom_point())
         fig = p.draw()
         assert isinstance(fig, Figure)
 
     def test_point_map_with_color(self, point_location_data):
         """Test points on map with color."""
         p = (ggplot(point_location_data, aes(x='lon', y='lat'))
-             + geom_point_map(color='red'))
+             + geom_map(map_type='usa')
+             + geom_point(color='red'))
         fig = p.draw()
         assert isinstance(fig, Figure)
 
-    def test_point_map_with_text(self, point_location_data):
-        """Test points on map with text labels."""
-        p = (ggplot(point_location_data, aes(x='lon', y='lat', text='city'))
-             + geom_point_map())
+    def test_point_map_with_label(self, point_location_data):
+        """Test points on map with label aesthetic."""
+        p = (ggplot(point_location_data, aes(x='lon', y='lat', label='city'))
+             + geom_map(map_type='usa')
+             + geom_point())
         fig = p.draw()
         assert isinstance(fig, Figure)
 
