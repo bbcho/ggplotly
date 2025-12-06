@@ -969,6 +969,8 @@ class TestEdgeCases:
 
     def test_zero_length_edge(self):
         """Test handling of zero-length edge."""
+        import warnings
+
         edges_df = pd.DataFrame({
             'x': [5],
             'y': [5],
@@ -977,7 +979,9 @@ class TestEdgeCases:
         })
 
         stat = stat_edgebundle(C=2, I=5, verbose=False)
-        bundled = stat.compute(edges_df)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            bundled = stat.compute(edges_df)
 
         # Should not crash
         assert len(bundled) > 0
@@ -1000,3 +1004,100 @@ class TestEdgeCases:
         edge0 = bundled[bundled['group'] == 0]
         assert abs(edge0.iloc[0]['x'] - (-10)) < 1e-5
         assert abs(edge0.iloc[0]['y'] - (-10)) < 1e-5
+
+
+class TestIgraphSupport:
+    """Tests for igraph Graph object support."""
+
+    def test_igraph_basic(self):
+        """Test basic igraph support."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        # Create simple graph
+        g = ig.Graph([(0, 1), (1, 2), (0, 2)])
+        g.vs['x'] = [0, 5, 10]
+        g.vs['y'] = [0, 5, 0]
+
+        bundle = geom_edgebundle(graph=g, verbose=False, C=2, I=5)
+
+        # Check that data was extracted
+        assert bundle.data is not None
+        assert len(bundle.data) == 3  # 3 edges
+        assert 'x' in bundle.data.columns
+        assert 'xend' in bundle.data.columns
+
+        # Check that nodes were extracted
+        assert bundle.nodes is not None
+        assert len(bundle.nodes) == 3  # 3 nodes
+
+    def test_igraph_with_lon_lat(self):
+        """Test igraph with longitude/latitude attributes."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = ig.Graph([(0, 1), (1, 2)])
+        g.vs['longitude'] = [-100, -90, -80]
+        g.vs['latitude'] = [40, 45, 40]
+        g.vs['name'] = ['A', 'B', 'C']
+
+        bundle = geom_edgebundle(graph=g, verbose=False, C=2, I=5)
+
+        assert bundle.data is not None
+        assert bundle.nodes is not None
+        assert 'name' in bundle.nodes.columns
+
+    def test_igraph_us_flights(self):
+        """Test with us_flights dataset."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+        from ggplotly import data
+
+        g = data('us_flights')
+
+        bundle = geom_edgebundle(graph=g, verbose=False, C=2, I=5)
+
+        assert bundle.data is not None
+        assert bundle.nodes is not None
+        assert len(bundle.nodes) == 276
+        assert 'name' in bundle.nodes.columns
+
+    def test_igraph_node_params(self):
+        """Test node visualization parameters."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = ig.Graph([(0, 1)])
+        g.vs['x'] = [0, 10]
+        g.vs['y'] = [0, 10]
+
+        bundle = geom_edgebundle(
+            graph=g,
+            verbose=False,
+            show_nodes=True,
+            node_color='red',
+            node_size=5,
+            node_alpha=0.5
+        )
+
+        assert bundle.params['show_nodes'] is True
+        assert bundle.params['node_color'] == 'red'
+        assert bundle.params['node_size'] == 5
+        assert bundle.params['node_alpha'] == 0.5
+
+    def test_igraph_draw(self):
+        """Test that igraph geom draws correctly."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = ig.Graph([(0, 1), (1, 2)])
+        g.vs['x'] = [0, 5, 10]
+        g.vs['y'] = [0, 5, 0]
+
+        # Create geom and extract data for ggplot
+        bundle = geom_edgebundle(graph=g, verbose=False, C=2, I=5)
+        p = ggplot(bundle.data, aes(x='x', y='y', xend='xend', yend='yend')) + bundle
+        fig = p.draw()
+
+        # Should have traces for edges and nodes
+        assert len(fig.data) > 0

@@ -118,3 +118,19 @@ class TestUSFlightsDatasets:
         assert df.shape[1] == 2
         assert "V1" in df.columns
         assert "V2" in df.columns
+
+    def test_us_flights_igraph(self):
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = data("us_flights")
+        assert isinstance(g, ig.Graph)
+        assert g.vcount() == 276
+        assert g.ecount() > 0
+        assert "name" in g.vs.attributes()
+        assert "longitude" in g.vs.attributes()
+        assert "latitude" in g.vs.attributes()
+
+    def test_us_flights_in_list(self):
+        available = data()
+        assert "us_flights" in available

@@ -5,6 +5,7 @@ Creates bundled graph visualizations where edges are attracted to each other
 based on compatibility, reducing visual clutter in dense graphs.
 
 Automatically detects geo context and uses Scattergeo when a map is present.
+Supports igraph Graph objects for convenient graph visualization.
 """
 
 import plotly.graph_objects as go
@@ -14,6 +15,60 @@ from .geom_base import Geom
 from ..stats.stat_edgebundle import stat_edgebundle
 
 
+def _extract_graph_data(graph):
+    """
+    Extract edge and node data from an igraph Graph object.
+
+    Parameters
+    ----------
+    graph : igraph.Graph
+        Graph object with vertex attributes for coordinates.
+        Expected attributes: 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'.
+
+    Returns
+    -------
+    tuple : (edges_df, nodes_df)
+        DataFrames containing edge coordinates and node attributes.
+    """
+    # Get coordinate attribute names
+    lon_attr = None
+    lat_attr = None
+    for attr in ['longitude', 'lon', 'x']:
+        if attr in graph.vs.attributes():
+            lon_attr = attr
+            break
+    for attr in ['latitude', 'lat', 'y']:
+        if attr in graph.vs.attributes():
+            lat_attr = attr
+            break
+
+    if lon_attr is None or lat_attr is None:
+        raise ValueError(
+            "Graph vertices must have coordinate attributes. "
+            "Expected 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'."
+        )
+
+    # Extract node data
+    nodes_data = {'x': graph.vs[lon_attr], 'y': graph.vs[lat_attr]}
+    for attr in graph.vs.attributes():
+        nodes_data[attr] = graph.vs[attr]
+    nodes_df = pd.DataFrame(nodes_data)
+
+    # Extract edge data
+    edges = []
+    for edge in graph.es:
+        source, target = edge.source, edge.target
+        edges.append({
+            'x': graph.vs[source][lon_attr],
+            'y': graph.vs[source][lat_attr],
+            'xend': graph.vs[target][lon_attr],
+            'yend': graph.vs[target][lat_attr]
+        })
+    edges_df = pd.DataFrame(edges)
+
+    return edges_df, nodes_df
+
+
 class geom_edgebundle(Geom):
     """Bundled edges for graph visualization using force-directed edge bundling."""
 
@@ -21,6 +76,7 @@ class geom_edgebundle(Geom):
         self,
         mapping=None,
         data=None,
+        graph=None,
         K: float = 1.0,
         E: float = 1.0,
         C: int = 6,
@@ -37,6 +93,10 @@ class geom_edgebundle(Geom):
         highlight_color: str = 'white',
         highlight_alpha: float = 0.3,
         highlight_width: float = 0.1,
+        show_nodes: bool = True,
+        node_color: str = 'white',
+        node_size: float = 3,
+        node_alpha: float = 1.0,
         verbose: bool = True,
         **kwargs
     ):
@@ -51,8 +111,13 @@ class geom_edgebundle(Geom):
         ----------
         mapping : aes, optional
             Aesthetic mappings. Required: x, y (start), xend, yend (end).
+            Not needed when using graph parameter.
         data : DataFrame, optional
             Data to use for this geom (overrides plot data).
+        graph : igraph.Graph, optional
+            An igraph Graph object with vertex coordinate attributes.
+            When provided, edges and nodes are extracted automatically.
+            Vertices must have 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'.
         K : float, default=1.0
             Spring constant controlling edge stiffness (resists bundling).
         E : float, default=1.0
@@ -86,15 +151,36 @@ class geom_edgebundle(Geom):
             Highlight transparency (0-1).
         highlight_width : float, default=0.1
             Highlight line width.
+        show_nodes : bool, default=True
+            Show nodes when using igraph input.
+        node_color : str, default='white'
+            Node marker color.
+        node_size : float, default=3
+            Node marker size.
+        node_alpha : float, default=1.0
+            Node transparency (0-1).
         verbose : bool, default=True
             Print progress messages.
 
         Examples
         --------
+        >>> # From DataFrame
         >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
         ...  + geom_edgebundle(compatibility_threshold=0.6))
+
+        >>> # From igraph
+        >>> g = data('us_flights')
+        >>> ggplot() + geom_edgebundle(graph=g)
         """
         super().__init__(data=data, mapping=mapping, **kwargs)
+
+        # Store graph and extracted data
+        self.graph = graph
+        self.nodes = None
+        if graph is not None:
+            edges_df, nodes_df = _extract_graph_data(graph)
+            self.data = edges_df
+            self.nodes = nodes_df
 
         # Bundling parameters
         self.K = K
@@ -116,6 +202,10 @@ class geom_edgebundle(Geom):
         self.params['highlight_color'] = highlight_color
         self.params['highlight_alpha'] = highlight_alpha
         self.params['highlight_width'] = highlight_width
+        self.params['show_nodes'] = show_nodes
+        self.params['node_color'] = node_color
+        self.params['node_size'] = node_size
+        self.params['node_alpha'] = node_alpha
 
         # Initialize stat transformer
         self.stat = stat_edgebundle(
@@ -155,7 +245,7 @@ class geom_edgebundle(Geom):
         """
         data = data if data is not None else self.data
 
-        if data is None or data.empty:
+        if data is None or (hasattr(data, 'empty') and data.empty):
             return fig
 
         # Get aesthetic mappings
@@ -166,7 +256,7 @@ class geom_edgebundle(Geom):
 
         # Validate required columns
         required = [x, y, xend, yend]
-        missing = [col for col in required if col not in data.columns]
+        missing = [c for c in required if c not in data.columns]
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
 
@@ -207,7 +297,49 @@ class geom_edgebundle(Geom):
             if show_highlight:
                 self._draw_cartesian_bundles(fig, bundled, rgba_highlight, highlight_width, row, col)
 
+        # Draw nodes if we have them (from igraph input)
+        if self.nodes is not None and self.params.get('show_nodes', True):
+            self._draw_nodes(fig, is_geo, row, col)
+
         return fig
+
+    def _draw_nodes(self, fig, is_geo, row, col):
+        """Draw nodes from igraph data."""
+        node_color = self.params.get('node_color', 'white')
+        node_size = self.params.get('node_size', 3)
+        node_alpha = self.params.get('node_alpha', 1.0)
+
+        rgba_node = self._color_to_rgba(node_color, node_alpha)
+
+        # Get hover text if 'name' attribute exists
+        hover_text = self.nodes.get('name', None)
+
+        if is_geo:
+            fig.add_trace(
+                go.Scattergeo(
+                    lon=self.nodes['x'].values,
+                    lat=self.nodes['y'].values,
+                    mode='markers',
+                    marker=dict(color=rgba_node, size=node_size),
+                    text=hover_text,
+                    hoverinfo='text' if hover_text is not None else 'skip',
+                    showlegend=False
+                )
+            )
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=self.nodes['x'].values,
+                    y=self.nodes['y'].values,
+                    mode='markers',
+                    marker=dict(color=rgba_node, size=node_size),
+                    text=hover_text,
+                    hoverinfo='text' if hover_text is not None else 'skip',
+                    showlegend=False
+                ),
+                row=row,
+                col=col
+            )
 
     def _draw_cartesian_bundles(self, fig, bundled, color, width, row, col):
         """Draw bundled edges as Scatter traces (Cartesian coordinates)."""
