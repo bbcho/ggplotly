@@ -293,6 +293,94 @@ class TestGeomDensity:
         assert isinstance(fig, Figure)
         assert len(fig.data) >= 1
 
+    def test_grouped_density_with_fill(self):
+        """Test grouped density plot with fill aesthetic creates separate traces per group."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.concatenate([np.random.randn(50), np.random.randn(50) + 2]),
+            'group': ['A'] * 50 + ['B'] * 50
+        })
+        p = ggplot(df, aes(x='x', fill='group')) + geom_density(alpha=0.5)
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        # Should have 2 traces (one per group)
+        assert len(fig.data) == 2
+
+    def test_grouped_density_with_color(self):
+        """Test grouped density plot with color aesthetic creates separate traces per group."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.concatenate([np.random.randn(50), np.random.randn(50) + 2]),
+            'category': ['X'] * 50 + ['Y'] * 50
+        })
+        p = ggplot(df, aes(x='x', color='category')) + geom_density()
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        # Should have 2 traces (one per category)
+        assert len(fig.data) == 2
+
+    def test_grouped_density_with_group_aesthetic(self):
+        """Test grouped density plot with group aesthetic creates separate traces."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.concatenate([np.random.randn(30), np.random.randn(30) + 1, np.random.randn(30) + 2]),
+            'grp': ['G1'] * 30 + ['G2'] * 30 + ['G3'] * 30
+        })
+        p = ggplot(df, aes(x='x', group='grp')) + geom_density()
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        # Should have 3 traces (one per group)
+        assert len(fig.data) == 3
+
+    def test_grouped_density_different_distributions(self):
+        """Test that grouped densities compute separate KDEs for each group."""
+        np.random.seed(42)
+        # Create two clearly different distributions
+        df = pd.DataFrame({
+            'x': np.concatenate([np.random.randn(100), np.random.randn(100) + 5]),
+            'group': ['narrow'] * 100 + ['shifted'] * 100
+        })
+        p = ggplot(df, aes(x='x', fill='group')) + geom_density()
+        fig = p.draw()
+
+        # The two traces should have different x ranges since distributions are shifted
+        trace1_x = fig.data[0].x
+        trace2_x = fig.data[1].x
+        # Check that the means of x values are different
+        assert abs(np.mean(trace1_x) - np.mean(trace2_x)) > 2
+
+    def test_density_with_na_rm(self):
+        """Test density plot handles missing values with na_rm parameter."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.concatenate([np.random.randn(50), [np.nan] * 10]),
+        })
+        # Should not raise with na_rm=True
+        p = ggplot(df, aes(x='x')) + geom_density(na_rm=True)
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        assert len(fig.data) >= 1
+
+    def test_density_bandwidth_adjust(self):
+        """Test density plot bandwidth adjustment."""
+        np.random.seed(42)
+        df = pd.DataFrame({'x': np.random.randn(100)})
+
+        # Create two plots with different bandwidth adjustments
+        p_smooth = ggplot(df, aes(x='x')) + geom_density(adjust=2)
+        p_detailed = ggplot(df, aes(x='x')) + geom_density(adjust=0.5)
+
+        fig_smooth = p_smooth.draw()
+        fig_detailed = p_detailed.draw()
+
+        # Both should create valid figures
+        assert isinstance(fig_smooth, Figure)
+        assert isinstance(fig_detailed, Figure)
+
 
 class TestGeomViolin:
     """Tests for geom_violin."""

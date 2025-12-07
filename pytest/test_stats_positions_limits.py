@@ -753,21 +753,19 @@ class TestScaleColorBrewer:
     """Tests for scale_color_brewer."""
 
     def test_brewer_qual_applies_colors(self):
-        """Test that qualitative brewer scale applies colors to data."""
+        """Test that qualitative brewer scale applies colors to figure traces."""
         df = pd.DataFrame({
             'x': [1, 2, 3, 4],
             'y': [10, 20, 30, 40],
             'group': ['A', 'B', 'C', 'D']
         })
 
-        scale = scale_color_brewer(type='qual', palette='Set1')
-        result = scale.apply_scale(df.copy(), {'color': 'group'})
+        p = ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + scale_color_brewer(type='qual', palette='Set1')
+        fig = p.draw()
 
-        # Should have 'color' column with actual color values
-        assert 'color' in result.columns
-
-        # All groups should have different colors
-        assert len(result['color'].unique()) == 4
+        # All traces should have different colors
+        colors = [t.marker.color for t in fig.data]
+        assert len(set(colors)) == 4
 
     def test_brewer_seq_applies_colors(self):
         """Test that sequential brewer scale applies colors."""
@@ -777,11 +775,11 @@ class TestScaleColorBrewer:
             'intensity': ['low', 'medium', 'high']
         })
 
-        scale = scale_color_brewer(type='seq', palette='Blues')
-        result = scale.apply_scale(df.copy(), {'color': 'intensity'})
+        p = ggplot(df, aes(x='x', y='y', color='intensity')) + geom_point() + scale_color_brewer(type='seq', palette='Blues')
+        fig = p.draw()
 
-        assert 'color' in result.columns
-        assert len(result['color'].unique()) == 3
+        colors = [t.marker.color for t in fig.data]
+        assert len(set(colors)) == 3
 
     def test_brewer_div_applies_colors(self):
         """Test that diverging brewer scale applies colors."""
@@ -791,28 +789,30 @@ class TestScaleColorBrewer:
             'direction': ['negative', 'neutral', 'positive']
         })
 
-        scale = scale_color_brewer(type='div', palette='RdBu')
-        result = scale.apply_scale(df.copy(), {'color': 'direction'})
+        p = ggplot(df, aes(x='x', y='y', color='direction')) + geom_point() + scale_color_brewer(type='div', palette='RdBu')
+        fig = p.draw()
 
-        assert 'color' in result.columns
+        colors = [t.marker.color for t in fig.data]
+        assert len(set(colors)) == 3
 
     def test_brewer_invalid_type_raises(self):
         """Test that invalid type raises error."""
-        scale = scale_color_brewer(type='invalid', palette='Set1')
         df = pd.DataFrame({'x': [1], 'y': [1], 'g': ['A']})
+        p = ggplot(df, aes(x='x', y='y', color='g')) + geom_point() + scale_color_brewer(type='invalid', palette='Set1')
 
         with pytest.raises(ValueError, match="Unsupported type"):
-            scale.apply_scale(df, {'color': 'g'})
+            p.draw()
 
-    def test_brewer_returns_unchanged_if_no_color_mapping(self):
-        """Test that data is unchanged if no color mapping."""
-        df = pd.DataFrame({'x': [1, 2], 'y': [10, 20]})
-        original = df.copy()
+    def test_brewer_applies_to_traces_by_name(self):
+        """Test that brewer scale applies colors based on trace names."""
+        df = pd.DataFrame({'x': [1, 2], 'y': [10, 20], 'group': ['A', 'B']})
 
-        scale = scale_color_brewer()
-        result = scale.apply_scale(df, {})  # No color mapping
+        p = ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + scale_color_brewer(type='qual', palette='Set1')
+        fig = p.draw()
 
-        pd.testing.assert_frame_equal(result, original)
+        # Should have two traces with different colors
+        assert len(fig.data) == 2
+        assert fig.data[0].marker.color != fig.data[1].marker.color
 
     def test_brewer_get_legend_info(self):
         """Test that get_legend_info returns palette info."""
@@ -826,19 +826,19 @@ class TestScaleFillBrewer:
     """Tests for scale_fill_brewer."""
 
     def test_fill_brewer_applies_colors(self):
-        """Test that fill brewer scale applies colors to data."""
+        """Test that fill brewer scale applies colors to figure traces."""
         df = pd.DataFrame({
             'x': ['A', 'B', 'C'],
             'y': [10, 20, 30],
             'category': ['cat1', 'cat2', 'cat3']
         })
 
-        scale = scale_fill_brewer(type='qual', palette='Pastel1')
-        result = scale.apply_scale(df.copy(), {'fill': 'category'})
+        p = ggplot(df, aes(x='x', y='y', fill='category')) + geom_col() + scale_fill_brewer(type='qual', palette='Pastel1')
+        fig = p.draw()
 
-        # Should have 'fill' column with actual color values
-        assert 'fill' in result.columns
-        assert len(result['fill'].unique()) == 3
+        # All traces should have different colors
+        colors = [t.marker.color for t in fig.data]
+        assert len(set(colors)) == 3
 
 
 class TestBrewerIntegration:

@@ -203,6 +203,40 @@ class AestheticMapper:
             # It's a literal value
             return value, None, None
     
+    def _is_continuous(self, series: pd.Series) -> bool:
+        """
+        Determine if a series should be treated as continuous (numeric) or categorical.
+
+        Parameters:
+            series: The data series to check
+
+        Returns:
+            True if the series should use continuous color mapping
+        """
+        # Must be numeric dtype
+        if not pd.api.types.is_numeric_dtype(series):
+            return False
+
+        # If it has many unique values relative to its size, treat as continuous
+        # This helps distinguish between e.g. [1, 2, 3] (categorical) and [0.1, 0.2, ..., 0.99] (continuous)
+        n_unique = series.nunique()
+        n_total = len(series)
+
+        # Heuristics:
+        # - More than 20 unique values is likely continuous
+        # - More than 50% unique values is likely continuous (for smaller datasets)
+        # - Float dtype with non-integer values is likely continuous
+        if n_unique > 20:
+            return True
+        if n_total > 0 and n_unique / n_total > 0.5:
+            return True
+        if pd.api.types.is_float_dtype(series):
+            # Check if values are actually floats (not integers stored as float)
+            if not series.dropna().apply(lambda x: float(x).is_integer()).all():
+                return True
+
+        return False
+
     def _create_color_map(self, series: pd.Series) -> Dict[Any, str]:
         """
         Create a mapping from unique values to colors.
@@ -211,8 +245,13 @@ class AestheticMapper:
             series: The data series to map
 
         Returns:
-            Dictionary mapping each unique value to a color
+            Dictionary mapping each unique value to a color, or None for continuous data
         """
+        # Check if this should be treated as continuous
+        if self._is_continuous(series):
+            # Return None to signal continuous color mapping
+            return None
+
         palette = self.get_color_palette()
         unique_values = series.dropna().unique()
 
@@ -301,13 +340,19 @@ class AestheticMapper:
         # - 'color' for line/point-based geoms
         # Individual geoms can handle this as needed
 
+        # Determine if color/fill is continuous (color_map will be None)
+        color_is_continuous = color_series is not None and color_map is None
+        fill_is_continuous = fill_series is not None and fill_map is None
+
         result = {
             'color': color,
             'color_series': color_series,
             'color_map': color_map,
+            'color_is_continuous': color_is_continuous,
             'fill': fill,
             'fill_series': fill_series,
             'fill_map': fill_map,
+            'fill_is_continuous': fill_is_continuous,
             'size': size if size is not None else 10,
             'size_series': size_series,
             'shape': shape,

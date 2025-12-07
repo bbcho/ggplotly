@@ -86,6 +86,47 @@ class geom_density(Geom):
 
         return bandwidth * adjust
 
+    def _compute_density_for_group(self, x_data, na_rm=False):
+        """
+        Compute KDE for a single group of data.
+
+        Parameters:
+            x_data: Series or array of x values
+            na_rm: Whether to remove NA values
+
+        Returns:
+            tuple: (x_grid, y_density) arrays
+        """
+        if na_rm:
+            x_data = x_data.dropna()
+
+        # Need at least 2 points for KDE
+        if len(x_data) < 2:
+            return None, None
+
+        # Compute bandwidth
+        bandwidth = self._compute_bandwidth(x_data, self.bw, self.adjust)
+
+        # Handle edge case where std is 0
+        std = np.std(x_data, ddof=1)
+        if std == 0:
+            return None, None
+
+        # Create KDE with custom bandwidth
+        kde = gaussian_kde(x_data, bw_method=bandwidth / std)
+
+        # Generate evaluation points
+        if self.trim:
+            x_grid = np.linspace(x_data.min(), x_data.max(), self.n)
+        else:
+            # Extend beyond data range like R does (by 3 bandwidths)
+            x_min = x_data.min() - 3 * bandwidth
+            x_max = x_data.max() + 3 * bandwidth
+            x_grid = np.linspace(x_min, x_max, self.n)
+
+        y = kde(x_grid)
+        return x_grid, y
+
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:
             self.params["size"] = 2
@@ -98,29 +139,52 @@ class geom_density(Geom):
 
         # Handle na_rm parameter
         na_rm = self.params.get("na_rm", False)
-        x = data[self.mapping["x"]]
-        if na_rm:
-            x = x.dropna()
 
-        # Compute bandwidth
-        bandwidth = self._compute_bandwidth(x, self.bw, self.adjust)
+        # Determine grouping column from fill, color, or group mapping
+        group_col = None
+        for aesthetic in ['fill', 'color', 'group']:
+            if aesthetic in self.mapping:
+                potential_col = self.mapping[aesthetic]
+                if potential_col in data.columns:
+                    group_col = potential_col
+                    break
 
-        # Create KDE with custom bandwidth
-        kde = gaussian_kde(x, bw_method=bandwidth / np.std(x, ddof=1))
+        x_col = self.mapping["x"]
 
-        # Generate evaluation points
-        if self.trim:
-            x_grid = np.linspace(x.min(), x.max(), self.n)
+        # Compute densities - either grouped or ungrouped
+        if group_col is not None:
+            # Grouped density: compute separate KDE for each group
+            density_frames = []
+            for group_value in data[group_col].unique():
+                group_data = data[data[group_col] == group_value]
+                x_data = group_data[x_col]
+
+                x_grid, y_density = self._compute_density_for_group(x_data, na_rm)
+
+                if x_grid is not None:
+                    group_df = pd.DataFrame({
+                        x_col: x_grid,
+                        'density': y_density,
+                        group_col: group_value
+                    })
+                    density_frames.append(group_df)
+
+            if density_frames:
+                computed_data = pd.concat(density_frames, ignore_index=True)
+            else:
+                # No valid groups, fall back to empty
+                computed_data = pd.DataFrame({x_col: [], 'density': [], group_col: []})
         else:
-            # Extend beyond data range like R does (by 3 bandwidths)
-            x_min = x.min() - 3 * bandwidth
-            x_max = x.max() + 3 * bandwidth
-            x_grid = np.linspace(x_min, x_max, self.n)
+            # Ungrouped density: single KDE for all data
+            x_data = data[x_col]
+            x_grid, y_density = self._compute_density_for_group(x_data, na_rm)
 
-        y = kde(x_grid)
+            if x_grid is not None:
+                computed_data = pd.DataFrame({x_col: x_grid, 'density': y_density})
+            else:
+                computed_data = pd.DataFrame({x_col: [], 'density': []})
 
         self.mapping["y"] = "density"
-        data = pd.DataFrame({self.mapping["x"]: x_grid, self.mapping["y"]: y})
 
         # Handle Plotly's fill parameter (tonexty, tozeroy, etc.) separately from fill aesthetic
         fill_param = self.params.get("fill", None)
@@ -154,7 +218,7 @@ class geom_density(Geom):
         self._transform_fig(
             plot,
             fig,
-            data,
+            computed_data,
             payload,
             color_targets,
             row,

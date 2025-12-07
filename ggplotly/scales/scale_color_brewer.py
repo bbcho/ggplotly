@@ -36,15 +36,33 @@ class scale_color_brewer(Scale):
         >>> scale_color_brewer(type='div', palette='RdBu')
         >>> scale_color_brewer(palette='Blues', direction=-1)  # reversed
         """
-        self.type = type
         self.direction = direction
 
         # Handle palette as integer index or string name
         if isinstance(palette, int):
             # Map integer to palette name based on type
             self.palette = self._get_palette_by_index(type, palette)
+            self.type = type
         else:
             self.palette = palette
+            # Auto-detect type from palette name if type not explicitly set
+            self.type = self._infer_palette_type(palette) if type == "seq" else type
+
+    def _infer_palette_type(self, palette):
+        """Infer the palette type from the palette name."""
+        # Qualitative palettes
+        qual_palettes = ['Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2',
+                         'Set1', 'Set2', 'Set3']
+        # Diverging palettes
+        div_palettes = ['BrBG', 'PiYG', 'PRGn', 'PuOr', 'RdBu', 'RdGy',
+                        'RdYlBu', 'RdYlGn', 'Spectral']
+
+        if palette in qual_palettes:
+            return 'qual'
+        elif palette in div_palettes:
+            return 'div'
+        else:
+            return 'seq'
 
     def _get_palette_by_index(self, type, index):
         """Get palette name from index (1-based to match R)."""
@@ -64,44 +82,65 @@ class scale_color_brewer(Scale):
         idx = max(0, min(index - 1, len(palette_list) - 1))
         return palette_list[idx]
 
-    def apply_scale(self, data, mapping):
-        """
-        Applies the ColorBrewer palette to the data based on the categorical variable.
+    def _get_color_palette(self):
+        """Get the color palette based on type and palette name."""
+        # Map ColorBrewer palette names to Plotly equivalents
+        # Some ColorBrewer palettes don't exist in Plotly, so we use similar alternatives
+        palette_mapping = {
+            'Accent': 'Vivid',  # Both are qualitative with distinct colors
+            'Paired': 'D3',     # Both have paired-style colors
+        }
+        palette_name = palette_mapping.get(self.palette, self.palette)
 
-        Parameters:
-            data (DataFrame): The input data containing the color aesthetic.
-            mapping (dict): The mapping of the categorical variable to the color scale.
-
-        Returns:
-            DataFrame: Modified data with the color aesthetic applied.
-        """
-        color_variable = mapping.get("color")
-        if color_variable is None or color_variable not in data.columns:
-            return data  # No color aesthetic to modify
-
-        # Define the available ColorBrewer palettes
-        if self.type == "qual":
-            color_palette = px.colors.qualitative.__dict__[self.palette]
-        elif self.type == "seq":
-            color_palette = px.colors.sequential.__dict__[self.palette]
-        elif self.type == "div":
-            color_palette = px.colors.diverging.__dict__[self.palette]
-        else:
-            raise ValueError(f"Unsupported type '{self.type}' for ColorBrewer scale.")
+        try:
+            if self.type == "qual":
+                color_palette = getattr(px.colors.qualitative, palette_name)
+            elif self.type == "seq":
+                color_palette = getattr(px.colors.sequential, palette_name)
+            elif self.type == "div":
+                color_palette = getattr(px.colors.diverging, palette_name)
+            else:
+                raise ValueError(f"Unsupported type '{self.type}' for ColorBrewer scale.")
+        except AttributeError:
+            raise ValueError(f"Palette '{self.palette}' not found for type '{self.type}'")
 
         # Reverse palette if direction is -1
         if self.direction == -1:
             color_palette = list(reversed(color_palette))
 
-        # Apply the color palette to the categorical variable
-        unique_values = data[color_variable].unique()
-        color_map = {
-            val: color_palette[i % len(color_palette)]
-            for i, val in enumerate(unique_values)
-        }
-        data["color"] = data[color_variable].map(color_map)
+        return color_palette
 
-        return data
+    def apply(self, fig):
+        """
+        Apply the ColorBrewer color scale to the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+        """
+        color_palette = self._get_color_palette()
+
+        # Extract categories from trace names
+        categories = []
+        for trace in fig.data:
+            if hasattr(trace, 'name') and trace.name and trace.name not in categories:
+                categories.append(trace.name)
+
+        # Create color mapping
+        color_map = {
+            cat: color_palette[i % len(color_palette)]
+            for i, cat in enumerate(categories)
+        }
+
+        # Apply colors to traces
+        for trace in fig.data:
+            if hasattr(trace, 'name') and trace.name in color_map:
+                color = color_map[trace.name]
+                if hasattr(trace, 'marker') and trace.marker is not None:
+                    trace.marker.color = color
+                if hasattr(trace, 'line') and trace.line is not None:
+                    trace.line.color = color
+                if hasattr(trace, 'fillcolor'):
+                    trace.fillcolor = color
 
     def get_legend_info(self):
         """

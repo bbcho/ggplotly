@@ -441,3 +441,120 @@ class TestScaleEdgeCases:
                  + scale_x_date(date_breaks=breaks))
             fig = p.draw()
             assert isinstance(fig, Figure)
+
+
+class TestContinuousColorMapping:
+    """Tests for continuous color mapping (numeric data mapped to color aesthetic)."""
+
+    def test_continuous_color_creates_single_trace(self):
+        """Test that continuous numeric color creates a single trace with colorscale."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.random.randn(100),
+            'y': np.random.randn(100),
+            'value': np.random.randn(100)  # Continuous numeric values
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='value')) + geom_point()
+        fig = p.draw()
+
+        # Should create only 1 trace (not 100 traces for each unique value)
+        assert len(fig.data) == 1, f"Expected 1 trace, got {len(fig.data)}"
+
+    def test_continuous_color_has_colorscale(self):
+        """Test that continuous color mapping applies a colorscale."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.random.randn(50),
+            'y': np.random.randn(50),
+            'value': np.random.randn(50)
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='value')) + geom_point()
+        fig = p.draw()
+
+        trace = fig.data[0]
+        assert trace.marker.colorscale is not None, "Expected colorscale to be set"
+        assert trace.marker.showscale is True, "Expected colorbar to be shown"
+
+    def test_continuous_color_values_are_numeric(self):
+        """Test that marker.color contains the actual numeric values."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': [1, 2, 3, 4, 5],
+            'y': [1, 2, 3, 4, 5],
+            'value': [0.1, 0.5, 1.0, 1.5, 2.0]
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='value')) + geom_point()
+        fig = p.draw()
+
+        trace = fig.data[0]
+        # marker.color should be the numeric values, not categorical colors
+        assert hasattr(trace.marker.color, '__iter__'), "Expected marker.color to be iterable"
+        assert len(trace.marker.color) == 5, "Expected 5 color values"
+
+    def test_continuous_color_with_scale_color_gradient(self):
+        """Test that scale_color_gradient overrides the default colorscale."""
+        np.random.seed(42)
+        df = pd.DataFrame({
+            'x': np.random.randn(30),
+            'y': np.random.randn(30),
+            'value': np.random.randn(30)
+        })
+
+        p = (ggplot(df, aes(x='x', y='y', color='value'))
+             + geom_point()
+             + scale_color_gradient(low='blue', high='red'))
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        # The scale_color_gradient should have applied its colorscale
+        trace = fig.data[0]
+        assert trace.marker.colorscale is not None
+
+    def test_categorical_color_still_works(self):
+        """Test that categorical color mapping still creates separate traces."""
+        df = pd.DataFrame({
+            'x': [1, 2, 3, 4, 5, 6],
+            'y': [1, 2, 3, 4, 5, 6],
+            'group': ['A', 'A', 'A', 'B', 'B', 'B']
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='group')) + geom_point()
+        fig = p.draw()
+
+        # Should create 2 traces (one for each group)
+        assert len(fig.data) == 2, f"Expected 2 traces for categorical, got {len(fig.data)}"
+
+    def test_small_integer_range_is_categorical(self):
+        """Test that small integer ranges are treated as categorical."""
+        df = pd.DataFrame({
+            'x': [1, 2, 3, 4, 5, 6],
+            'y': [1, 2, 3, 4, 5, 6],
+            'category': [1, 1, 2, 2, 3, 3]  # Only 3 unique integers
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='category')) + geom_point()
+        fig = p.draw()
+
+        # Should be treated as categorical (3 traces)
+        # The heuristic treats small integer ranges as categorical
+        assert len(fig.data) == 3, f"Expected 3 traces for small integers, got {len(fig.data)}"
+
+    def test_many_unique_values_is_continuous(self):
+        """Test that many unique numeric values trigger continuous mapping."""
+        np.random.seed(42)
+        # Create data with 50 unique values - should be continuous
+        df = pd.DataFrame({
+            'x': range(50),
+            'y': range(50),
+            'value': np.random.rand(50) * 100  # 50 unique float values
+        })
+
+        p = ggplot(df, aes(x='x', y='y', color='value')) + geom_point()
+        fig = p.draw()
+
+        # Should be 1 trace with colorscale (continuous)
+        assert len(fig.data) == 1, f"Expected 1 trace for continuous, got {len(fig.data)}"
+        assert fig.data[0].marker.colorscale is not None
