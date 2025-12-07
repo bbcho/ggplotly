@@ -7,9 +7,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from plotly.graph_objects import Figure
-
-import sys
-sys.path.insert(0, '/Users/ben/Projects/ggplotly')
+import plotly.graph_objects as go
 
 from ggplotly import (
     ggplot, aes,
@@ -19,6 +17,19 @@ from ggplotly import (
     theme_dark, theme_minimal,
     ggsize,
 )
+
+
+def make_surface_data(func, x_range=(-5, 5), y_range=(-5, 5), resolution=50):
+    """Create a DataFrame from a z = f(x, y) function."""
+    x = np.linspace(x_range[0], x_range[1], resolution)
+    y = np.linspace(y_range[0], y_range[1], resolution)
+    X, Y = np.meshgrid(x, y)
+    Z = func(X, Y)
+    return pd.DataFrame({
+        'x': X.flatten(),
+        'y': Y.flatten(),
+        'z': Z.flatten(),
+    })
 
 
 @pytest.fixture
@@ -78,7 +89,7 @@ def multi_surface_data():
 class TestGeomSurfaceBasic:
     """Basic functionality tests for geom_surface."""
 
-    def test_basic_surface(self, surface_data):
+    def test_basic_surface_creates_correct_trace(self, surface_data):
         """Test basic surface plot creation."""
         p = ggplot(surface_data, aes(x='x', y='y', z='z')) + geom_surface()
         fig = p.draw()
@@ -95,7 +106,7 @@ class TestGeomSurfaceBasic:
         z_data = fig.data[0].z
         assert z_data.shape == (30, 30), "Z data should be 30x30 grid"
 
-    def test_surface_x_y_1d_arrays(self, surface_data):
+    def test_surface_x_y_are_1d_arrays(self, surface_data):
         """Test that x and y are 1D arrays (unique values)."""
         p = ggplot(surface_data, aes(x='x', y='y', z='z')) + geom_surface()
         fig = p.draw()
@@ -116,31 +127,23 @@ class TestGeomSurfaceBasic:
 class TestGeomSurfaceColorscale:
     """Tests for colorscale options in surface plots."""
 
-    def test_default_colorscale(self, peak_data):
-        """Test that default colorscale is Viridis."""
+    def test_default_colorscale_is_set(self, peak_data):
+        """Test that default colorscale is applied."""
         p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface()
         fig = p.draw()
 
-        # Plotly normalizes colorscale names
         colorscale = fig.data[0].colorscale
         assert colorscale is not None, "Should have a colorscale"
 
     def test_custom_colorscale_plasma(self, peak_data):
-        """Test custom Plasma colorscale."""
+        """Test custom Plasma colorscale is applied."""
         p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface(colorscale='Plasma')
         fig = p.draw()
 
         assert fig.data[0].colorscale is not None
 
-    def test_custom_colorscale_blues(self, peak_data):
-        """Test custom Blues colorscale."""
-        p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface(colorscale='Blues')
-        fig = p.draw()
-
-        assert fig.data[0].colorscale is not None
-
-    def test_reversescale(self, peak_data):
-        """Test reversed colorscale."""
+    def test_reversescale_applied(self, peak_data):
+        """Test reversed colorscale is applied."""
         p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface(reversescale=True)
         fig = p.draw()
 
@@ -150,15 +153,15 @@ class TestGeomSurfaceColorscale:
 class TestGeomSurfaceOpacity:
     """Tests for opacity/alpha parameter."""
 
-    def test_default_opacity(self, surface_data):
+    def test_default_opacity_is_one(self, surface_data):
         """Test default opacity is 1."""
         p = ggplot(surface_data, aes(x='x', y='y', z='z')) + geom_surface()
         fig = p.draw()
 
         assert fig.data[0].opacity == 1.0, "Default opacity should be 1.0"
 
-    def test_custom_opacity(self, surface_data):
-        """Test custom opacity value."""
+    def test_custom_opacity_applied(self, surface_data):
+        """Test custom opacity value is applied."""
         p = ggplot(surface_data, aes(x='x', y='y', z='z')) + geom_surface(alpha=0.7)
         fig = p.draw()
 
@@ -168,7 +171,7 @@ class TestGeomSurfaceOpacity:
 class TestGeomSurfaceColorbar:
     """Tests for colorbar settings."""
 
-    def test_showscale_default(self, peak_data):
+    def test_showscale_default_is_true(self, peak_data):
         """Test that colorbar is shown by default."""
         p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface()
         fig = p.draw()
@@ -181,6 +184,13 @@ class TestGeomSurfaceColorbar:
         fig = p.draw()
 
         assert fig.data[0].showscale == False, "Colorbar should be hidden"
+
+    def test_colorbar_title(self, peak_data):
+        """Test custom colorbar title."""
+        p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface(colorbar_title='Height (z)')
+        fig = p.draw()
+
+        assert fig.data[0].colorbar.title.text == 'Height (z)'
 
 
 class TestGeomSurfaceContours:
@@ -195,7 +205,7 @@ class TestGeomSurfaceContours:
         assert fig.data[0].contours is not None, "Contours should be set"
         assert fig.data[0].contours.z.show == True
 
-    def test_hidesurface_show_only_contours(self, peak_data):
+    def test_hidesurface_shows_only_contours(self, peak_data):
         """Test hiding surface to show only contours."""
         contours = dict(z=dict(show=True, project=dict(z=True)))
         p = ggplot(peak_data, aes(x='x', y='y', z='z')) + geom_surface(
@@ -206,11 +216,34 @@ class TestGeomSurfaceContours:
 
         assert fig.data[0].hidesurface == True
 
+    def test_multiple_contour_projections(self):
+        """Test multiple contour projections (x, y, z)."""
+        def sinc_2d(x, y):
+            r = np.sqrt(x**2 + y**2)
+            return np.where(r == 0, 1, np.sin(r) / r)
+
+        df = make_surface_data(sinc_2d, x_range=(-10, 10), y_range=(-10, 10), resolution=30)
+        fig = (
+            ggplot(df, aes(x='x', y='y', z='z'))
+            + geom_surface(
+                colorscale='Plasma',
+                contours=dict(
+                    x=dict(show=True, usecolormap=True, project=dict(x=True)),
+                    y=dict(show=True, usecolormap=True, project=dict(y=True)),
+                    z=dict(show=True, usecolormap=True, project=dict(z=True)),
+                )
+            )
+        ).draw()
+
+        assert fig.data[0].contours.x.show is True
+        assert fig.data[0].contours.y.show is True
+        assert fig.data[0].contours.z.show is True
+
 
 class TestGeomSurfaceLabels:
     """Tests for axis labels with labs()."""
 
-    def test_labs_x_y_z(self, surface_data):
+    def test_labs_sets_all_three_axis_labels(self, surface_data):
         """Test that labs() sets all three axis labels."""
         p = (ggplot(surface_data, aes(x='x', y='y', z='z'))
              + geom_surface()
@@ -222,7 +255,7 @@ class TestGeomSurfaceLabels:
         assert scene.yaxis.title.text == 'Y Coordinate'
         assert scene.zaxis.title.text == 'Height'
 
-    def test_labs_title(self, surface_data):
+    def test_labs_sets_title(self, surface_data):
         """Test that labs() sets plot title."""
         p = (ggplot(surface_data, aes(x='x', y='y', z='z'))
              + geom_surface()
@@ -240,28 +273,6 @@ class TestGeomSurfaceLabels:
         assert scene.xaxis.title.text == 'x'
         assert scene.yaxis.title.text == 'y'
         assert scene.zaxis.title.text == 'z'
-
-
-class TestGeomSurfaceThemes:
-    """Tests for theme application to surface plots."""
-
-    def test_theme_dark(self, surface_data):
-        """Test that theme_dark applies to surface plot."""
-        p = (ggplot(surface_data, aes(x='x', y='y', z='z'))
-             + geom_surface()
-             + theme_dark())
-        fig = p.draw()
-
-        assert isinstance(fig, Figure)
-
-    def test_theme_minimal(self, surface_data):
-        """Test that theme_minimal applies to surface plot."""
-        p = (ggplot(surface_data, aes(x='x', y='y', z='z'))
-             + geom_surface()
-             + theme_minimal())
-        fig = p.draw()
-
-        assert isinstance(fig, Figure)
 
 
 class TestGeomSurfaceFaceting:
@@ -298,13 +309,12 @@ class TestGeomSurfaceGGSize:
 class TestGeomSurfaceFillAesthetic:
     """Tests for fill aesthetic (surfacecolor)."""
 
-    def test_fill_aesthetic(self):
+    def test_fill_aesthetic_creates_surfacecolor(self):
         """Test that fill aesthetic creates surfacecolor."""
         x = np.linspace(-2, 2, 20)
         y = np.linspace(-2, 2, 20)
         X, Y = np.meshgrid(x, y)
         Z = X**2 + Y**2
-        # Use distance from origin as fill color
         fill_vals = np.sqrt(X**2 + Y**2)
 
         df = pd.DataFrame({
@@ -326,7 +336,6 @@ class TestGeomSurfaceEdgeCases:
 
     def test_non_grid_data_raises_error(self):
         """Test that non-grid data (like parametric surfaces) raises ValueError."""
-        # Create torus-like data that doesn't form a regular grid
         resolution = 20
         u = np.linspace(0, 2 * np.pi, resolution)
         v = np.linspace(0, 2 * np.pi, resolution)
@@ -344,27 +353,6 @@ class TestGeomSurfaceEdgeCases:
 
         with pytest.raises(ValueError, match="geom_surface requires data on a regular x-y grid"):
             p = ggplot(df, aes(x='x', y='y', z='z')) + geom_surface()
-            p.draw()
-
-    def test_wireframe_non_grid_data_raises_error(self):
-        """Test that geom_wireframe also raises error for non-grid data."""
-        # Create sphere-like data
-        resolution = 20
-        u = np.linspace(0, 2 * np.pi, resolution)
-        v = np.linspace(0, np.pi, resolution)
-        U, V = np.meshgrid(u, v)
-        X = np.cos(U) * np.sin(V)
-        Y = np.sin(U) * np.sin(V)
-        Z = np.cos(V)
-
-        df = pd.DataFrame({
-            'x': X.flatten(),
-            'y': Y.flatten(),
-            'z': Z.flatten()
-        })
-
-        with pytest.raises(ValueError, match="geom_wireframe requires data on a regular x-y grid"):
-            p = ggplot(df, aes(x='x', y='y', z='z')) + geom_wireframe()
             p.draw()
 
     def test_small_grid(self):
@@ -409,7 +397,6 @@ class TestGeomSurfaceEdgeCases:
         y = np.linspace(-2, 2, 10)
         X, Y = np.meshgrid(x, y)
         Z = X + Y
-        # Add some NaN values
         Z[0, 0] = np.nan
         Z[5, 5] = np.nan
 
@@ -428,13 +415,12 @@ class TestGeomSurfaceEdgeCases:
 class TestGeomWireframeBasic:
     """Tests for geom_wireframe."""
 
-    def test_basic_wireframe(self, surface_data):
+    def test_basic_wireframe_creates_scatter3d(self, surface_data):
         """Test basic wireframe plot creation."""
         p = ggplot(surface_data, aes(x='x', y='y', z='z')) + geom_wireframe()
         fig = p.draw()
 
         assert isinstance(fig, Figure)
-        # Wireframe creates multiple traces (lines along x and y)
         assert len(fig.data) > 0, "Should have traces"
         assert fig.data[0].type == 'scatter3d', "Traces should be scatter3d"
         assert fig.data[0].mode == 'lines', "Mode should be lines"
@@ -474,6 +460,26 @@ class TestGeomWireframeBasic:
             p = ggplot(surface_data, aes(x='x', y='y')) + geom_wireframe()
             p.draw()
 
+    def test_wireframe_non_grid_data_raises_error(self):
+        """Test that geom_wireframe also raises error for non-grid data."""
+        resolution = 20
+        u = np.linspace(0, 2 * np.pi, resolution)
+        v = np.linspace(0, np.pi, resolution)
+        U, V = np.meshgrid(u, v)
+        X = np.cos(U) * np.sin(V)
+        Y = np.sin(U) * np.sin(V)
+        Z = np.cos(V)
+
+        df = pd.DataFrame({
+            'x': X.flatten(),
+            'y': Y.flatten(),
+            'z': Z.flatten()
+        })
+
+        with pytest.raises(ValueError, match="geom_wireframe requires data on a regular x-y grid"):
+            p = ggplot(df, aes(x='x', y='y', z='z')) + geom_wireframe()
+            p.draw()
+
 
 class TestGeomSurfaceAndWireframeCombination:
     """Tests for combining surface and wireframe."""
@@ -485,8 +491,6 @@ class TestGeomSurfaceAndWireframeCombination:
              + geom_point_3d(color='red', size=2))
         fig = p.draw()
 
-        assert isinstance(fig, Figure)
-        # Should have surface trace + point trace
         trace_types = [trace.type for trace in fig.data]
         assert 'surface' in trace_types
         assert 'scatter3d' in trace_types
@@ -516,3 +520,67 @@ class TestGeomSurfaceDataIntegrity:
 
         # Values should be close (might be reordered)
         assert np.allclose(np.sort(z_in_figure.flatten()), np.sort(z_original.flatten()))
+
+
+class TestMathematicalSurfaces:
+    """Tests for various mathematical surface functions."""
+
+    def test_paraboloid(self):
+        """Test paraboloid z = x^2 + y^2."""
+        df = make_surface_data(lambda x, y: x**2 + y**2, resolution=30)
+        fig = (ggplot(df, aes(x='x', y='y', z='z')) + geom_surface()).draw()
+
+        assert fig.data[0].type == 'surface'
+        # Check that z values are non-negative (paraboloid property)
+        assert np.all(fig.data[0].z >= 0)
+
+    def test_saddle_surface(self):
+        """Test saddle surface x^2 - y^2."""
+        df = make_surface_data(lambda x, y: x**2 - y**2, resolution=30)
+        fig = (ggplot(df, aes(x='x', y='y', z='z')) + geom_surface()).draw()
+
+        assert fig.data[0].type == 'surface'
+        # Saddle surface has both positive and negative values
+        z_flat = fig.data[0].z.flatten()
+        assert np.any(z_flat > 0) and np.any(z_flat < 0)
+
+
+class TestFullFeatured:
+    """Test combining multiple features."""
+
+    def test_all_customizations_applied(self):
+        """Test combining multiple features."""
+        df = make_surface_data(
+            lambda x, y: np.sin(np.sqrt(x**2 + y**2)) * np.exp(-(x**2 + y**2) / 20),
+            x_range=(-8, 8),
+            y_range=(-8, 8),
+            resolution=40,
+        )
+
+        fig = (
+            ggplot(df, aes(x='x', y='y', z='z'))
+            + geom_surface(
+                colorscale='Viridis',
+                alpha=0.9,
+                contours=dict(
+                    z=dict(show=True, usecolormap=True, project=dict(z=True))
+                ),
+            )
+            + labs(
+                title='Damped Ripple with Contour Projection',
+                x='X Coordinate',
+                y='Y Coordinate',
+                z='Amplitude',
+            )
+            + theme_minimal()
+            + ggsize(width=900, height=700)
+        ).draw()
+
+        assert fig.data[0].type == 'surface'
+        assert fig.data[0].opacity == 0.9
+        assert fig.data[0].contours.z.show is True
+        assert fig.layout.width == 900
+        assert fig.layout.height == 700
+        assert fig.layout.scene.xaxis.title.text == 'X Coordinate'
+        assert fig.layout.scene.yaxis.title.text == 'Y Coordinate'
+        assert fig.layout.scene.zaxis.title.text == 'Amplitude'
