@@ -23,7 +23,7 @@ class geom_smooth(Geom):
         span (float, optional): The smoothing span for LOESS. Controls the amount of smoothing.
                                 Larger values (closer to 1) produce smoother lines. Default is 2/3 (~0.667) to match R.
         se (bool, optional): Whether to display confidence interval ribbon. Default is True to match R.
-        level (float, optional): Confidence level for the interval (e.g., 0.68 for 1 stdev, 0.95 for 95% CI). Default is 0.68.
+        level (float, optional): Confidence level for the interval (e.g., 0.95 for 95% CI). Default is 0.95 to match R.
         color (str, optional): Color of the smooth lines. If a categorical variable is mapped to color, different colors will be assigned.
         linetype (str, optional): Line type ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the smooth lines. Default is 1.
@@ -63,7 +63,7 @@ class geom_smooth(Geom):
         # Get smoothing parameters
         method = self.params.get("method", "loess")  # Default to 'loess'
         se = self.params.get("se", True)  # Default to True to match R
-        level = self.params.get("level", 0.68)  # Default to 1 standard deviation
+        level = self.params.get("level", 0.95)  # Default to 95% CI to match R
         span = self.params.get("span", 2/3)  # Default to 2/3 to match R's loess
 
         # Initialize stat_smooth for statistical smoothing

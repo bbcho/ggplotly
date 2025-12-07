@@ -82,7 +82,8 @@ from plotly.subplots import make_subplots
 
 
 class facet_grid(Facet):
-    def __init__(self, rows, cols, scales='fixed', space='fixed', labeller=None):
+    def __init__(self, rows, cols, scales='fixed', space='fixed', labeller=None,
+                 margins=False, drop=True, switch=None):
         """
         Initialize a facet_grid object.
 
@@ -103,12 +104,24 @@ class facet_grid(Facet):
                 - None or 'value': Just show the value (default)
                 - 'both': Show "variable: value"
                 - callable: Function that takes (variable, value) and returns label string
+            margins (bool or list): If True, add marginal facets showing all data.
+                If a list, specifies which margins to display (e.g., ['rows', 'cols']).
+                Default is False.
+            drop (bool): If True (default), drop unused factor levels from faceting.
+            switch (str): Position to switch strip labels. Options:
+                - None: Default positions (top for cols, right for rows)
+                - 'x': Switch column labels to bottom
+                - 'y': Switch row labels to left
+                - 'both': Switch both
         """
         self.rows = rows
         self.cols = cols
         self.scales = scales
         self.space = space
         self.labeller = labeller
+        self.margins = margins
+        self.drop = drop
+        self.switch = switch
 
     def _get_label(self, row_var, row_val, col_var, col_val):
         """Generate label for a facet based on labeller setting."""
@@ -298,7 +311,8 @@ def label_both(variable, value):
 
 
 class facet_wrap(Facet):
-    def __init__(self, facet_var, ncol=None, nrow=None, scales='fixed', dir='h', labeller=None):
+    def __init__(self, facet_var, ncol=None, nrow=None, scales='fixed', dir='h',
+                 labeller=None, strip_position='top', drop=True, as_table=True):
         """
         Initialize a facet_wrap object.
 
@@ -318,6 +332,15 @@ class facet_wrap(Facet):
                 - None or 'value': Just show the value (default)
                 - 'both': Show "variable: value"
                 - callable: Function that takes (variable, value) and returns label string
+            strip_position (str): Position of facet labels. Options:
+                - 'top': Labels on top (default)
+                - 'bottom': Labels on bottom
+                - 'left': Labels on left
+                - 'right': Labels on right
+            drop (bool): If True (default), drop unused factor levels from faceting.
+            as_table (bool): If True (default), arrange facets like a table with highest
+                values at bottom-right. If False, arrange like a plot with highest
+                values at top-right.
         """
         self.facet_var = facet_var
         self.ncol = ncol
@@ -325,6 +348,9 @@ class facet_wrap(Facet):
         self.scales = scales
         self.dir = dir
         self.labeller = labeller
+        self.strip_position = strip_position
+        self.drop = drop
+        self.as_table = as_table
 
     def _get_label(self, facet_value):
         """Generate label for a facet based on labeller setting."""

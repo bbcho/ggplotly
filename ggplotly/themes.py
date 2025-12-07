@@ -139,28 +139,234 @@ class Theme:
 #     def apply(self, fig):
 #         fig.update_layout(template="simple_white")
 
-def theme(legend_position='right', legend_show=True, **kwargs):
+def theme(legend_position='right', legend_show=True,
+          # Axis title elements
+          axis_title=None, axis_title_x=None, axis_title_y=None,
+          # Axis text elements
+          axis_text=None, axis_text_x=None, axis_text_y=None,
+          # Axis line elements
+          axis_line=None, axis_line_x=None, axis_line_y=None,
+          # Axis ticks
+          axis_ticks=None, axis_ticks_x=None, axis_ticks_y=None,
+          # Panel elements
+          panel_background=None, panel_grid=None, panel_grid_major=None,
+          panel_grid_minor=None, panel_border=None,
+          # Plot elements
+          plot_title=None, plot_subtitle=None, plot_caption=None,
+          plot_background=None,
+          # Legend elements
+          legend_title=None, legend_text=None, legend_background=None,
+          # Strip elements (for facets)
+          strip_text=None, strip_background=None,
+          **kwargs):
     """
-    Create a custom theme with legend control (ggplot2-style).
-    
+    Create a custom theme with granular control over plot elements (ggplot2-style).
+
     Parameters:
         legend_position (str): 'right', 'left', 'top', 'bottom', 'none'
         legend_show (bool): Whether to show legend
-        **kwargs: Additional theme parameters
-    
+
+        Axis Title Elements:
+            axis_title (element_text): Style for all axis titles
+            axis_title_x (element_text): Style for x-axis title
+            axis_title_y (element_text): Style for y-axis title
+
+        Axis Text Elements (tick labels):
+            axis_text (element_text): Style for all axis text
+            axis_text_x (element_text): Style for x-axis text
+            axis_text_y (element_text): Style for y-axis text
+
+        Axis Line Elements:
+            axis_line (element_line): Style for all axis lines
+            axis_line_x (element_line): Style for x-axis line
+            axis_line_y (element_line): Style for y-axis line
+
+        Axis Ticks:
+            axis_ticks (element_line): Style for all axis ticks
+            axis_ticks_x (element_line): Style for x-axis ticks
+            axis_ticks_y (element_line): Style for y-axis ticks
+
+        Panel Elements:
+            panel_background (element_rect): Background of the plot panel
+            panel_grid (element_line): All grid lines
+            panel_grid_major (element_line): Major grid lines
+            panel_grid_minor (element_line): Minor grid lines
+            panel_border (element_rect): Border around plot panel
+
+        Plot Elements:
+            plot_title (element_text): Style for plot title
+            plot_subtitle (element_text): Style for plot subtitle
+            plot_caption (element_text): Style for plot caption
+            plot_background (element_rect): Background of entire plot
+
+        Legend Elements:
+            legend_title (element_text): Style for legend title
+            legend_text (element_text): Style for legend text
+            legend_background (element_rect): Background of legend
+
+        Strip Elements (for faceted plots):
+            strip_text (element_text): Style for facet strip labels
+            strip_background (element_rect): Background of facet strips
+
+        **kwargs: Additional Plotly layout parameters
+
     Returns:
         Theme: A theme object that can be added to ggplot
+
+    Examples:
+        >>> theme(legend_position='bottom')
+        >>> theme(axis_title=element_text(size=14, color='blue'))
+        >>> theme(panel_background=element_rect(fill='lightgray'))
+        >>> theme(plot_title=element_text(size=20, color='darkblue'))
     """
     class CustomTheme(Theme):
         def __init__(self):
             super().__init__(legend_position=legend_position, legend_show=legend_show)
-        
+
         def apply(self, fig):
             super().apply(fig)
+
+            layout_updates = {}
+            xaxis_updates = {}
+            yaxis_updates = {}
+
+            # Apply axis title styling
+            if axis_title is not None or axis_title_x is not None:
+                title_style = axis_title_x or axis_title
+                if isinstance(title_style, element_text):
+                    xaxis_updates['title_font'] = dict(
+                        size=title_style.size,
+                        color=title_style.color,
+                        family=title_style.family
+                    )
+
+            if axis_title is not None or axis_title_y is not None:
+                title_style = axis_title_y or axis_title
+                if isinstance(title_style, element_text):
+                    yaxis_updates['title_font'] = dict(
+                        size=title_style.size,
+                        color=title_style.color,
+                        family=title_style.family
+                    )
+
+            # Apply axis text (tick labels) styling
+            if axis_text is not None or axis_text_x is not None:
+                text_style = axis_text_x or axis_text
+                if isinstance(text_style, element_text):
+                    xaxis_updates['tickfont'] = dict(
+                        size=text_style.size,
+                        color=text_style.color,
+                        family=text_style.family
+                    )
+
+            if axis_text is not None or axis_text_y is not None:
+                text_style = axis_text_y or axis_text
+                if isinstance(text_style, element_text):
+                    yaxis_updates['tickfont'] = dict(
+                        size=text_style.size,
+                        color=text_style.color,
+                        family=text_style.family
+                    )
+
+            # Apply axis line styling
+            if axis_line is not None or axis_line_x is not None:
+                line_style = axis_line_x or axis_line
+                if isinstance(line_style, element_line):
+                    xaxis_updates['linecolor'] = line_style.color
+                    xaxis_updates['linewidth'] = line_style.width
+                    xaxis_updates['showline'] = True
+
+            if axis_line is not None or axis_line_y is not None:
+                line_style = axis_line_y or axis_line
+                if isinstance(line_style, element_line):
+                    yaxis_updates['linecolor'] = line_style.color
+                    yaxis_updates['linewidth'] = line_style.width
+                    yaxis_updates['showline'] = True
+
+            # Apply axis tick styling
+            if axis_ticks is not None or axis_ticks_x is not None:
+                tick_style = axis_ticks_x or axis_ticks
+                if isinstance(tick_style, element_line):
+                    xaxis_updates['tickcolor'] = tick_style.color
+                    xaxis_updates['tickwidth'] = tick_style.width
+                    xaxis_updates['ticks'] = 'outside'
+
+            if axis_ticks is not None or axis_ticks_y is not None:
+                tick_style = axis_ticks_y or axis_ticks
+                if isinstance(tick_style, element_line):
+                    yaxis_updates['tickcolor'] = tick_style.color
+                    yaxis_updates['tickwidth'] = tick_style.width
+                    yaxis_updates['ticks'] = 'outside'
+
+            # Apply panel background
+            if panel_background is not None:
+                if isinstance(panel_background, element_rect):
+                    layout_updates['plot_bgcolor'] = panel_background.fill
+
+            # Apply panel grid
+            grid_style = panel_grid_major or panel_grid
+            if grid_style is not None:
+                if isinstance(grid_style, element_line):
+                    xaxis_updates['gridcolor'] = grid_style.color
+                    xaxis_updates['gridwidth'] = grid_style.width
+                    xaxis_updates['showgrid'] = True
+                    yaxis_updates['gridcolor'] = grid_style.color
+                    yaxis_updates['gridwidth'] = grid_style.width
+                    yaxis_updates['showgrid'] = True
+
+            # Apply plot title styling
+            if plot_title is not None:
+                if isinstance(plot_title, element_text):
+                    layout_updates['title_font'] = dict(
+                        size=plot_title.size,
+                        color=plot_title.color,
+                        family=plot_title.family
+                    )
+
+            # Apply plot background
+            if plot_background is not None:
+                if isinstance(plot_background, element_rect):
+                    layout_updates['paper_bgcolor'] = plot_background.fill
+
+            # Apply legend styling
+            legend_updates = {}
+            if legend_title is not None:
+                if isinstance(legend_title, element_text):
+                    legend_updates['title_font'] = dict(
+                        size=legend_title.size,
+                        color=legend_title.color,
+                        family=legend_title.family
+                    )
+
+            if legend_text is not None:
+                if isinstance(legend_text, element_text):
+                    legend_updates['font'] = dict(
+                        size=legend_text.size,
+                        color=legend_text.color,
+                        family=legend_text.family
+                    )
+
+            if legend_background is not None:
+                if isinstance(legend_background, element_rect):
+                    legend_updates['bgcolor'] = legend_background.fill
+                    legend_updates['bordercolor'] = legend_background.color
+                    legend_updates['borderwidth'] = legend_background.width
+
+            if legend_updates:
+                layout_updates['legend'] = legend_updates
+
+            # Apply updates
+            if xaxis_updates:
+                fig.update_xaxes(**xaxis_updates)
+            if yaxis_updates:
+                fig.update_yaxes(**yaxis_updates)
+            if layout_updates:
+                fig.update_layout(**layout_updates)
+
             # Apply any additional customizations from kwargs
             if kwargs:
                 fig.update_layout(**kwargs)
-    
+
     return CustomTheme()
 
 class theme_template(Theme):
@@ -234,6 +440,10 @@ class theme_classic(Theme):
 
     Similar to ggplot2's theme_classic().
 
+    Parameters:
+        base_size (int): Base font size in points. Default is 11.
+        base_family (str): Base font family. Default is "" (system default).
+
     Automatically applies classic styling to:
     - Standard 2D plots (white background, no gridlines)
     - 3D scenes (white background)
@@ -241,7 +451,20 @@ class theme_classic(Theme):
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_classic()
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_classic(base_size=14)
     """
+
+    def __init__(self, base_size=11, base_family=""):
+        """
+        Initialize theme_classic.
+
+        Parameters:
+            base_size (int): Base font size in points. Default is 11.
+            base_family (str): Base font family. Default is "" (system default).
+        """
+        super().__init__()
+        self.base_size = base_size
+        self.base_family = base_family
 
     def apply(self, fig):
         """
@@ -253,10 +476,15 @@ class theme_classic(Theme):
         Returns:
             None: Modifies the figure in place.
         """
+        font_dict = dict(size=self.base_size)
+        if self.base_family:
+            font_dict['family'] = self.base_family
+
         fig.update_layout(
             template="simple_white",
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=False),
+            font=font_dict,
         )
         # Apply classic styling to 3D scenes (white background, no grid)
         self._apply_3d_scene_style(
@@ -534,11 +762,31 @@ class theme_minimal(Theme):
     """
     Minimal theme that removes background and gridlines for a cleaner look.
 
+    Parameters:
+        base_size (int): Base font size in points. Default is 11.
+        base_family (str): Base font family. Default is "" (system default).
+
     Automatically applies minimal styling to:
     - Standard 2D plots (white background, no gridlines)
     - 3D scenes (white background, subtle grid)
     - Geographic maps (clean, minimal appearance)
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_minimal()
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_minimal(base_size=14)
     """
+
+    def __init__(self, base_size=11, base_family=""):
+        """
+        Initialize theme_minimal.
+
+        Parameters:
+            base_size (int): Base font size in points. Default is 11.
+            base_family (str): Base font family. Default is "" (system default).
+        """
+        super().__init__()
+        self.base_size = base_size
+        self.base_family = base_family
 
     def apply(self, fig):
         """
@@ -547,6 +795,10 @@ class theme_minimal(Theme):
         Parameters:
             fig (Figure): The Plotly figure to which the theme will be applied.
         """
+        font_dict = dict(color="black", size=self.base_size)
+        if self.base_family:
+            font_dict['family'] = self.base_family
+
         minimal_template = go.layout.Template(
             layout=dict(
                 xaxis=dict(
@@ -565,7 +817,7 @@ class theme_minimal(Theme):
                 ),
                 plot_bgcolor="white",
                 paper_bgcolor="white",
-                font=dict(color="black", size=12),
+                font=font_dict,
             )
         )
 

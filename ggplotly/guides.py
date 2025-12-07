@@ -1,25 +1,215 @@
 # guides.py
 
+"""
+Guide functions for controlling legends and color bars.
+"""
 
-# # guides.py
-# class Labs:
-#     def __init__(self, **kwargs):
-#         """
-#         Initialize plot labels.
 
-#         Parameters:
-#             **kwargs: Label parameters (e.g., title, x, y).
-#         """
-#         self.labels = kwargs
+class guide_legend:
+    """
+    Configure legend appearance for discrete scales.
 
-#     def apply(self, fig):
-#         """
-#         Apply labels to the figure.
+    Parameters:
+        title (str, optional): Legend title. Use None to suppress title.
+        title_position (str): Position of title ('top', 'left', 'right'). Default is 'top'.
+        direction (str): Direction of legend keys ('horizontal', 'vertical'). Default is 'vertical'.
+        nrow (int, optional): Number of rows for legend keys.
+        ncol (int, optional): Number of columns for legend keys.
+        byrow (bool): If True, fill by row. Default is False (fill by column).
+        reverse (bool): If True, reverse the order of keys. Default is False.
+        override_aes (dict, optional): Override aesthetic properties in legend.
 
-#         Parameters:
-#             fig (Figure): Plotly figure object.
-#         """
-#         fig.update_layout(**self.labels)
+    Examples:
+        >>> guides(color=guide_legend(title='Groups', ncol=2))
+        >>> guides(fill=guide_legend(reverse=True))
+    """
+
+    def __init__(self, title=None, title_position='top', direction='vertical',
+                 nrow=None, ncol=None, byrow=False, reverse=False, override_aes=None):
+        self.title = title
+        self.title_position = title_position
+        self.direction = direction
+        self.nrow = nrow
+        self.ncol = ncol
+        self.byrow = byrow
+        self.reverse = reverse
+        self.override_aes = override_aes or {}
+
+
+class guide_colorbar:
+    """
+    Configure colorbar appearance for continuous scales.
+
+    Parameters:
+        title (str, optional): Colorbar title. Use None to suppress title.
+        title_position (str): Position of title ('top', 'bottom', 'left', 'right'). Default is 'top'.
+        direction (str): Direction of colorbar ('horizontal', 'vertical'). Default is 'vertical'.
+        barwidth (float, optional): Width of the colorbar.
+        barheight (float, optional): Height of the colorbar.
+        nbin (int): Number of bins for colorbar. Default is 300.
+        raster (bool): If True, render as raster. Default is True.
+        ticks (bool): If True, show tick marks. Default is True.
+        draw_ulim (bool): If True, draw upper limit. Default is True.
+        draw_llim (bool): If True, draw lower limit. Default is True.
+        reverse (bool): If True, reverse colorbar direction. Default is False.
+
+    Examples:
+        >>> guides(color=guide_colorbar(title='Value', direction='horizontal'))
+        >>> guides(fill=guide_colorbar(barwidth=20))
+    """
+
+    def __init__(self, title=None, title_position='top', direction='vertical',
+                 barwidth=None, barheight=None, nbin=300, raster=True,
+                 ticks=True, draw_ulim=True, draw_llim=True, reverse=False):
+        self.title = title
+        self.title_position = title_position
+        self.direction = direction
+        self.barwidth = barwidth
+        self.barheight = barheight
+        self.nbin = nbin
+        self.raster = raster
+        self.ticks = ticks
+        self.draw_ulim = draw_ulim
+        self.draw_llim = draw_llim
+        self.reverse = reverse
+
+
+class Guides:
+    """
+    Control guide (legend/colorbar) display for aesthetics.
+
+    This class allows you to customize or hide guides for specific aesthetics.
+
+    Parameters:
+        color: Guide for color aesthetic (guide_legend, guide_colorbar, 'none', or False)
+        fill: Guide for fill aesthetic
+        shape: Guide for shape aesthetic
+        size: Guide for size aesthetic
+        alpha: Guide for alpha aesthetic
+        linetype: Guide for linetype aesthetic
+
+    Examples:
+        >>> guides(color='none')  # Hide color legend
+        >>> guides(color=guide_legend(title='My Legend'))
+        >>> guides(fill=guide_colorbar(direction='horizontal'))
+    """
+
+    def __init__(self, color=None, fill=None, shape=None, size=None,
+                 alpha=None, linetype=None, **kwargs):
+        self.guides = {
+            'color': color,
+            'fill': fill,
+            'shape': shape,
+            'size': size,
+            'alpha': alpha,
+            'linetype': linetype,
+        }
+        # Add any additional aesthetics
+        self.guides.update(kwargs)
+
+    def apply(self, fig):
+        """
+        Apply guide settings to the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+        """
+        layout_updates = {}
+        legend_updates = {}
+
+        # Process each aesthetic's guide
+        for aesthetic, guide in self.guides.items():
+            if guide is None:
+                continue
+
+            # Handle 'none' or False to hide the guide
+            if guide == 'none' or guide is False:
+                if aesthetic in ('color', 'fill', 'shape', 'size', 'alpha', 'linetype'):
+                    layout_updates['showlegend'] = False
+                continue
+
+            # Handle guide_legend
+            if isinstance(guide, guide_legend):
+                if guide.title is not None:
+                    legend_updates['title_text'] = guide.title
+
+                # Handle direction
+                if guide.direction == 'horizontal':
+                    legend_updates['orientation'] = 'h'
+                else:
+                    legend_updates['orientation'] = 'v'
+
+                # Handle title position
+                if guide.title_position == 'left':
+                    legend_updates['title_side'] = 'left'
+                elif guide.title_position == 'right':
+                    legend_updates['title_side'] = 'right'
+                else:
+                    legend_updates['title_side'] = 'top'
+
+                # Handle reverse
+                if guide.reverse:
+                    legend_updates['traceorder'] = 'reversed'
+
+            # Handle guide_colorbar
+            elif isinstance(guide, guide_colorbar):
+                colorbar_updates = {}
+
+                if guide.title is not None:
+                    colorbar_updates['title'] = guide.title
+
+                if guide.direction == 'horizontal':
+                    colorbar_updates['orientation'] = 'h'
+
+                if guide.barwidth is not None:
+                    colorbar_updates['thickness'] = guide.barwidth
+
+                if guide.barheight is not None:
+                    colorbar_updates['len'] = guide.barheight
+
+                if not guide.ticks:
+                    colorbar_updates['ticks'] = ''
+
+                # Apply colorbar settings to traces with colorbars
+                if colorbar_updates:
+                    for trace in fig.data:
+                        if hasattr(trace, 'marker') and trace.marker is not None:
+                            if hasattr(trace.marker, 'colorbar'):
+                                trace.marker.colorbar.update(colorbar_updates)
+
+        # Apply legend updates
+        if legend_updates:
+            layout_updates['legend'] = legend_updates
+
+        if layout_updates:
+            fig.update_layout(**layout_updates)
+
+
+def guides(**kwargs):
+    """
+    Control guide (legend/colorbar) display for aesthetics.
+
+    Parameters:
+        **kwargs: Aesthetic-guide mappings. Keys are aesthetic names (color, fill, shape, etc.)
+            Values can be:
+            - 'none' or False: Hide the guide
+            - guide_legend(...): Configure legend appearance
+            - guide_colorbar(...): Configure colorbar appearance
+
+    Returns:
+        Guides: A Guides object that can be added to ggplot.
+
+    Examples:
+        # Hide color legend
+        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + guides(color='none')
+
+        # Customize legend
+        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + guides(color=guide_legend(title='Category', ncol=2))
+
+        # Customize colorbar
+        >>> ggplot(df, aes(x='x', y='y', color='value')) + geom_point() + guides(color=guide_colorbar(direction='horizontal'))
+    """
+    return Guides(**kwargs)
 
 
 class Labs:
@@ -33,13 +223,22 @@ class Labs:
         y (str, optional): Y-axis label.
         z (str, optional): Z-axis label (for 3D plots).
         color (str, optional): Legend title for color aesthetic.
+        colour (str, optional): Alias for color (British spelling).
         fill (str, optional): Legend title for fill aesthetic.
+        size (str, optional): Legend title for size aesthetic.
+        shape (str, optional): Legend title for shape aesthetic.
+        alpha (str, optional): Legend title for alpha aesthetic.
+        linetype (str, optional): Legend title for linetype aesthetic.
         caption (str, optional): Caption displayed at bottom-right of plot.
+        tag (str, optional): Plot tag (e.g., "A", "B" for figure panels).
+        alt (str, optional): Alternative text for accessibility.
+        **kwargs: Additional label parameters for other aesthetics.
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + labs(title='My Plot', x='X Axis', y='Y Axis')
         >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + labs(color='Group')
         >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_point_3d() + labs(x='X', y='Y', z='Z')
+        >>> labs(shape='Shape Type', size='Size Value', alpha='Transparency')
     """
 
     def __init__(
@@ -50,8 +249,16 @@ class Labs:
         y=None,
         z=None,
         color=None,
+        colour=None,
         fill=None,
+        size=None,
+        shape=None,
+        alpha=None,
+        linetype=None,
         caption=None,
+        tag=None,
+        alt=None,
+        **kwargs
     ):
         """
         Initialize plot labels.
@@ -63,17 +270,32 @@ class Labs:
             y (str, optional): Y-axis label.
             z (str, optional): Z-axis label (for 3D plots).
             color (str, optional): Legend title for color aesthetic.
+            colour (str, optional): Alias for color (British spelling).
             fill (str, optional): Legend title for fill aesthetic.
+            size (str, optional): Legend title for size aesthetic.
+            shape (str, optional): Legend title for shape aesthetic.
+            alpha (str, optional): Legend title for alpha aesthetic.
+            linetype (str, optional): Legend title for linetype aesthetic.
             caption (str, optional): Caption displayed at bottom-right of plot.
+            tag (str, optional): Plot tag (e.g., "A", "B" for figure panels).
+            alt (str, optional): Alternative text for accessibility.
+            **kwargs: Additional label parameters.
         """
         self.title = title
         self.subtitle = subtitle
         self.x = x
         self.y = y
         self.z = z
-        self.color = color  # Legend title for color aesthetic
-        self.fill = fill  # Legend title for fill aesthetic
+        self.color = color or colour  # Support both spellings
+        self.fill = fill
+        self.size = size
+        self.shape = shape
+        self.alpha = alpha
+        self.linetype = linetype
         self.caption = caption
+        self.tag = tag
+        self.alt = alt
+        self.extra_labels = kwargs  # Store any additional aesthetic labels
 
     def apply(self, fig):
         """

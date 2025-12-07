@@ -14,7 +14,7 @@ class stat_smooth:
     Handles the computation of smoothed values, which are then passed to geom_smooth for visualization.
     """
 
-    def __init__(self, method="loess", span=2/3, se=True, level=0.68, degree=2):
+    def __init__(self, method="loess", span=2/3, se=True, level=0.95, degree=2):
         """
         Initializes the smoothing stat.
 
@@ -26,7 +26,8 @@ class stat_smooth:
             span (float): The smoothing parameter for LOESS (fraction of points to use).
                          Default is 2/3 to match R's loess default.
             se (bool): Whether to compute standard errors. Default is True.
-            level (float): Confidence level for intervals. Default is 0.68 (1 standard deviation).
+            level (float): Confidence level for intervals. Default is 0.95 (95% CI),
+                         matching R's ggplot2 default.
             degree (int): Polynomial degree for LOESS fitting (1 or 2). Default is 2.
         """
         self.method = method

@@ -52,23 +52,28 @@ class stat_summary(Stat):
     Can compute central tendency and error bars in one step.
 
     Parameters:
-        fun_y (str or callable): Function for the central value. Options:
+        fun (str or callable): Function for the central value. Options:
             - 'mean' (default), 'median', 'min', 'max', 'sum'
             - Or a custom function that takes a Series and returns a scalar
-        fun_ymin (str or callable, optional): Function for lower error bar.
-        fun_ymax (str or callable, optional): Function for upper error bar.
+            Alias: fun_y (deprecated, for backward compatibility)
+        fun_min (str or callable, optional): Function for lower error bar.
+            Alias: fun_ymin (deprecated, for backward compatibility)
+        fun_max (str or callable, optional): Function for upper error bar.
+            Alias: fun_ymax (deprecated, for backward compatibility)
         fun_data (str or callable, optional): Function that returns y, ymin, ymax together.
             Built-in options:
             - 'mean_se': mean +/- standard error
             - 'mean_cl_normal': mean +/- 95% CI (t-distribution)
             - 'mean_sdl': mean +/- 1 SD
             - 'median_hilow': median with 95% quantile range
+        fun_args (dict, optional): Additional arguments passed to fun/fun_min/fun_max.
         geom (str): Default geom to use. Options: 'pointrange', 'errorbar', 'point'
+        na_rm (bool): If True, remove NA values before computation. Default is False.
 
     Aesthetics computed:
         - y: The central summary value
-        - ymin: Lower bound (if fun_ymin or fun_data provided)
-        - ymax: Upper bound (if fun_ymax or fun_data provided)
+        - ymin: Lower bound (if fun_min or fun_data provided)
+        - ymax: Upper bound (if fun_max or fun_data provided)
 
     Examples:
         # Mean with standard error bars
@@ -77,23 +82,59 @@ class stat_summary(Stat):
         # Median with 95% quantile range
         stat_summary(fun_data='median_hilow')
 
-        # Custom: mean with min/max range
+        # Custom: mean with min/max range (R-style parameter names)
+        stat_summary(fun='mean', fun_min='min', fun_max='max')
+
+        # Custom: mean with min/max range (legacy parameter names, still supported)
         stat_summary(fun_y='mean', fun_ymin='min', fun_ymax='max')
 
         # Custom function
-        stat_summary(fun_y=lambda x: x.quantile(0.75))
+        stat_summary(fun=lambda x: x.quantile(0.75))
     """
 
     __name__ = "summary"
 
-    def __init__(self, data=None, mapping=None, fun_y='mean', fun_ymin=None,
-                 fun_ymax=None, fun_data=None, geom='pointrange', **params):
+    def __init__(self, data=None, mapping=None, fun='mean', fun_min=None,
+                 fun_max=None, fun_data=None, fun_args=None, geom='pointrange',
+                 na_rm=False, fun_y=None, fun_ymin=None, fun_ymax=None, **params):
         super().__init__(data, mapping, **params)
-        self.fun_y = fun_y
-        self.fun_ymin = fun_ymin
-        self.fun_ymax = fun_ymax
+        # Support both R-style (fun, fun_min, fun_max) and legacy (fun_y, fun_ymin, fun_ymax)
+        # Legacy parameters take precedence if provided for backward compatibility
+        self.fun_y = fun_y if fun_y is not None else fun
+        self.fun_ymin = fun_ymin if fun_ymin is not None else fun_min
+        self.fun_ymax = fun_ymax if fun_ymax is not None else fun_max
         self.fun_data = fun_data
+        self.fun_args = fun_args or {}
         self.geom = geom
+        self.na_rm = na_rm
+
+    # R-style property aliases
+    @property
+    def fun(self):
+        """R-style alias for fun_y."""
+        return self.fun_y
+
+    @fun.setter
+    def fun(self, value):
+        self.fun_y = value
+
+    @property
+    def fun_min(self):
+        """R-style alias for fun_ymin."""
+        return self.fun_ymin
+
+    @fun_min.setter
+    def fun_min(self, value):
+        self.fun_ymin = value
+
+    @property
+    def fun_max(self):
+        """R-style alias for fun_ymax."""
+        return self.fun_ymax
+
+    @fun_max.setter
+    def fun_max(self, value):
+        self.fun_ymax = value
 
     def _get_agg_func(self, func_spec):
         """Convert function specification to callable."""
@@ -158,6 +199,10 @@ class stat_summary(Stat):
 
         if x_col is None or y_col is None:
             raise ValueError("stat_summary requires both 'x' and 'y' aesthetics")
+
+        # Handle NA removal if requested
+        if self.na_rm:
+            data = data.dropna(subset=[x_col, y_col])
 
         # Group by x
         grouped = data.groupby(x_col)[y_col]

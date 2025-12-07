@@ -7,31 +7,62 @@ import plotly.express as px
 class scale_color_brewer(Scale):
     """Scale for mapping a categorical variable to a ColorBrewer palette."""
 
-    def __init__(self, type="qual", palette="Set1"):
+    def __init__(self, type="seq", palette=1, direction=1):
         """
         Map a categorical variable to a ColorBrewer palette for color aesthetic.
 
         Parameters
         ----------
-        type : str, default='qual'
+        type : str, default='seq'
             Type of ColorBrewer palette:
+            - 'seq': Sequential (ordered data) - default to match R
             - 'qual': Qualitative (categorical data)
-            - 'seq': Sequential (ordered data)
             - 'div': Diverging (data with meaningful midpoint)
-        palette : str, default='Set1'
-            Name of the ColorBrewer palette. Examples:
-            - Qualitative: 'Set1', 'Set2', 'Set3', 'Pastel1', 'Dark2'
+        palette : int or str, default=1
+            Index or name of the ColorBrewer palette. Can be:
+            - An integer index (1-based, to match R)
+            - A string name like 'Blues', 'Set1', 'RdBu'
+            Common palette names:
             - Sequential: 'Blues', 'Greens', 'Reds', 'Oranges', 'Purples'
+            - Qualitative: 'Set1', 'Set2', 'Set3', 'Pastel1', 'Dark2'
             - Diverging: 'RdBu', 'RdYlGn', 'BrBG', 'PiYG'
+        direction : int, default=1
+            Direction of the palette. 1 for normal order, -1 for reversed.
 
         Examples
         --------
-        >>> scale_color_brewer()  # default: Set1 qualitative
-        >>> scale_color_brewer(type='seq', palette='Blues')
+        >>> scale_color_brewer()  # default: sequential palette
+        >>> scale_color_brewer(type='qual', palette='Set1')
         >>> scale_color_brewer(type='div', palette='RdBu')
+        >>> scale_color_brewer(palette='Blues', direction=-1)  # reversed
         """
         self.type = type
-        self.palette = palette
+        self.direction = direction
+
+        # Handle palette as integer index or string name
+        if isinstance(palette, int):
+            # Map integer to palette name based on type
+            self.palette = self._get_palette_by_index(type, palette)
+        else:
+            self.palette = palette
+
+    def _get_palette_by_index(self, type, index):
+        """Get palette name from index (1-based to match R)."""
+        # Default palettes by type, ordered to match R's brewer.pal.info
+        seq_palettes = ['Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys',
+                        'Oranges', 'OrRd', 'PuBu', 'PuBuGn', 'PuRd', 'Purples',
+                        'RdPu', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd']
+        qual_palettes = ['Accent', 'Dark2', 'Paired', 'Pastel1', 'Pastel2',
+                         'Set1', 'Set2', 'Set3']
+        div_palettes = ['BrBG', 'PiYG', 'PRGn', 'PuOr', 'RdBu', 'RdGy',
+                        'RdYlBu', 'RdYlGn', 'Spectral']
+
+        palettes = {'seq': seq_palettes, 'qual': qual_palettes, 'div': div_palettes}
+        palette_list = palettes.get(type, seq_palettes)
+
+        # Convert 1-based index to 0-based, with bounds checking
+        idx = max(0, min(index - 1, len(palette_list) - 1))
+        return palette_list[idx]
 
     def apply_scale(self, data, mapping):
         """
@@ -57,6 +88,10 @@ class scale_color_brewer(Scale):
             color_palette = px.colors.diverging.__dict__[self.palette]
         else:
             raise ValueError(f"Unsupported type '{self.type}' for ColorBrewer scale.")
+
+        # Reverse palette if direction is -1
+        if self.direction == -1:
+            color_palette = list(reversed(color_palette))
 
         # Apply the color palette to the categorical variable
         unique_values = data[color_variable].unique()
