@@ -123,6 +123,54 @@ class Geom:
         """
         result = {}
 
+        def is_valid_color(value):
+            """Check if a value looks like a valid color (not a column name)."""
+            if value is None:
+                return False
+            if not isinstance(value, str):
+                return False
+            # Check for common color formats
+            if value.startswith('#'):
+                return True
+            if value.startswith('rgb') or value.startswith('hsl'):
+                return True
+            # Check against a list of known CSS color names
+            # This is safer than heuristics since column names like 'group', 'species', etc.
+            # could otherwise be mistaken for colors
+            css_colors = {
+                'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+                'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet',
+                'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
+                'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+                'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen',
+                'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange',
+                'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue',
+                'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet',
+                'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
+                'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro',
+                'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow',
+                'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory',
+                'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon',
+                'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
+                'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
+                'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
+                'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
+                'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid',
+                'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen',
+                'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+                'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive',
+                'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod',
+                'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip',
+                'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple',
+                'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown',
+                'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver',
+                'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow',
+                'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato',
+                'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow',
+                'yellowgreen'
+            }
+            return value.lower() in css_colors
+
         # Determine the color to use
         if value_key is not None:
             # Looking up color for a specific category
@@ -137,9 +185,21 @@ class Geom:
                              style_props['default_color']
         else:
             # Use literal value or default (handle None explicitly)
-            color_value = style_props.get('color') if style_props.get('color') is not None else \
-                         style_props.get('fill') if style_props.get('fill') is not None else \
-                         style_props['default_color']
+            # Only use color/fill if they're actual colors, not column names that couldn't be resolved
+            color_val = style_props.get('color')
+            fill_val = style_props.get('fill')
+
+            # If there's a color_series or fill_series, the color/fill value is a column name, not a color
+            # In that case, use the default color instead
+            if style_props.get('color_series') is not None or style_props.get('fill_series') is not None:
+                # There's a mapping but we don't have a value_key - use default
+                color_value = style_props['default_color']
+            elif color_val is not None and is_valid_color(color_val):
+                color_value = color_val
+            elif fill_val is not None and is_valid_color(fill_val):
+                color_value = fill_val
+            else:
+                color_value = style_props['default_color']
 
         # Apply to appropriate trace properties
         for aesthetic, trace_prop in target_props.items():
@@ -211,7 +271,11 @@ class Geom:
         # Priority: explicit group > color/fill mapping > shape mapping
         # If multiple aesthetics are mapped, we need to create traces for each combination
 
-        has_color_grouping = style_props['color_series'] is not None or style_props['fill_series'] is not None
+        # Check for continuous color mapping (numeric data)
+        has_continuous_color = style_props.get('color_is_continuous', False) or style_props.get('fill_is_continuous', False)
+
+        # Only use categorical grouping if color/fill is NOT continuous
+        has_color_grouping = (style_props['color_series'] is not None or style_props['fill_series'] is not None) and not has_continuous_color
         has_shape_grouping = shape_series is not None
 
         # Get categorical aesthetic info
@@ -373,7 +437,47 @@ class Geom:
                     col=col,
                 )
 
-        # Case 5: No grouping - single trace
+        # Case 5: Continuous color mapping - single trace with colorscale
+        elif has_continuous_color:
+            # Get the continuous color data
+            if style_props.get('color_is_continuous'):
+                color_values = style_props['color_series']
+            else:
+                color_values = style_props['fill_series']
+
+            # Build marker dict - only include properties supported by the trace type
+            marker_dict = dict(
+                color=color_values,
+                colorscale='Viridis',  # Default, will be overridden by scale_color_gradient
+                showscale=True,
+            )
+
+            # Only add size/symbol if they're in color_targets (i.e., the trace type supports them)
+            if 'size' in color_targets:
+                if style_props['size_series'] is not None:
+                    marker_dict['size'] = style_props['size_series']
+                else:
+                    marker_dict['size'] = style_props['size']
+            if 'shape' in color_targets:
+                shape_val = style_props.get('shape')
+                marker_dict['symbol'] = shape_val if shape_val else 'circle'
+
+            # For continuous color, we pass the numeric values and let Plotly handle the colorscale
+            # The scale_color_gradient will apply the colorscale later
+            fig.add_trace(
+                plot(
+                    x=x,
+                    y=y,
+                    opacity=alpha,
+                    showlegend=False,  # Colorbar serves as legend for continuous
+                    marker=marker_dict,
+                    **payload_copy,
+                ),
+                row=row,
+                col=col,
+            )
+
+        # Case 6: No grouping - single trace
         else:
             trace_props = self._apply_color_targets(
                 color_targets, style_props,

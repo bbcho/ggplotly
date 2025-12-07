@@ -66,7 +66,12 @@ class geom_rug(Geom):
         y = data[y_col].values if y_col and y_col in data.columns else None
 
         alpha = style_props['alpha']
-        color = style_props.get('color') or style_props['default_color']
+        # For rug plots, we use a single color (not mapped per data point)
+        # If color is a column reference, use default color instead
+        color = style_props.get('color')
+        if color is None or style_props.get('color_series') is not None:
+            # Color is either not set or is a column reference - use default
+            color = style_props['default_color']
         line_width = style_props['size']
 
         # Get data ranges to calculate rug length
