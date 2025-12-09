@@ -373,12 +373,27 @@ def _apply_spring_forces_vectorized(edge_points, kP):
     return forces
 
 
-def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, edge_idx, n_points, eps=1e-8):
+def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, edge_idx, n_points, weights=None, eps=1e-8):
     """
     Apply electrostatic forces to all internal points of an edge at once.
 
     Following the FDEB paper (Holten & Van Wijk 2009), the electrostatic force
     is the sum of unit direction vectors toward compatible edge points.
+
+    Parameters
+    ----------
+    edge_list : list of np.ndarray
+        List of edge point arrays
+    compatible_indices_list : list of np.ndarray
+        Pre-computed compatible edge indices for each edge
+    edge_idx : int
+        Index of the current edge
+    n_points : int
+        Number of points in the edge
+    weights : np.ndarray, optional
+        Normalized edge weights. Heavier edges attract more strongly.
+    eps : float
+        Small value to avoid division by zero
     """
     compatible_indices = compatible_indices_list[edge_idx]
 
@@ -390,6 +405,12 @@ def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, e
 
     edge_points = edge_list[edge_idx]
 
+    # Get weights for compatible edges (default to 1.0)
+    if weights is not None:
+        compat_weights = weights[compatible_indices, np.newaxis]  # (n_compat, 1)
+    else:
+        compat_weights = 1.0
+
     # Process all internal points (1 to n_points-1)
     for i in range(1, n_points - 1):
         curr_point = edge_points[i]
@@ -399,8 +420,8 @@ def _apply_electrostatic_forces_all_points(edge_list, compatible_indices_list, e
         dists = np.linalg.norm(diff, axis=1, keepdims=True)
         dists = np.maximum(dists, eps)
 
-        # Sum of unit direction vectors toward compatible points
-        forces[i] = (diff / dists).sum(axis=0)
+        # Sum of unit direction vectors toward compatible points, weighted by edge weight
+        forces[i] = (compat_weights * diff / dists).sum(axis=0)
 
     return forces
 
@@ -449,6 +470,10 @@ class stat_edgebundle:
     --------
     >>> stat = stat_edgebundle(compatibility_threshold=0.6)
     >>> bundled = stat.compute(edges_df)
+
+    >>> # With edge weights
+    >>> stat = stat_edgebundle()
+    >>> bundled = stat.compute(edges_df, weights=edges_df['weight'])
     """
 
     def __init__(
@@ -479,17 +504,32 @@ class stat_edgebundle:
         self._cached_result = None
         self._cached_data_hash = None
 
-    def _compute_data_hash(self, data: pd.DataFrame) -> int:
+    def _compute_data_hash(self, data: pd.DataFrame, weights: Optional[np.ndarray] = None) -> int:
         """Compute a hash of the input data for cache invalidation."""
+        weight_hash = weights.tobytes() if weights is not None else b''
         return hash((
             data.shape,
             data['x'].values.tobytes(),
             data['y'].values.tobytes(),
             data['xend'].values.tobytes(),
             data['yend'].values.tobytes(),
+            weight_hash,
         ))
 
-    def compute(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _normalize_weights(self, weights: np.ndarray) -> np.ndarray:
+        """
+        Normalize weights to [0.5, 1.5] range.
+
+        This preserves relative differences while preventing extreme values
+        from dominating the force simulation.
+        """
+        w_min, w_max = weights.min(), weights.max()
+        if w_max - w_min < 1e-8:
+            # All weights are the same, return uniform weights
+            return np.ones_like(weights)
+        return 0.5 + (weights - w_min) / (w_max - w_min)
+
+    def compute(self, data: pd.DataFrame, weights: Optional[np.ndarray] = None) -> pd.DataFrame:
         """
         Apply edge bundling transformation.
 
@@ -497,6 +537,10 @@ class stat_edgebundle:
         ----------
         data : pd.DataFrame
             Must contain columns: x, y, xend, yend
+        weights : np.ndarray, optional
+            Edge weights. Heavier edges attract compatible edges more strongly,
+            causing them to bundle toward high-traffic routes. Weights are
+            normalized to [0.5, 1.5] range internally.
 
         Returns
         -------
@@ -509,12 +553,25 @@ class stat_edgebundle:
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
 
+        # Convert weights to numpy array if provided
+        if weights is not None:
+            weights = np.asarray(weights, dtype=np.float64)
+            if len(weights) != len(data):
+                raise ValueError(f"weights length ({len(weights)}) must match data length ({len(data)})")
+
         # Check cache
-        data_hash = self._compute_data_hash(data)
+        data_hash = self._compute_data_hash(data, weights)
         if self._cached_result is not None and self._cached_data_hash == data_hash:
             if self.verbose:
                 print("Using cached bundling result")
             return self._cached_result
+
+        # Normalize weights if provided
+        normalized_weights = None
+        if weights is not None:
+            normalized_weights = self._normalize_weights(weights)
+            if self.verbose:
+                print(f"Using edge weights (range: {weights.min():.2f} - {weights.max():.2f})")
 
         # Convert to numpy array format
         edges_xy = np.column_stack([
@@ -524,7 +581,7 @@ class stat_edgebundle:
             data['yend'].values
         ])
 
-        result = self._bundle_edges(edges_xy)
+        result = self._bundle_edges(edges_xy, normalized_weights)
 
         # Cache the result
         self._cached_result = result
@@ -532,7 +589,7 @@ class stat_edgebundle:
 
         return result
 
-    def _bundle_edges(self, edges_xy: np.ndarray) -> pd.DataFrame:
+    def _bundle_edges(self, edges_xy: np.ndarray, weights: Optional[np.ndarray] = None) -> pd.DataFrame:
         """Core bundling algorithm."""
         n_edges = len(edges_xy)
         eps = 1e-8
@@ -578,7 +635,7 @@ class stat_edgebundle:
 
                     spring_forces = _apply_spring_forces_vectorized(edge_points, kP)
                     electro_forces = _apply_electrostatic_forces_all_points(
-                        edge_list, compatible_indices_list, e_idx, n_points, eps
+                        edge_list, compatible_indices_list, e_idx, n_points, weights, eps
                     )
 
                     forces = S * (spring_forces + self.E * electro_forces)

@@ -15,7 +15,7 @@ from .geom_base import Geom
 from ..stats.stat_edgebundle import stat_edgebundle
 
 
-def _extract_graph_data(graph):
+def _extract_graph_data(graph, weight_attr=None):
     """
     Extract edge and node data from an igraph Graph object.
 
@@ -24,11 +24,15 @@ def _extract_graph_data(graph):
     graph : igraph.Graph
         Graph object with vertex attributes for coordinates.
         Expected attributes: 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'.
+    weight_attr : str, optional
+        Name of edge attribute to use as weight. If None, will auto-detect
+        'weight' attribute if present.
 
     Returns
     -------
     tuple : (edges_df, nodes_df)
         DataFrames containing edge coordinates and node attributes.
+        edges_df includes 'weight' column if weights are available.
     """
     # Get coordinate attribute names
     lon_attr = None
@@ -48,6 +52,10 @@ def _extract_graph_data(graph):
             "Expected 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'."
         )
 
+    # Determine weight attribute
+    if weight_attr is None and 'weight' in graph.es.attributes():
+        weight_attr = 'weight'
+
     # Extract node data
     nodes_data = {'x': graph.vs[lon_attr], 'y': graph.vs[lat_attr]}
     for attr in graph.vs.attributes():
@@ -58,12 +66,15 @@ def _extract_graph_data(graph):
     edges = []
     for edge in graph.es:
         source, target = edge.source, edge.target
-        edges.append({
+        edge_data = {
             'x': graph.vs[source][lon_attr],
             'y': graph.vs[source][lat_attr],
             'xend': graph.vs[target][lon_attr],
             'yend': graph.vs[target][lat_attr]
-        })
+        }
+        if weight_attr is not None:
+            edge_data['weight'] = edge[weight_attr]
+        edges.append(edge_data)
     edges_df = pd.DataFrame(edges)
 
     return edges_df, nodes_df
@@ -77,6 +88,7 @@ class geom_edgebundle(Geom):
         mapping=None,
         data=None,
         graph=None,
+        weight=None,
         K: float = 1.0,
         E: float = 1.0,
         C: int = 6,
@@ -111,6 +123,7 @@ class geom_edgebundle(Geom):
         ----------
         mapping : aes, optional
             Aesthetic mappings. Required: x, y (start), xend, yend (end).
+            Optional: weight (edge weight for bundling attraction).
             Not needed when using graph parameter.
         data : DataFrame, optional
             Data to use for this geom (overrides plot data).
@@ -118,6 +131,12 @@ class geom_edgebundle(Geom):
             An igraph Graph object with vertex coordinate attributes.
             When provided, edges and nodes are extracted automatically.
             Vertices must have 'longitude'/'lon'/'x' and 'latitude'/'lat'/'y'.
+            Edge 'weight' attribute is used automatically if present.
+        weight : str, optional
+            Column name or igraph edge attribute for edge weights.
+            Heavier edges attract compatible edges more strongly during
+            bundling, causing lighter edges to bundle toward heavy routes.
+            Weights are normalized to [0.5, 1.5] range internally.
         K : float, default=1.0
             Spring constant controlling edge stiffness (resists bundling).
         E : float, default=1.0
@@ -168,17 +187,27 @@ class geom_edgebundle(Geom):
         >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
         ...  + geom_edgebundle(compatibility_threshold=0.6))
 
-        >>> # From igraph
+        >>> # From DataFrame with weights
+        >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend', weight='traffic'))
+        ...  + geom_edgebundle())
+
+        >>> # From igraph (auto-detects 'weight' edge attribute)
         >>> g = data('us_flights')
         >>> ggplot() + geom_edgebundle(graph=g)
+
+        >>> # From igraph with explicit weight attribute
+        >>> ggplot() + geom_edgebundle(graph=g, weight='passengers')
         """
         super().__init__(data=data, mapping=mapping, **kwargs)
+
+        # Store weight column/attribute name
+        self.weight_attr = weight
 
         # Store graph and extracted data
         self.graph = graph
         self.nodes = None
         if graph is not None:
-            edges_df, nodes_df = _extract_graph_data(graph)
+            edges_df, nodes_df = _extract_graph_data(graph, weight_attr=weight)
             self.data = edges_df
             self.nodes = nodes_df
 
@@ -268,8 +297,17 @@ class geom_edgebundle(Geom):
             'yend': data[yend]
         })
 
+        # Extract weights if available
+        weights = None
+        weight_col = self.mapping.get('weight', self.weight_attr)
+        if weight_col is None and 'weight' in data.columns:
+            # Auto-detect weight column (e.g., from igraph extraction)
+            weight_col = 'weight'
+        if weight_col is not None and weight_col in data.columns:
+            weights = data[weight_col].values
+
         # Apply edge bundling transformation
-        bundled = self.stat.compute(edges_df)
+        bundled = self.stat.compute(edges_df, weights=weights)
 
         # Check if we're in geo context
         is_geo = self._is_geo_figure(fig)

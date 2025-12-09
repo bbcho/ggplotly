@@ -1101,3 +1101,263 @@ class TestIgraphSupport:
 
         # Should have traces for edges and nodes
         assert len(fig.data) > 0
+
+
+class TestEdgeWeights:
+    """Tests for edge weight support in bundling."""
+
+    def test_stat_edgebundle_with_weights(self):
+        """Test that stat_edgebundle accepts and uses weights."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0, 0],
+            'y': [0, 1, 2],
+            'xend': [10, 10, 10],
+            'yend': [0, 1, 2]
+        })
+        weights = np.array([10.0, 1.0, 1.0])
+
+        stat = stat_edgebundle(C=2, I=10, verbose=False)
+        bundled = stat.compute(edges_df, weights=weights)
+
+        assert len(bundled) > 0
+        assert 'x' in bundled.columns
+        assert 'y' in bundled.columns
+
+    def test_stat_edgebundle_weight_normalization(self):
+        """Test that weights are normalized to [0.5, 1.5] range."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        # Test with extreme weight values
+        weights = np.array([1.0, 1000.0])
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+        # Should not crash with extreme values
+        bundled = stat.compute(edges_df, weights=weights)
+        assert len(bundled) > 0
+
+    def test_stat_edgebundle_uniform_weights(self):
+        """Test that uniform weights behave like no weights."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat = stat_edgebundle(C=2, I=10, verbose=False)
+
+        # Compute without weights
+        bundled_no_weights = stat.compute(edges_df)
+
+        # Clear cache
+        stat._cached_result = None
+        stat._cached_data_hash = None
+
+        # Compute with uniform weights (should be same as no weights)
+        uniform_weights = np.array([5.0, 5.0])
+        bundled_uniform = stat.compute(edges_df, weights=uniform_weights)
+
+        # Results should be identical (uniform weights normalize to 1.0)
+        np.testing.assert_array_almost_equal(
+            bundled_no_weights['x'].values,
+            bundled_uniform['x'].values
+        )
+
+    def test_stat_edgebundle_weight_length_mismatch(self):
+        """Test that mismatched weight length raises error."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+        weights = np.array([1.0, 2.0, 3.0])  # Wrong length
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+
+        with pytest.raises(ValueError, match="weights length"):
+            stat.compute(edges_df, weights=weights)
+
+    def test_geom_edgebundle_with_weight_mapping(self):
+        """Test geom_edgebundle with weight aesthetic mapping."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0, 0],
+            'y': [0, 1, 2],
+            'xend': [10, 10, 10],
+            'yend': [0, 1, 2],
+            'traffic': [100, 10, 10]
+        })
+
+        fig = (
+            ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend', weight='traffic'))
+            + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
+        ).draw()
+
+        assert len(fig.data) > 0
+
+    def test_geom_edgebundle_with_weight_param(self):
+        """Test geom_edgebundle with weight parameter."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1],
+            'passengers': [500, 50]
+        })
+
+        bundle = geom_edgebundle(
+            data=edges_df,
+            weight='passengers',
+            C=2, I=5,
+            verbose=False
+        )
+
+        assert bundle.weight_attr == 'passengers'
+
+    def test_geom_edgebundle_auto_detect_weight_column(self):
+        """Test that geom_edgebundle auto-detects 'weight' column."""
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1],
+            'weight': [10.0, 1.0]
+        })
+
+        fig = (
+            ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
+            + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
+        ).draw()
+
+        assert len(fig.data) > 0
+
+    def test_igraph_with_edge_weights(self):
+        """Test igraph support with edge weights."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = ig.Graph([(0, 1), (1, 2), (0, 2)])
+        g.vs['x'] = [0, 5, 10]
+        g.vs['y'] = [0, 5, 0]
+        g.es['weight'] = [100, 10, 10]  # First edge is heavy
+
+        bundle = geom_edgebundle(graph=g, verbose=False, C=2, I=5)
+
+        # Check that weight was extracted
+        assert 'weight' in bundle.data.columns
+        assert bundle.data['weight'].tolist() == [100, 10, 10]
+
+    def test_igraph_with_custom_weight_attr(self):
+        """Test igraph with custom weight attribute name."""
+        pytest.importorskip("igraph")
+        import igraph as ig
+
+        g = ig.Graph([(0, 1), (1, 2)])
+        g.vs['x'] = [0, 5, 10]
+        g.vs['y'] = [0, 5, 0]
+        g.es['passengers'] = [500, 50]
+
+        bundle = geom_edgebundle(graph=g, weight='passengers', verbose=False, C=2, I=5)
+
+        assert 'weight' in bundle.data.columns
+        assert bundle.data['weight'].tolist() == [500, 50]
+
+    def test_weights_affect_bundling(self):
+        """Test that weights actually affect the bundling result."""
+        # Create parallel edges where middle edge should bundle differently
+        # based on whether it has high or low weight
+        edges_df = pd.DataFrame({
+            'x': [0, 0, 0],
+            'y': [0, 0.5, 1],
+            'xend': [10, 10, 10],
+            'yend': [0, 0.5, 1]
+        })
+
+        stat = stat_edgebundle(C=3, I=20, verbose=False)
+
+        # Heavy top edge - middle should bundle toward top
+        stat._cached_result = None
+        stat._cached_data_hash = None
+        weights_top_heavy = np.array([100.0, 1.0, 1.0])
+        bundled_top = stat.compute(edges_df, weights=weights_top_heavy)
+
+        # Heavy bottom edge - middle should bundle toward bottom
+        stat._cached_result = None
+        stat._cached_data_hash = None
+        weights_bottom_heavy = np.array([1.0, 1.0, 100.0])
+        bundled_bottom = stat.compute(edges_df, weights=weights_bottom_heavy)
+
+        # Middle edge (group 1) should have different y values
+        middle_top = bundled_top[bundled_top['group'] == 1]
+        middle_bottom = bundled_bottom[bundled_bottom['group'] == 1]
+
+        # The bundled paths should be different
+        assert not np.allclose(
+            middle_top['y'].values,
+            middle_bottom['y'].values,
+            atol=0.01
+        )
+
+    def test_weights_pull_middle_edge_toward_heavy_group(self):
+        """
+        Test that heavy edges attract lighter edges more strongly.
+
+        Creates 3 groups of parallel edges (top at y=8, middle at y=5, bottom at y=2).
+        When top edges are heavy, middle should be pulled UP toward y=8.
+        When bottom edges are heavy, middle should be pulled DOWN toward y=2.
+        """
+        edges_df = pd.DataFrame({
+            # 3 top edges at y=8, 1 middle at y=5, 3 bottom at y=2
+            'x':    [0, 0, 0,   0,   0, 0, 0],
+            'y':    [8, 8, 8,   5,   2, 2, 2],
+            'xend': [10, 10, 10, 10,  10, 10, 10],
+            'yend': [8, 8, 8,   5,   2, 2, 2],
+        })
+
+        stat = stat_edgebundle(C=4, I=30, compatibility_threshold=0.5, verbose=False)
+
+        # No weights - middle should stay centered
+        bundled_none = stat.compute(edges_df, weights=None)
+
+        stat._cached_result = None
+        stat._cached_data_hash = None
+
+        # Heavy top - middle should be pulled UP
+        weights_heavy_top = np.array([100, 100, 100,  1,  1, 1, 1])
+        bundled_top = stat.compute(edges_df, weights=weights_heavy_top)
+
+        stat._cached_result = None
+        stat._cached_data_hash = None
+
+        # Heavy bottom - middle should be pulled DOWN
+        weights_heavy_bottom = np.array([1, 1, 1,  1,  100, 100, 100])
+        bundled_bottom = stat.compute(edges_df, weights=weights_heavy_bottom)
+
+        # Get midpoint y-values for the middle edge (group 3)
+        def get_midpoint_y(bundled):
+            group = bundled[bundled['group'] == 3]
+            mid_idx = len(group) // 2
+            return group.iloc[mid_idx]['y']
+
+        mid_y_none = get_midpoint_y(bundled_none)
+        mid_y_top = get_midpoint_y(bundled_top)
+        mid_y_bottom = get_midpoint_y(bundled_bottom)
+
+        # With no weights, middle should stay at y=5 (centered)
+        assert abs(mid_y_none - 5.0) < 0.1, f"Unweighted middle should stay near y=5, got {mid_y_none}"
+
+        # With heavy top, middle should be pulled UP (y > 5)
+        assert mid_y_top > 5.5, f"Heavy top should pull middle UP above 5.5, got {mid_y_top}"
+
+        # With heavy bottom, middle should be pulled DOWN (y < 5)
+        assert mid_y_bottom < 4.5, f"Heavy bottom should pull middle DOWN below 4.5, got {mid_y_bottom}"
+
+        # The difference between heavy-top and heavy-bottom should be significant
+        assert mid_y_top - mid_y_bottom > 2.0, (
+            f"Weight effect should create >2.0 difference, got {mid_y_top - mid_y_bottom:.2f}"
+        )
