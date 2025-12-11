@@ -2,14 +2,20 @@ import plotly.graph_objects as go
 
 
 class Theme:
+    """Base theme class for styling ggplot figures."""
+
     def __init__(self, template=None, legend_position='right', legend_show=True):
         """
-        Base Theme class.
+        Initialize the theme.
 
-        Parameters:
-            template (go.layout.Template, optional): Plotly template to apply to the figure.
-            legend_position (str): Position of the legend ('right', 'left', 'top', 'bottom', 'none').
-            legend_show (bool): Whether to show the legend.
+        Parameters
+        ----------
+        template : go.layout.Template, optional
+            Plotly template to apply to the figure.
+        legend_position : str, default='right'
+            Position of the legend ('right', 'left', 'top', 'bottom', 'none').
+        legend_show : bool, default=True
+            Whether to show the legend.
         """
         self.template = template
         self.legend_position = legend_position
@@ -19,11 +25,10 @@ class Theme:
         """
         Apply the theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to which the theme will be applied.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to which the theme will be applied.
         """
         self._apply_legend_settings(fig)
 
@@ -52,11 +57,16 @@ class Theme:
         """
         Apply styling to all 3D scenes in the figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to modify.
-            bgcolor (str): Background color for the 3D scene.
-            gridcolor (str): Grid line color.
-            linecolor (str): Axis line color.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to modify.
+        bgcolor : str, optional
+            Background color for the 3D scene.
+        gridcolor : str, optional
+            Grid line color.
+        linecolor : str, optional
+            Axis line color.
         """
         # Check if figure has 3D traces
         has_3d = any(hasattr(trace, 'type') and trace.type == 'scatter3d' for trace in fig.data)
@@ -96,15 +106,24 @@ class Theme:
         """
         Apply styling to geographic maps in the figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to modify.
-            bgcolor (str): Background color for the geo plot.
-            landcolor (str): Color of land areas.
-            oceancolor (str): Color of ocean areas.
-            lakecolor (str): Color of lakes.
-            countrycolor (str): Color of country borders.
-            coastlinecolor (str): Color of coastlines.
-            subunitcolor (str): Color of subunit borders (e.g., US states).
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to modify.
+        bgcolor : str, optional
+            Background color for the geo plot.
+        landcolor : str, optional
+            Color of land areas.
+        oceancolor : str, optional
+            Color of ocean areas.
+        lakecolor : str, optional
+            Color of lakes.
+        countrycolor : str, optional
+            Color of country borders.
+        coastlinecolor : str, optional
+            Color of coastlines.
+        subunitcolor : str, optional
+            Color of subunit borders (e.g., US states).
         """
         # Check if figure has geo traces
         geo_types = ('scattergeo', 'choropleth', 'scattermapbox', 'choroplethmapbox')
@@ -162,62 +181,88 @@ def theme(legend_position='right', legend_show=True,
     """
     Create a custom theme with granular control over plot elements (ggplot2-style).
 
-    Parameters:
-        legend_position (str): 'right', 'left', 'top', 'bottom', 'none'
-        legend_show (bool): Whether to show legend
+    Parameters
+    ----------
+    legend_position : str, default='right'
+        Position of the legend ('right', 'left', 'top', 'bottom', 'none').
+    legend_show : bool, default=True
+        Whether to show the legend.
+    axis_title : element_text, optional
+        Style for all axis titles.
+    axis_title_x : element_text, optional
+        Style for x-axis title.
+    axis_title_y : element_text, optional
+        Style for y-axis title.
+    axis_text : element_text, optional
+        Style for all axis text (tick labels).
+    axis_text_x : element_text, optional
+        Style for x-axis text.
+    axis_text_y : element_text, optional
+        Style for y-axis text.
+    axis_line : element_line, optional
+        Style for all axis lines.
+    axis_line_x : element_line, optional
+        Style for x-axis line.
+    axis_line_y : element_line, optional
+        Style for y-axis line.
+    axis_ticks : element_line, optional
+        Style for all axis ticks.
+    axis_ticks_x : element_line, optional
+        Style for x-axis ticks.
+    axis_ticks_y : element_line, optional
+        Style for y-axis ticks.
+    panel_background : element_rect, optional
+        Background of the plot panel.
+    panel_grid : element_line, optional
+        Style for all grid lines.
+    panel_grid_major : element_line, optional
+        Style for major grid lines.
+    panel_grid_minor : element_line, optional
+        Style for minor grid lines.
+    panel_border : element_rect, optional
+        Border around plot panel.
+    plot_title : element_text, optional
+        Style for plot title.
+    plot_subtitle : element_text, optional
+        Style for plot subtitle.
+    plot_caption : element_text, optional
+        Style for plot caption.
+    plot_background : element_rect, optional
+        Background of entire plot.
+    legend_title : element_text, optional
+        Style for legend title.
+    legend_text : element_text, optional
+        Style for legend text.
+    legend_background : element_rect, optional
+        Background of legend.
+    strip_text : element_text, optional
+        Style for facet strip labels.
+    strip_background : element_rect, optional
+        Background of facet strips.
+    **kwargs
+        Additional Plotly layout parameters.
 
-        Axis Title Elements:
-            axis_title (element_text): Style for all axis titles
-            axis_title_x (element_text): Style for x-axis title
-            axis_title_y (element_text): Style for y-axis title
+    Returns
+    -------
+    Theme
+        A theme object that can be added to ggplot.
 
-        Axis Text Elements (tick labels):
-            axis_text (element_text): Style for all axis text
-            axis_text_x (element_text): Style for x-axis text
-            axis_text_y (element_text): Style for y-axis text
+    Examples
+    --------
+    >>> from ggplotly import ggplot, aes, geom_point, theme, element_text, element_rect, data
+    >>> mpg = data('mpg')
 
-        Axis Line Elements:
-            axis_line (element_line): Style for all axis lines
-            axis_line_x (element_line): Style for x-axis line
-            axis_line_y (element_line): Style for y-axis line
+    >>> # Move legend to bottom
+    >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + theme(legend_position='bottom')
 
-        Axis Ticks:
-            axis_ticks (element_line): Style for all axis ticks
-            axis_ticks_x (element_line): Style for x-axis ticks
-            axis_ticks_y (element_line): Style for y-axis ticks
+    >>> # Style axis titles
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme(axis_title=element_text(size=14, color='blue'))
 
-        Panel Elements:
-            panel_background (element_rect): Background of the plot panel
-            panel_grid (element_line): All grid lines
-            panel_grid_major (element_line): Major grid lines
-            panel_grid_minor (element_line): Minor grid lines
-            panel_border (element_rect): Border around plot panel
+    >>> # Change panel background
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme(panel_background=element_rect(fill='lightgray'))
 
-        Plot Elements:
-            plot_title (element_text): Style for plot title
-            plot_subtitle (element_text): Style for plot subtitle
-            plot_caption (element_text): Style for plot caption
-            plot_background (element_rect): Background of entire plot
-
-        Legend Elements:
-            legend_title (element_text): Style for legend title
-            legend_text (element_text): Style for legend text
-            legend_background (element_rect): Background of legend
-
-        Strip Elements (for faceted plots):
-            strip_text (element_text): Style for facet strip labels
-            strip_background (element_rect): Background of facet strips
-
-        **kwargs: Additional Plotly layout parameters
-
-    Returns:
-        Theme: A theme object that can be added to ggplot
-
-    Examples:
-        >>> theme(legend_position='bottom')
-        >>> theme(axis_title=element_text(size=14, color='blue'))
-        >>> theme(panel_background=element_rect(fill='lightgray'))
-        >>> theme(plot_title=element_text(size=20, color='darkblue'))
+    >>> # Style plot title
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme(plot_title=element_text(size=20, color='darkblue'))
     """
     class CustomTheme(Theme):
         def __init__(self):
@@ -370,48 +415,67 @@ def theme(legend_position='right', legend_show=True,
     return CustomTheme()
 
 class theme_template(Theme):
-    """
-    Apply a custom Plotly template as a theme.
+    """Apply a custom Plotly template as a theme."""
 
-    Examples:
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_template()
-    """
+    def __init__(self, template=None):
+        """
+        Apply a custom Plotly template as a theme.
+
+        Parameters
+        ----------
+        template : go.layout.Template, optional
+            The Plotly template to apply.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, data
+        >>> from ggplotly.themes import theme_template
+        >>> mpg = data('mpg')
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme_template()
+        """
+        super().__init__(template=template)
 
     def apply(self, fig):
         """
         Apply the template theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to modify.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to modify.
         """
         fig.update_layout(template=self.template)
 
 
 class theme_dark(Theme):
-    """
-    Dark theme with dark background and light text.
+    """Dark theme with dark background and light text."""
 
-    Automatically applies dark styling to:
-    - Standard 2D plots (via plotly_dark template)
-    - 3D scenes (dark background with subtle grid)
-    - Geographic maps (dark land, ocean, and borders)
+    def __init__(self):
+        """
+        Create a dark theme with dark background and light text.
 
-    Examples:
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_dark()
-    """
+        Automatically applies dark styling to:
+
+        - Standard 2D plots (via plotly_dark template)
+        - 3D scenes (dark background with subtle grid)
+        - Geographic maps (dark land, ocean, and borders)
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, theme_dark, data
+        >>> mpg = data('mpg')
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + theme_dark()
+        """
+        super().__init__()
 
     def apply(self, fig):
         """
         Apply the dark theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to modify.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to modify.
         """
         fig.update_layout(template="plotly_dark")
         # Apply dark styling to 3D scenes
@@ -435,32 +499,33 @@ class theme_dark(Theme):
 
 
 class theme_classic(Theme):
-    """
-    Classic theme with white background and no gridlines.
-
-    Similar to ggplot2's theme_classic().
-
-    Parameters:
-        base_size (int): Base font size in points. Default is 11.
-        base_family (str): Base font family. Default is "" (system default).
-
-    Automatically applies classic styling to:
-    - Standard 2D plots (white background, no gridlines)
-    - 3D scenes (white background)
-    - Geographic maps (light, clean appearance)
-
-    Examples:
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_classic()
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_classic(base_size=14)
-    """
+    """Classic theme with white background and no gridlines."""
 
     def __init__(self, base_size=11, base_family=""):
         """
-        Initialize theme_classic.
+        Create a classic theme with white background and no gridlines.
 
-        Parameters:
-            base_size (int): Base font size in points. Default is 11.
-            base_family (str): Base font family. Default is "" (system default).
+        Similar to ggplot2's theme_classic().
+
+        Automatically applies classic styling to:
+
+        - Standard 2D plots (white background, no gridlines)
+        - 3D scenes (white background)
+        - Geographic maps (light, clean appearance)
+
+        Parameters
+        ----------
+        base_size : int, default=11
+            Base font size in points.
+        base_family : str, default=""
+            Base font family (system default if empty).
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, theme_classic, data
+        >>> mpg = data('mpg')
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme_classic()
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme_classic(base_size=14)
         """
         super().__init__()
         self.base_size = base_size
@@ -470,11 +535,10 @@ class theme_classic(Theme):
         """
         Apply the classic theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to modify.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to modify.
         """
         font_dict = dict(size=self.base_size)
         if self.base_family:
@@ -506,20 +570,27 @@ class theme_classic(Theme):
 
 
 class theme_default(Theme):
-    """
-    Default theme with light background and gridlines.
+    """Default theme with light background and gridlines."""
 
-    Automatically applies default styling to:
-    - Standard 2D plots (white background, light gridlines)
-    - Geographic maps (standard light appearance)
-    """
+    def __init__(self):
+        """
+        Create the default theme with light background and gridlines.
+
+        Automatically applies default styling to:
+
+        - Standard 2D plots (white background, light gridlines)
+        - Geographic maps (standard light appearance)
+        """
+        super().__init__()
 
     def apply(self, fig):
         """
-        Default theme that applies a light background with gridlines using the go.layout.Template.
+        Apply the default theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to which the theme will be applied.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to which the theme will be applied.
         """
         default_template = go.layout.Template(
             layout=dict(
@@ -565,15 +636,17 @@ class theme_default(Theme):
 
 
 class theme_bbc(Theme):
-    """
-    BBC-style theme with clean white background and distinctive colors.
-
-    Automatically applies BBC styling to:
-    - Standard 2D plots (white background, BBC color palette)
-    - Geographic maps (clean, professional appearance)
-    """
+    """BBC-style theme with clean white background and distinctive colors."""
 
     def __init__(self):
+        """
+        Create a BBC-style theme with clean white background and distinctive colors.
+
+        Automatically applies BBC styling to:
+
+        - Standard 2D plots (white background, BBC color palette)
+        - Geographic maps (clean, professional appearance)
+        """
         # Define a template for Plotly to apply globally
         self.template = go.layout.Template(
             layout=dict(
@@ -627,17 +700,20 @@ class theme_bbc(Theme):
 
 
 class theme_ggplot2(Theme):
-    """
-    A theme that replicates the default ggplot2 style from R, including color palette and other global settings.
-    This theme uses Plotly's template system to apply the style across all geoms.
-
-    Automatically applies ggplot2 styling to:
-    - Standard 2D plots (grey background, white gridlines)
-    - 3D scenes (grey background)
-    - Geographic maps (grey-toned appearance matching ggplot2)
-    """
+    """A theme that replicates the default ggplot2 style from R."""
 
     def __init__(self):
+        """
+        Create a theme that replicates the default ggplot2 style from R.
+
+        Uses Plotly's template system to apply the style across all geoms.
+
+        Automatically applies ggplot2 styling to:
+
+        - Standard 2D plots (grey background, white gridlines)
+        - 3D scenes (grey background)
+        - Geographic maps (grey-toned appearance matching ggplot2)
+        """
         # Define a template for Plotly to apply globally
         self.template = go.layout.Template(
             layout=dict(
@@ -696,15 +772,19 @@ class theme_ggplot2(Theme):
 
 
 class theme_nytimes(Theme):
-    """
-    A theme inspired by New York Times charts, using Plotly's template system to apply style globally.
-
-    Automatically applies NYT styling to:
-    - Standard 2D plots (clean white background, subtle gridlines)
-    - Geographic maps (clean, professional appearance)
-    """
+    """A theme inspired by New York Times charts."""
 
     def __init__(self):
+        """
+        Create a theme inspired by New York Times charts.
+
+        Uses Plotly's template system to apply style globally.
+
+        Automatically applies NYT styling to:
+
+        - Standard 2D plots (clean white background, subtle gridlines)
+        - Geographic maps (clean, professional appearance)
+        """
         # Define a template for Plotly to apply globally
         self.template = go.layout.Template(
             layout=dict(
@@ -759,30 +839,31 @@ class theme_nytimes(Theme):
 
 
 class theme_minimal(Theme):
-    """
-    Minimal theme that removes background and gridlines for a cleaner look.
-
-    Parameters:
-        base_size (int): Base font size in points. Default is 11.
-        base_family (str): Base font family. Default is "" (system default).
-
-    Automatically applies minimal styling to:
-    - Standard 2D plots (white background, no gridlines)
-    - 3D scenes (white background, subtle grid)
-    - Geographic maps (clean, minimal appearance)
-
-    Examples:
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_minimal()
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + theme_minimal(base_size=14)
-    """
+    """Minimal theme that removes background and gridlines for a cleaner look."""
 
     def __init__(self, base_size=11, base_family=""):
         """
-        Initialize theme_minimal.
+        Create a minimal theme that removes background and gridlines.
 
-        Parameters:
-            base_size (int): Base font size in points. Default is 11.
-            base_family (str): Base font family. Default is "" (system default).
+        Automatically applies minimal styling to:
+
+        - Standard 2D plots (white background, no gridlines)
+        - 3D scenes (white background, subtle grid)
+        - Geographic maps (clean, minimal appearance)
+
+        Parameters
+        ----------
+        base_size : int, default=11
+            Base font size in points.
+        base_family : str, default=""
+            Base font family (system default if empty).
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, theme_minimal, data
+        >>> mpg = data('mpg')
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme_minimal()
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + theme_minimal(base_size=14)
         """
         super().__init__()
         self.base_size = base_size
@@ -790,10 +871,12 @@ class theme_minimal(Theme):
 
     def apply(self, fig):
         """
-        Minimal theme that removes background and gridlines for a cleaner look, using go.layout.Template.
+        Apply the minimal theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to which the theme will be applied.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to which the theme will be applied.
         """
         font_dict = dict(color="black", size=self.base_size)
         if self.base_family:
@@ -843,17 +926,33 @@ class theme_minimal(Theme):
 
 
 class theme_custom(Theme):
+    """Custom theme with user-specified colors."""
+
     def __init__(self, background_color="white", grid_color="grey", text_color="black"):
+        """
+        Create a custom theme with user-specified colors.
+
+        Parameters
+        ----------
+        background_color : str, default='white'
+            Background color for the plot.
+        grid_color : str, default='grey'
+            Color of grid lines.
+        text_color : str, default='black'
+            Color of text elements.
+        """
         self.background_color = background_color
         self.grid_color = grid_color
         self.text_color = text_color
 
     def apply(self, fig):
         """
-        Apply a custom theme using go.layout.Template with customizable background, grid, and text colors.
+        Apply the custom theme to a figure.
 
-        Parameters:
-            fig (Figure): The Plotly figure to which the theme will be applied.
+        Parameters
+        ----------
+        fig : Figure
+            The Plotly figure to which the theme will be applied.
         """
         custom_template = go.layout.Template(
             layout=dict(
@@ -869,47 +968,61 @@ class theme_custom(Theme):
         fig.update_layout(template=custom_template)
 
 
-# themes.py
 class element_text:
-    def __init__(self, size=12, color="black", family="Arial"):
-        """
-        Customize text elements.
+    """
+    Customize text elements in themes.
 
-        Parameters:
-            size (int): Font size.
-            color (str): Text color.
-            family (str): Font family.
-        """
+    Parameters
+    ----------
+    size : int, default=12
+        Font size in points.
+    color : str, default='black'
+        Text color.
+    family : str, default='Arial'
+        Font family.
+    """
+
+    def __init__(self, size=12, color="black", family="Arial"):
         self.size = size
         self.color = color
         self.family = family
 
 
 class element_line:
-    def __init__(self, color="black", width=1, dash="solid"):
-        """
-        Customize line elements.
+    """
+    Customize line elements in themes.
 
-        Parameters:
-            color (str): Line color.
-            width (int): Line width.
-            dash (str): Line dash style.
-        """
+    Parameters
+    ----------
+    color : str, default='black'
+        Line color.
+    width : int, default=1
+        Line width in pixels.
+    dash : str, default='solid'
+        Line dash style ('solid', 'dash', 'dot', 'dashdot').
+    """
+
+    def __init__(self, color="black", width=1, dash="solid"):
         self.color = color
         self.width = width
         self.dash = dash
 
 
 class element_rect:
-    def __init__(self, fill="white", color="black", width=1):
-        """
-        Customize rectangle elements.
+    """
+    Customize rectangle elements in themes.
 
-        Parameters:
-            fill (str): Fill color.
-            color (str): Border color.
-            width (int): Border width.
-        """
+    Parameters
+    ----------
+    fill : str, default='white'
+        Fill color.
+    color : str, default='black'
+        Border color.
+    width : int, default=1
+        Border width in pixels.
+    """
+
+    def __init__(self, fill="white", color="black", width=1):
         self.fill = fill
         self.color = color
         self.width = width

@@ -1,15 +1,17 @@
 # TODO
 
-- [ ] Get Edge bundles working
-  - <https://classes.engineering.wustl.edu/cse557/readings/holten-edgebundling.pdf>
-  - <https://www.data-to-viz.com/graph/edge_bundling.html>
-  - <https://github.com/upphiminn/d3.ForceBundle>
-  - <https://github.com/CreativeCodingLab/GPUEdgeBundling>
 - [ ] go thru geoms one by one to make sure I've replicated all of the parameters from ggplot
 - [ ] Add plotly charts that don't exist in ggplot2 like 3D scatter plots
   - [ ] sliders and range controls
   - [ ] 3D plots
   - [ ] waterfall charts
+
+## Plotly Functionality I want to port over
+
+- [X] range slider
+- [X] range selector
+- [ ] slider
+- [ ] drop down
 
 ## Missing ggplot2 Functions
 

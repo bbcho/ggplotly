@@ -32,7 +32,7 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 
 ## ggplot2 Function Coverage
 
-### Geoms (28)
+### Geoms (34)
 
 | Function | Description |
 |----------|-------------|
@@ -64,6 +64,13 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `geom_point_map` | Points on maps |
 | `geom_range` | Range plots (min/max/avg) |
 | `geom_edgebundle` | Edge bundling for networks |
+| `geom_sf` | Simple features (geographic) |
+| `geom_searoute` | Maritime shipping routes |
+| `geom_point_3d` | 3D scatter plots |
+| `geom_surface` | 3D surface plots |
+| `geom_wireframe` | 3D wireframe plots |
+| `geom_candlestick` | Candlestick charts (financial) |
+| `geom_ohlc` | OHLC charts (financial) |
 
 ### Stats (7)
 
@@ -77,7 +84,7 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `stat_smooth` | Smoothing with CI |
 | `stat_summary` | Summary statistics |
 
-### Scales (15)
+### Scales (17)
 
 | Function | Description |
 |----------|-------------|
@@ -87,6 +94,8 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `scale_y_log10` | Log10 y-axis |
 | `scale_x_date` | Date x-axis |
 | `scale_x_datetime` | DateTime x-axis |
+| `scale_x_rangeslider` | Interactive range slider for zooming |
+| `scale_x_rangeselector` | Range selector buttons for time series |
 | `scale_color_manual` | Manual color mapping |
 | `scale_color_gradient` | Continuous color gradient |
 | `scale_color_brewer` | ColorBrewer palettes |
@@ -104,6 +113,7 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `coord_cartesian` | Cartesian coordinates |
 | `coord_flip` | Flip x and y axes |
 | `coord_polar` | Polar coordinates |
+| `coord_sf` | Spatial/geographic coordinates |
 
 ### Facets (2)
 
@@ -126,15 +136,18 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `theme_custom` | Custom theme builder |
 | `theme` | Theme modification |
 
-### Position Adjustments (3)
+### Position Adjustments (6)
 
 | Function | Description |
 |----------|-------------|
 | `position_dodge` | Dodge overlapping objects |
 | `position_jitter` | Add random noise |
 | `position_stack` | Stack objects |
+| `position_fill` | Stack and normalize to 100% |
+| `position_nudge` | Nudge points by fixed amount |
+| `position_identity` | No adjustment (identity) |
 
-### Guides & Labels (4)
+### Guides & Labels (7)
 
 | Function | Description |
 |----------|-------------|
@@ -142,6 +155,9 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `ggtitle` | Set title |
 | `annotate` | Add annotations |
 | `xlim` / `ylim` / `lims` | Set axis limits |
+| `guides` | Control legend/colorbar display |
+| `guide_legend` | Configure legend appearance |
+| `guide_colorbar` | Configure colorbar appearance |
 
 ### Utilities (2)
 
@@ -150,4 +166,4 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `ggsave` | Save plots to file |
 | `ggsize` | Set plot dimensions |
 
-## Total: ~85 ggplot2-equivalent functions
+## Total: ~97 ggplot2-equivalent functions

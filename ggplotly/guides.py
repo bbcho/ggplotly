@@ -1,31 +1,48 @@
 # guides.py
 
-"""
-Guide functions for controlling legends and color bars.
-"""
+"""Guide functions for controlling legends and color bars."""
 
 
 class guide_legend:
-    """
-    Configure legend appearance for discrete scales.
-
-    Parameters:
-        title (str, optional): Legend title. Use None to suppress title.
-        title_position (str): Position of title ('top', 'left', 'right'). Default is 'top'.
-        direction (str): Direction of legend keys ('horizontal', 'vertical'). Default is 'vertical'.
-        nrow (int, optional): Number of rows for legend keys.
-        ncol (int, optional): Number of columns for legend keys.
-        byrow (bool): If True, fill by row. Default is False (fill by column).
-        reverse (bool): If True, reverse the order of keys. Default is False.
-        override_aes (dict, optional): Override aesthetic properties in legend.
-
-    Examples:
-        >>> guides(color=guide_legend(title='Groups', ncol=2))
-        >>> guides(fill=guide_legend(reverse=True))
-    """
+    """Configure legend appearance for discrete scales."""
 
     def __init__(self, title=None, title_position='top', direction='vertical',
                  nrow=None, ncol=None, byrow=False, reverse=False, override_aes=None):
+        """
+        Configure legend appearance for discrete scales.
+
+        Parameters
+        ----------
+        title : str, optional
+            Legend title. Use None to suppress title.
+        title_position : str, default='top'
+            Position of title ('top', 'left', 'right').
+        direction : str, default='vertical'
+            Direction of legend keys ('horizontal', 'vertical').
+        nrow : int, optional
+            Number of rows for legend keys.
+        ncol : int, optional
+            Number of columns for legend keys.
+        byrow : bool, default=False
+            If True, fill by row. Default is False (fill by column).
+        reverse : bool, default=False
+            If True, reverse the order of keys.
+        override_aes : dict, optional
+            Override aesthetic properties in legend.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, guides, guide_legend, data
+        >>> mpg = data('mpg')
+
+        >>> # Customize color legend with title and columns
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + \\
+        ...     guides(color=guide_legend(title='Vehicle Class', ncol=2))
+
+        >>> # Reverse legend order
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='drv')) + geom_point() + \\
+        ...     guides(color=guide_legend(reverse=True))
+        """
         self.title = title
         self.title_position = title_position
         self.direction = direction
@@ -37,30 +54,52 @@ class guide_legend:
 
 
 class guide_colorbar:
-    """
-    Configure colorbar appearance for continuous scales.
-
-    Parameters:
-        title (str, optional): Colorbar title. Use None to suppress title.
-        title_position (str): Position of title ('top', 'bottom', 'left', 'right'). Default is 'top'.
-        direction (str): Direction of colorbar ('horizontal', 'vertical'). Default is 'vertical'.
-        barwidth (float, optional): Width of the colorbar.
-        barheight (float, optional): Height of the colorbar.
-        nbin (int): Number of bins for colorbar. Default is 300.
-        raster (bool): If True, render as raster. Default is True.
-        ticks (bool): If True, show tick marks. Default is True.
-        draw_ulim (bool): If True, draw upper limit. Default is True.
-        draw_llim (bool): If True, draw lower limit. Default is True.
-        reverse (bool): If True, reverse colorbar direction. Default is False.
-
-    Examples:
-        >>> guides(color=guide_colorbar(title='Value', direction='horizontal'))
-        >>> guides(fill=guide_colorbar(barwidth=20))
-    """
+    """Configure colorbar appearance for continuous scales."""
 
     def __init__(self, title=None, title_position='top', direction='vertical',
                  barwidth=None, barheight=None, nbin=300, raster=True,
                  ticks=True, draw_ulim=True, draw_llim=True, reverse=False):
+        """
+        Configure colorbar appearance for continuous scales.
+
+        Parameters
+        ----------
+        title : str, optional
+            Colorbar title. Use None to suppress title.
+        title_position : str, default='top'
+            Position of title ('top', 'bottom', 'left', 'right').
+        direction : str, default='vertical'
+            Direction of colorbar ('horizontal', 'vertical').
+        barwidth : float, optional
+            Width of the colorbar.
+        barheight : float, optional
+            Height of the colorbar.
+        nbin : int, default=300
+            Number of bins for colorbar.
+        raster : bool, default=True
+            If True, render as raster.
+        ticks : bool, default=True
+            If True, show tick marks.
+        draw_ulim : bool, default=True
+            If True, draw upper limit.
+        draw_llim : bool, default=True
+            If True, draw lower limit.
+        reverse : bool, default=False
+            If True, reverse colorbar direction.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, guides, guide_colorbar, data
+        >>> diamonds = data('diamonds')
+
+        >>> # Horizontal colorbar with custom title
+        >>> ggplot(diamonds.head(1000), aes(x='carat', y='price', color='depth')) + geom_point() + \\
+        ...     guides(color=guide_colorbar(title='Depth %', direction='horizontal'))
+
+        >>> # Customize colorbar width
+        >>> ggplot(diamonds.head(1000), aes(x='carat', y='price', color='depth')) + geom_point() + \\
+        ...     guides(color=guide_colorbar(barwidth=20))
+        """
         self.title = title
         self.title_position = title_position
         self.direction = direction
@@ -75,27 +114,44 @@ class guide_colorbar:
 
 
 class Guides:
-    """
-    Control guide (legend/colorbar) display for aesthetics.
-
-    This class allows you to customize or hide guides for specific aesthetics.
-
-    Parameters:
-        color: Guide for color aesthetic (guide_legend, guide_colorbar, 'none', or False)
-        fill: Guide for fill aesthetic
-        shape: Guide for shape aesthetic
-        size: Guide for size aesthetic
-        alpha: Guide for alpha aesthetic
-        linetype: Guide for linetype aesthetic
-
-    Examples:
-        >>> guides(color='none')  # Hide color legend
-        >>> guides(color=guide_legend(title='My Legend'))
-        >>> guides(fill=guide_colorbar(direction='horizontal'))
-    """
+    """Control guide (legend/colorbar) display for aesthetics."""
 
     def __init__(self, color=None, fill=None, shape=None, size=None,
                  alpha=None, linetype=None, **kwargs):
+        """
+        Control guide (legend/colorbar) display for aesthetics.
+
+        This class allows you to customize or hide guides for specific aesthetics.
+
+        Parameters
+        ----------
+        color : guide_legend, guide_colorbar, str, or bool, optional
+            Guide for color aesthetic. Use 'none' or False to hide.
+        fill : guide_legend, guide_colorbar, str, or bool, optional
+            Guide for fill aesthetic.
+        shape : guide_legend or str, optional
+            Guide for shape aesthetic.
+        size : guide_legend or str, optional
+            Guide for size aesthetic.
+        alpha : guide_legend or str, optional
+            Guide for alpha aesthetic.
+        linetype : guide_legend or str, optional
+            Guide for linetype aesthetic.
+        **kwargs
+            Additional aesthetic-guide mappings.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, guides, guide_legend, data
+        >>> mpg = data('mpg')
+
+        >>> # Hide color legend
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + guides(color='none')
+
+        >>> # Customize legend
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + \\
+        ...     guides(color=guide_legend(title='Vehicle Class'))
+        """
         self.guides = {
             'color': color,
             'fill': fill,
@@ -111,8 +167,10 @@ class Guides:
         """
         Apply guide settings to the figure.
 
-        Parameters:
-            fig (Figure): Plotly figure object.
+        Parameters
+        ----------
+        fig : Figure
+            Plotly figure object.
         """
         layout_updates = {}
         legend_updates = {}
@@ -189,57 +247,43 @@ def guides(**kwargs):
     """
     Control guide (legend/colorbar) display for aesthetics.
 
-    Parameters:
-        **kwargs: Aesthetic-guide mappings. Keys are aesthetic names (color, fill, shape, etc.)
-            Values can be:
-            - 'none' or False: Hide the guide
-            - guide_legend(...): Configure legend appearance
-            - guide_colorbar(...): Configure colorbar appearance
+    Parameters
+    ----------
+    **kwargs
+        Aesthetic-guide mappings. Keys are aesthetic names (color, fill, shape, etc.)
+        Values can be:
 
-    Returns:
-        Guides: A Guides object that can be added to ggplot.
+        - 'none' or False: Hide the guide
+        - guide_legend(...): Configure legend appearance
+        - guide_colorbar(...): Configure colorbar appearance
 
-    Examples:
-        # Hide color legend
-        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + guides(color='none')
+    Returns
+    -------
+    Guides
+        A Guides object that can be added to ggplot.
 
-        # Customize legend
-        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + guides(color=guide_legend(title='Category', ncol=2))
+    Examples
+    --------
+    >>> from ggplotly import ggplot, aes, geom_point, guides, guide_legend, guide_colorbar, data
+    >>> mpg = data('mpg')
+    >>> diamonds = data('diamonds')
 
-        # Customize colorbar
-        >>> ggplot(df, aes(x='x', y='y', color='value')) + geom_point() + guides(color=guide_colorbar(direction='horizontal'))
+    >>> # Hide color legend
+    >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + guides(color='none')
+
+    >>> # Customize legend with title and columns
+    >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + \\
+    ...     guides(color=guide_legend(title='Vehicle Class', ncol=2))
+
+    >>> # Customize colorbar direction
+    >>> ggplot(diamonds.head(1000), aes(x='carat', y='price', color='depth')) + geom_point() + \\
+    ...     guides(color=guide_colorbar(direction='horizontal'))
     """
     return Guides(**kwargs)
 
 
 class Labs:
-    """
-    Set plot labels including title, subtitle, axis labels, legend titles, and caption.
-
-    Parameters:
-        title (str, optional): Main plot title.
-        subtitle (str, optional): Subtitle displayed below the title.
-        x (str, optional): X-axis label.
-        y (str, optional): Y-axis label.
-        z (str, optional): Z-axis label (for 3D plots).
-        color (str, optional): Legend title for color aesthetic.
-        colour (str, optional): Alias for color (British spelling).
-        fill (str, optional): Legend title for fill aesthetic.
-        size (str, optional): Legend title for size aesthetic.
-        shape (str, optional): Legend title for shape aesthetic.
-        alpha (str, optional): Legend title for alpha aesthetic.
-        linetype (str, optional): Legend title for linetype aesthetic.
-        caption (str, optional): Caption displayed at bottom-right of plot.
-        tag (str, optional): Plot tag (e.g., "A", "B" for figure panels).
-        alt (str, optional): Alternative text for accessibility.
-        **kwargs: Additional label parameters for other aesthetics.
-
-    Examples:
-        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + labs(title='My Plot', x='X Axis', y='Y Axis')
-        >>> ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + labs(color='Group')
-        >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_point_3d() + labs(x='X', y='Y', z='Z')
-        >>> labs(shape='Shape Type', size='Size Value', alpha='Transparency')
-    """
+    """Set plot labels including title, subtitle, axis labels, legend titles, and caption."""
 
     def __init__(
         self,
@@ -261,25 +305,59 @@ class Labs:
         **kwargs
     ):
         """
-        Initialize plot labels.
+        Set plot labels including title, subtitle, axis labels, legend titles, and caption.
 
-        Parameters:
-            title (str, optional): Main plot title.
-            subtitle (str, optional): Subtitle displayed below the title.
-            x (str, optional): X-axis label.
-            y (str, optional): Y-axis label.
-            z (str, optional): Z-axis label (for 3D plots).
-            color (str, optional): Legend title for color aesthetic.
-            colour (str, optional): Alias for color (British spelling).
-            fill (str, optional): Legend title for fill aesthetic.
-            size (str, optional): Legend title for size aesthetic.
-            shape (str, optional): Legend title for shape aesthetic.
-            alpha (str, optional): Legend title for alpha aesthetic.
-            linetype (str, optional): Legend title for linetype aesthetic.
-            caption (str, optional): Caption displayed at bottom-right of plot.
-            tag (str, optional): Plot tag (e.g., "A", "B" for figure panels).
-            alt (str, optional): Alternative text for accessibility.
-            **kwargs: Additional label parameters.
+        Parameters
+        ----------
+        title : str, optional
+            Main plot title.
+        subtitle : str, optional
+            Subtitle displayed below the title.
+        x : str, optional
+            X-axis label.
+        y : str, optional
+            Y-axis label.
+        z : str, optional
+            Z-axis label (for 3D plots).
+        color : str, optional
+            Legend title for color aesthetic.
+        colour : str, optional
+            Alias for color (British spelling).
+        fill : str, optional
+            Legend title for fill aesthetic.
+        size : str, optional
+            Legend title for size aesthetic.
+        shape : str, optional
+            Legend title for shape aesthetic.
+        alpha : str, optional
+            Legend title for alpha aesthetic.
+        linetype : str, optional
+            Legend title for linetype aesthetic.
+        caption : str, optional
+            Caption displayed at bottom-right of plot.
+        tag : str, optional
+            Plot tag (e.g., 'A', 'B' for figure panels).
+        alt : str, optional
+            Alternative text for accessibility.
+        **kwargs
+            Additional label parameters for other aesthetics.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, labs, data
+        >>> mpg = data('mpg')
+
+        >>> # Set title and axis labels
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+        ...     labs(title='Fuel Efficiency', x='Engine Displacement (L)', y='Highway MPG')
+
+        >>> # Set legend title
+        >>> ggplot(mpg, aes(x='displ', y='hwy', color='class')) + geom_point() + \\
+        ...     labs(color='Vehicle Class')
+
+        >>> # Add subtitle and caption
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+        ...     labs(title='Fuel Efficiency', subtitle='1999-2008 vehicles', caption='Source: EPA')
         """
         self.title = title
         self.subtitle = subtitle
@@ -301,11 +379,10 @@ class Labs:
         """
         Apply the labels to the figure.
 
-        Parameters:
-            fig (Figure): Plotly figure object.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            Plotly figure object.
         """
         layout_updates = {}
 
@@ -374,57 +451,25 @@ class Labs:
                     fig.update_layout(**{scene_key: scene_updates})
 
 
-# guides.py continued
 def labs(**kwargs):
     """
     Create a Labs object to modify plot labels.
 
-    Parameters:
-        **kwargs: Label parameters (e.g., title, x, y).
+    Parameters
+    ----------
+    **kwargs
+        Label parameters (e.g., title, x, y, color, fill).
 
-    Returns:
-        Labs: An instance of the Labs class.
+    Returns
+    -------
+    Labs
+        An instance of the Labs class.
     """
     return Labs(**kwargs)
 
 
 class Annotate:
-    """
-    Add annotations to a plot at specific data coordinates.
-
-    Supports text, rectangles, segments/arrows, and other shapes.
-    Similar to ggplot2's annotate().
-
-    Parameters:
-        geom (str): Type of annotation. Options:
-            - 'text': Text label at (x, y)
-            - 'label': Text with background box at (x, y)
-            - 'segment': Line segment from (x, y) to (xend, yend)
-            - 'rect': Rectangle from (xmin, ymin) to (xmax, ymax)
-            - 'point': Point marker at (x, y)
-            - 'curve': Curved arrow (with curvature parameter)
-        x, y: Position coordinates (data coordinates)
-        xend, yend: End coordinates for segments
-        xmin, xmax, ymin, ymax: Bounds for rectangles
-        label: Text content for text/label annotations
-        color: Color of the annotation
-        fill: Fill color (for rect, label background)
-        size: Size of text or point
-        alpha: Transparency
-        fontface: Font style ('plain', 'bold', 'italic')
-        hjust, vjust: Horizontal/vertical justification (0-1)
-        arrow: Whether to add arrow to segment (bool or dict)
-
-    Examples:
-        # Add text annotation
-        annotate('text', x=5, y=10, label='Important point')
-
-        # Add rectangle highlight
-        annotate('rect', xmin=2, xmax=4, ymin=5, ymax=8, fill='yellow', alpha=0.3)
-
-        # Add arrow pointing to something
-        annotate('segment', x=3, y=5, xend=5, yend=8, arrow=True)
-    """
+    """Add annotations to a plot at specific data coordinates."""
 
     def __init__(self, geom, x=None, y=None, xend=None, yend=None,
                  xmin=None, xmax=None, ymin=None, ymax=None,
@@ -432,22 +477,69 @@ class Annotate:
                  alpha=None, fontface=None, hjust=None, vjust=None,
                  arrow=None, **kwargs):
         """
-        Initialize an annotation.
+        Add annotations to a plot at specific data coordinates.
 
-        Parameters:
-            geom (str): Type of annotation ('text', 'label', 'segment', 'rect', 'point', 'curve').
-            x, y (float): Position coordinates in data space.
-            xend, yend (float, optional): End coordinates for segments.
-            xmin, xmax, ymin, ymax (float, optional): Bounds for rectangles.
-            label (str, optional): Text content for text/label annotations.
-            color (str, optional): Color of the annotation.
-            fill (str, optional): Fill color for rectangles or label backgrounds.
-            size (float, optional): Size of text or point.
-            alpha (float, optional): Transparency (0-1).
-            fontface (str, optional): Font style ('plain', 'bold', 'italic').
-            hjust, vjust (float, optional): Horizontal/vertical justification (0-1).
-            arrow (bool or dict, optional): Whether to add arrow to segment.
-            **kwargs: Additional parameters.
+        Supports text, rectangles, segments/arrows, and other shapes.
+        Similar to ggplot2's annotate().
+
+        Parameters
+        ----------
+        geom : str
+            Type of annotation. Options: 'text', 'label', 'segment', 'rect',
+            'point', 'curve', 'hline', 'vline'.
+        x : float, optional
+            X position coordinate (data coordinates).
+        y : float, optional
+            Y position coordinate (data coordinates).
+        xend : float, optional
+            End x coordinate for segments.
+        yend : float, optional
+            End y coordinate for segments.
+        xmin : float, optional
+            Left bound for rectangles.
+        xmax : float, optional
+            Right bound for rectangles.
+        ymin : float, optional
+            Bottom bound for rectangles.
+        ymax : float, optional
+            Top bound for rectangles.
+        label : str, optional
+            Text content for text/label annotations.
+        color : str, optional
+            Color of the annotation.
+        fill : str, optional
+            Fill color (for rect, label background).
+        size : float, optional
+            Size of text or point.
+        alpha : float, optional
+            Transparency (0-1).
+        fontface : str, optional
+            Font style ('plain', 'bold', 'italic').
+        hjust : float, optional
+            Horizontal justification (0-1).
+        vjust : float, optional
+            Vertical justification (0-1).
+        arrow : bool or dict, optional
+            Whether to add arrow to segment.
+        **kwargs
+            Additional parameters.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_point, annotate, data
+        >>> mpg = data('mpg')
+
+        >>> # Add text annotation
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+        ...     annotate('text', x=5, y=40, label='High efficiency zone')
+
+        >>> # Add highlighted rectangle region
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+        ...     annotate('rect', xmin=1.5, xmax=2.5, ymin=30, ymax=45, fill='yellow', alpha=0.3)
+
+        >>> # Add segment with arrow
+        >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+        ...     annotate('segment', x=3, y=35, xend=2, yend=44, arrow=True)
         """
         self.geom = geom
         self.x = x
@@ -473,8 +565,10 @@ class Annotate:
         """
         Apply the annotation to the figure.
 
-        Parameters:
-            fig (Figure): Plotly figure object.
+        Parameters
+        ----------
+        fig : Figure
+            Plotly figure object.
         """
         if self.geom == 'text':
             self._add_text(fig)
@@ -669,21 +763,33 @@ def annotate(geom, **kwargs):
     """
     Create an annotation to add to a plot.
 
-    Parameters:
-        geom (str): Type of annotation ('text', 'label', 'segment', 'rect', 'point', 'curve')
-        **kwargs: Annotation parameters (x, y, label, color, etc.)
+    Parameters
+    ----------
+    geom : str
+        Type of annotation ('text', 'label', 'segment', 'rect', 'point', 'curve').
+    **kwargs
+        Annotation parameters (x, y, label, color, etc.).
 
-    Returns:
-        Annotate: An Annotate object.
+    Returns
+    -------
+    Annotate
+        An Annotate object.
 
-    Examples:
-        # Text annotation
-        ggplot(df, aes(x='x', y='y')) + geom_point() + annotate('text', x=5, y=10, label='Peak')
+    Examples
+    --------
+    >>> from ggplotly import ggplot, aes, geom_point, annotate, data
+    >>> mpg = data('mpg')
 
-        # Highlight region
-        ggplot(df, aes(x='x', y='y')) + geom_point() + annotate('rect', xmin=2, xmax=4, ymin=0, ymax=5, fill='yellow', alpha=0.2)
+    >>> # Text annotation
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+    ...     annotate('text', x=5, y=40, label='Outliers')
 
-        # Arrow pointing to data
-        ggplot(df, aes(x='x', y='y')) + geom_point() + annotate('segment', x=0, y=0, xend=5, yend=10, arrow=True)
+    >>> # Rectangle highlight
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+    ...     annotate('rect', xmin=1.5, xmax=2.5, ymin=30, ymax=45, fill='yellow', alpha=0.2)
+
+    >>> # Arrow pointing to a feature
+    >>> ggplot(mpg, aes(x='displ', y='hwy')) + geom_point() + \\
+    ...     annotate('segment', x=4, y=35, xend=2.5, yend=44, arrow=True)
     """
     return Annotate(geom, **kwargs)

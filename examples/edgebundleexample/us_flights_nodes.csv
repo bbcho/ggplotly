@@ -1,0 +1,277 @@
+"id","name","city","state","longitude","latitude"
+0,"Lehigh Valley International","Allentown","PA",-75.44040167,40.65236278
+1,"Abilene Regional","Abilene","TX",-99.68189722,32.41132
+2,"Albuquerque International","Albuquerque","NM",-106.6091944,35.04022222
+3,"Southwest Georgia Regional","Albany","GA",-84.19447333,31.535515
+4,"Nantucket Memorial","Nantucket","MA",-70.06018139,41.25305194
+5,"Waco Regional","Waco","TX",-97.23051917,31.61128833
+6,"Arcata","Arcata/Eureka","CA",-124.1086189,40.97811528
+7,"Atlantic City International","Atlantic City","NJ",-74.57716667,39.45758333
+8,"Alexandria International","Alexandria","LA",-92.54855611,31.32737167
+9,"Bush","Augusta","GA",-81.96449611,33.369955
+10,"Albany Cty","Albany","NY",-73.80297861,42.74811944
+11,"Waterloo Municipal","Waterloo","IA",-92.40034361,42.55708139
+12,"Amarillo International","Amarillo","TX",-101.7059272,35.2193725
+13,"Aspen-Pitkin Co/Sardy","Aspen","CO",-106.868845,39.22316
+14,"William B Hartsfield-Atlanta Intl","Atlanta","GA",-84.42694444,33.64044444
+15,"Outagamie County Regional","Appleton","WI",-88.51947556,44.25740806
+16,"Austin-Bergstrom International","Austin","TX",-97.66987194,30.19453278
+17,"Asheville Regional","Asheville","NC",-82.54180556,35.43619444
+18,"Wilkes-Barre/Scranton Intl","Wilkes-Barre/Scranton","PA",-75.7242675,41.33814944
+19,"Kalamazoo County","Kalamazoo","MI",-85.5520575,42.234875
+20,"Bradley International","Windsor Locks","CT",-72.68322833,41.93887417
+21,"Meadows","Bakersfield","CA",-119.0567681,35.43359806
+22,"Binghamton Regional","Binghamton","NY",-75.97961361,42.20848278
+23,"Bangor International","Bangor","ME",-68.82813889,44.80744444
+24,"Birmingham International","Birmingham","AL",-86.75354972,33.56294306
+25,"Billings Logan Intl","Billings","MT",-108.5428611,45.8076625
+26,"Bismarck Municipal","Bismarck","ND",-100.7467222,46.77411111
+27,"Bemidji-Beltrami County","Bemidji","MN",-94.93372333,47.50942417
+28,"Bellingham Intl","Bellingham","WA",-122.5375278,48.79275
+29,"Central Illinois Regional","Bloomington","IL",-88.91595278,40.47798556
+30,"Nashville International","Nashville","TN",-86.67818222,36.12447667
+31,"Boise Air Terminal","Boise","ID",-116.2227778,43.56444444
+32,"Gen Edw L Logan Intl","Boston","MA",-71.00517917,42.3643475
+33,"Southeast Texas Regional","Beaumont/Port Arthur","TX",-94.02069444,29.95083333
+34,"Glynco Jetport","Brunswick","GA",-81.46630556,31.25902778
+35,"Brownsville/S.Padre Island International","Brownsville","TX",-97.42586111,25.90683333
+36,"Bert Mooney","Butte","MT",-112.49746,45.95479528
+37,"Baton Rouge Metropolitan, Ryan","Baton Rouge","LA",-91.14963444,30.53316083
+38,"Burlington International","Burlington","VT",-73.1503125,44.47300361
+39,"Buffalo Niagara Intl","Buffalo","NY",-78.73216667,42.94052472
+40,"Burbank-Glendale-Pasadena","Burbank","CA",-118.3584969,34.20061917
+41,"Baltimore-Washington International","Baltimore","MD",-76.66819833,39.17540167
+42,"Gallatin","Bozeman","MT",-111.1530072,45.77690139
+43,"Columbia Metropolitan","Columbia","SC",-81.11953944,33.93884
+44,"Akron-Canton Regional","Akron","OH",-81.44246556,40.91631194
+45,"Cedar City Muni","Cedar City","UT",-113.098575,37.70097028
+46,"Jack McNamara","Crescent City","CA",-124.2365333,41.78015722
+47,"Lovell","Chattanooga","TN",-85.20378778,35.03526833
+48,"Charlottesville-Albermarle","Charlottesville","VA",-78.45286111,38.13863889
+49,"Charleston AFB/International","Charleston","SC",-80.04050583,32.89864639
+50,"Chico Municipal","Chico","CA",-121.8584231,39.79538278
+51,"Eastern Iowa","Cedar Rapids","IA",-91.71087222,41.88458833
+52,"MC Clellan-Palomar Airport",NA,NA,-117.278727,33.127231
+53,"Cleveland-Hopkins Intl","Cleveland","OH",-81.84939667,41.41089417
+54,"Easterwood","College Station","TX",-96.36382417,30.58858944
+55,"Charlotte/Douglas International","Charlotte","NC",-80.94312583,35.21401111
+56,"Port Columbus Intl","Columbus","OH",-82.89188278,39.99798528
+57,"University of Illinois-Willard","Champaign/Urbana","IL",-88.27805556,40.03925
+58,"Houghton County Memorial","Hancock","MI",-88.48906083,47.16841722
+59,"Yellowstone Regional","Cody","WY",-109.0237961,44.52019417
+60,"City of Colorado Springs Muni","Colorado Springs","CO",-104.70025,38.80580556
+61,"Natrona County Intl","Casper","WY",-106.4644661,42.90835556
+62,"Corpus Christi International","Corpus Christi","TX",-97.50121528,27.77036083
+63,"Yeager","Charleston","WV",-81.59318972,38.37315083
+64,"Columbus Metropolitan","Columbus","GA",-84.93886111,32.51633333
+65,"Cincinnati Northern Kentucky Intl","Covington","KY",-84.6621725,39.04614278
+66,"Central Wisconsin","Mosinee","WI",-89.66677944,44.77761917
+67,"Cheyenne","Cheyenne","WY",-104.8118381,41.1557225
+68,"Daytona Beach International","Daytona Beach","FL",-81.05805556,29.17991667
+69,"Dallas Love","Dallas","TX",-96.85177222,32.84711389
+70,"James M Cox Dayton Intl","Dayton","OH",-84.219375,39.90237583
+71,"Dubuque Municipal","Dubuque","IA",-90.70916722,42.40295944
+72,"Ronald Reagan Washington National","Arlington","VA",-77.03772222,38.85208333
+73,"Denver Intl","Denver","CO",-104.6670019,39.85840806
+74,"Dallas-Fort Worth International","Dallas-Fort Worth","TX",-97.0372,32.89595056
+75,"Dothan","Dothan","AL",-85.44962889,31.32133917
+76,"Duluth International","Duluth","MN",-92.19364861,46.84209028
+77,"Durango-La Plata County","Durango","CO",-107.7537692,37.15151667
+78,"Des Moines International","Des Moines","IA",-93.66068222,41.53493306
+79,"Detroit Metropolitan-Wayne County","Detroit","MI",-83.34883583,42.21205889
+80,"Eagle County Regional","Eagle","CO",-106.9176953,39.64256778
+81,"Elko Regional","Elko","NV",-115.7916964,40.82492611
+82,"Elmira/Corning Regional","Elmira","NY",-76.89144333,42.15991361
+83,"El Paso International","El Paso","TX",-106.3778056,31.80666667
+84,"Erie Intl","Erie","PA",-80.17621556,42.08202139
+85,"Mahlon Sweet","Eugene","OR",-123.2186856,44.12326
+86,"Evansville Regional","Evansville","IN",-87.53062667,38.03799139
+87,"Craven County Regional","New Bern","NC",-77.04294444,35.07297222
+88,"Newark Intl","Newark","NJ",-74.16866056,40.69249722
+89,"Key West International","Key West","FL",-81.75955556,24.55611111
+90,"Hector International","Fargo","ND",-96.81498889,46.91934889
+91,"Fresno Yosemite International","Fresno","CA",-119.7181389,36.77619444
+92,"Fayetteville Municipal","Fayetteville","NC",-78.88,34.99147222
+93,"Glacier Park Intl","Kalispell","MT",-114.2550694,48.31140472
+94,"Flagstaff Pulliam","Flagstaff","AZ",-111.6712183,35.13845472
+95,"Fort Lauderdale-Hollywood Int'l","Ft. Lauderdale","FL",-80.15275,26.07258333
+96,"Florence Regional","Florence","SC",-79.72388889,34.18536111
+97,"Bishop","Flint","MI",-83.74345639,42.96550333
+98,"Joe Foss","Sioux Falls","SD",-96.74170028,43.58135111
+99,"Fort Smith Regional","Fort Smith","AR",-94.36744111,35.33659028
+100,"Fort Wayne International","Fort Wayne","IN",-85.19514639,40.97846583
+101,"Gillette-Campbell County","Gillette","WY",-105.5393614,44.34889806
+102,"Spokane Intl","Spokane","WA",-117.5338425,47.61985556
+103,"Grand Forks International","Grand Forks","ND",-97.17611111,47.949255
+104,"Gregg County","Longview","TX",-94.71171,32.38486111
+105,"Walker","Grand Junction","CO",-108.5267347,39.1224125
+106,"Gainesville Regional","Gainesville","FL",-82.27177778,29.69005556
+107,"Gulfport-Biloxi Regional","Gulfport-Biloxi","MS",-89.07009278,30.40728028
+108,"Austin Straubel International","Green Bay","WI",-88.12959,44.48507333
+109,"Robert Gray AAF","Killeen","TX",-97.82779778,31.06489778
+110,"Kent County International","Grand Rapids","MI",-85.52276778,42.88081972
+111,"Piedmont Triad International","Greensboro","NC",-79.9372975,36.09774694
+112,"Greenville-Spartanburg","Greer","SC",-82.21885833,34.89566722
+113,"Great Falls Intl","Great Falls","MT",-111.3706853,47.48200194
+114,"Golden Triangle Regional","Columbus-Starkville-West Point","MS",-88.59136861,33.45033444
+115,"Gunnison County","Gunnison","CO",-106.9331817,38.53396333
+116,"Yampa Valley","Hayden","CO",-107.2176597,40.48118028
+117,"Hilton Head",NA,NA,-80.697629,32.224384
+118,"Helena Regional","Helena","MT",-111.9827503,46.60681806
+119,"William P Hobby","Houston","TX",-95.27888889,29.64541861
+120,"Westchester Cty","White Plains","NY",-73.70757444,41.06695778
+121,"Valley International","Harlingen","TX",-97.65439389,26.22850611
+122,"Huntsville International","Huntsville","AL",-86.77310944,34.6404475
+123,"Tri-State/Walker-Long","Huntington","WV",-82.55802778,38.36666667
+124,"Washington Dulles International","Chantilly","VA",-77.45580972,38.94453194
+125,"George Bush Intercontinental","Houston","TX",-95.33972222,29.98047222
+126,"Wichita Mid-Continent","Wichita","KS",-97.43304583,37.64995889
+127,"Idaho Falls Regional","Idaho Falls","ID",-112.0701667,43.51455556
+128,"Wilmington International","Wilmington","NC",-77.90255556,34.27061111
+129,"Indianapolis International","Indianapolis","IN",-86.29438417,39.71732917
+130,"Falls International","International Falls","MN",-93.40306667,48.56618722
+131,"Imperial County","Imperial","CA",-115.5787456,32.83422028
+132,"Long Island - MacArthur","Islip","NY",-73.10021194,40.7952425
+133,"Tompkins Cty","Ithaca","NY",-76.45844444,42.49102778
+134,"Inyokern","Inyokern","CA",-117.8295122,35.65884306
+135,"Jackson Hole","Jackson","WY",-110.7377389,43.60732417
+136,"Jackson International","Jackson","MS",-90.07588889,32.31116667
+137,"Jacksonville International","Jacksonville","FL",-81.68786111,30.49405556
+138,"John F Kennedy Intl","New York","NY",-73.77892556,40.63975111
+139,"Capital City","Lansing","MI",-84.58735806,42.7787
+140,"McCarran International","Las Vegas","NV",-115.1523333,36.08036111
+141,"Lawton-Ft Sill Regional","Lawton","OK",-98.41663667,34.56771444
+142,"Los Angeles International","Los Angeles","CA",-118.4080744,33.94253611
+143,"Lubbock International","Lubbock","TX",-101.8227778,33.66363889
+144,"Lake Charles Regional","Lake Charles","LA",-93.22340361,30.1260975
+145,"Blue Grass","Lexington","KY",-84.60538889,38.03697222
+146,"Lafayette Regional","Lafayette","LA",-91.987655,30.20527972
+147,"LaGuardia","New York","NY",-73.87260917,40.77724306
+148,"Long Beach (Daugherty)","Long Beach","CA",-118.1516111,33.81772222
+149,"Adams","Little Rock","AR",-92.22424556,34.72939611
+150,"Klamath Falls International","Klamath Falls","OR",-121.7332081,42.15614361
+151,"Lincoln Municipal","Lincoln","NE",-96.75925,40.85097222
+152,"Laredo International","Laredo","TX",-99.46154361,27.54373861
+153,"La Crosse Municipal","La Crosse","WI",-91.25653778,43.87937972
+154,"Greenbrier Valley","Lewisburg","WV",-80.39947222,37.85830556
+155,"Lewiston-Nez Perce County","Lewiston","ID",-117.0153944,46.37449806
+156,"Lynchburg Municipal-Preston Glenn","Lynchburg","VA",-79.20043056,37.32668528
+157,"Midland International","Midland","TX",-102.2019139,31.94252778
+158,"Mbs International","Saginaw","MI",-84.07964722,43.53291472
+159,"Kansas City International","Kansas City","MO",-94.71390556,39.29760528
+160,"Middle Georgia Regional","Macon","GA",-83.64921083,32.69284944
+161,"Orlando International","Orlando","FL",-81.31602778,28.42888889
+162,"Harrisburg Intl","Harrisburg","PA",-76.76340361,40.19349528
+163,"Chicago Midway","Chicago","IL",-87.75242444,41.7859825
+164,"Key","Meridian","MS",-88.75120556,32.33313333
+165,"Memphis International","Memphis","TN",-89.97666667,35.04241667
+166,"McAllen Miller International","McAllen","TX",-98.23861111,26.17583333
+167,"Rogue Valley International","Medford","OR",-122.8734978,42.37422778
+168,"Montgomery Regional Apt","Montgomery","AL",-86.39397611,32.30064417
+169,"Manchester","Manchester","NH",-71.43705583,42.93451639
+170,"Miami International","Miami","FL",-80.29055556,25.79325
+171,"General Mitchell International","Milwaukee","WI",-87.89658333,42.94722222
+172,"Muskegon County","Muskegon","MI",-86.23822306,43.16948806
+173,"Melbourne International","Melbourne","FL",-80.64580556,28.10275
+174,"Quad City","Moline","IL",-90.50753917,41.44852639
+175,"Monroe Regional","Monroe","LA",-92.03768778,32.51086556
+176,"Mobile Regional","Mobile","AL",-88.24283333,30.69141667
+177,"Modesto City-County-Harry Sham","Modesto","CA",-120.9544214,37.62581722
+178,"Minot International","Minot","ND",-101.2803339,48.25937778
+179,"Marquette County Airport",NA,NA,-87.395361,46.353639
+180,"Monterey Peninsula","Monterey","CA",-121.8429478,36.5869825
+181,"Dane County Regional","Madison","WI",-89.33751361,43.13985778
+182,"Missoula International","Missoula","MT",-114.0905556,46.91630556
+183,"Minneapolis-St Paul Intl","Minneapolis","MN",-93.2169225,44.88054694
+184,"New Orleans International","New Orleans","LA",-90.25802778,29.99338889
+185,"Montrose Regional","Montrose","CO",-107.8938333,38.50886722
+186,"Myrtle Beach International","Myrtle Beach","SC",-78.92833333,33.67975
+187,"Albert J Ellis","Jacksonville","NC",-77.61213778,34.82916444
+188,"Metropolitan Oakland International","Oakland","CA",-122.2207167,37.72129083
+189,"Ogden-Hinckley","Ogden","UT",-112.012175,41.19594417
+190,"Will Rogers World","Oklahoma City","OK",-97.60073389,35.39308833
+191,"Eppley Airfield","Omaha","NE",-95.89417306,41.30251861
+192,"Ontario International","Ontario","CA",-117.6011944,34.056
+193,"Chicago O'Hare International","Chicago","IL",-87.90446417,41.979595
+194,"Norfolk International","Norfolk","VA",-76.20122222,36.89461111
+195,"North Bend Muni","North Bend","OR",-124.2460278,43.41713889
+196,"Oxnard","Oxnard","CA",-119.2072164,34.20080083
+197,"Palm Beach International","West Palm Beach","FL",-80.09559417,26.68316194
+198,"Portland Intl","Portland","OR",-122.5975,45.58872222
+199,"Panama City-Bay County International","Panama City","FL",-85.68280556,30.21208333
+200,"Newport News/Williamsburg International","Newport News","VA",-76.4929875,37.13189556
+201,"Philadelphia Intl","Philadelphia","PA",-75.24114083,39.87195278
+202,"Phoenix Sky Harbor International","Phoenix","AZ",-112.0080556,33.43416667
+203,"Greater Peoria Regional","Peoria","IL",-89.69330556,40.66424333
+204,"Pocatello Regional","Pocatello","ID",-112.5958611,42.91130556
+205,"Pierre Regional","Pierre","SD",-100.285965,44.38267694
+206,"Pittsburgh International","Pittsburgh","PA",-80.23287083,40.49146583
+207,"Pellston Regional  of Emmet County","Pellston","MI",-84.796715,45.5709275
+208,"Palmdale Production Flight","Palmdale","CA",-118.0845528,34.62938889
+209,"Pensacola Regional","Pensacola","FL",-87.18744444,30.47330556
+210,"Tri-Cities","Pasco","WA",-119.1190292,46.26468028
+211,"Palm Springs International","Palm Springs","CA",-116.5062531,33.82921556
+212,"Pueblo Memorial","Pueblo","CO",-104.4965722,38.28908722
+213,"Theodore F Green State","Providence","RI",-71.42822111,41.72399917
+214,"Portland International Jetport","Portland","ME",-70.30875,43.64616667
+215,"Rapid City Regional","Rapid City","SD",-103.0573708,44.04532139
+216,"Redding Municipal","Redding","CA",-122.2934019,40.50898361
+217,"Roberts","Redmond","OR",-121.1499633,44.25406722
+218,"Raleigh-Durham International","Raleigh","NC",-78.78747222,35.87763889
+219,"Greater Rockford","Rockford","IL",-89.09721111,42.19536389
+220,"Rhinelander-Oneida County","Rhinelander","WI",-89.46745361,45.63119306
+221,"Richmond International","Richmond","VA",-77.31966667,37.50516667
+222,"Rock Springs-Sweetwater County","Rock Springs","WY",-109.0651928,41.5942175
+223,"Reno/Tahoe International","Reno","NV",-119.7680647,39.49857611
+224,"Roanoke Regional/ Woodrum","Roanoke","VA",-79.97542833,37.32546833
+225,"Greater Rochester Int'l","Rochester","NY",-77.67238389,43.11886611
+226,"Roswell Industrial Air Center","Roswell","NM",-104.5305556,33.30155556
+227,"Rochester International","Rochester","MN",-92.49798722,43.90882639
+228,"Southwest Florida International","Ft. Myers","FL",-81.75516667,26.53616667
+229,"San Diego International-Lindbergh","San Diego","CA",-117.1896567,32.73355611
+230,"San Antonio International","San Antonio","TX",-98.46977778,29.53369444
+231,"Savannah International","Savannah","GA",-81.20213889,32.12758333
+232,"Santa Barbara Municipal","Santa Barbara","CA",-119.8403733,34.42621194
+233,"South Bend Regional","South Bend","IN",-86.31847417,41.70895361
+234,"San Luis Obispo Co-McChesney","San Luis Obispo","CA",-120.6423931,35.23705806
+235,"University Park",NA,NA,-77.846302,40.851206
+236,"Louisville International-Standiford","Louisville","KY",-85.736,38.17438889
+237,"Seattle-Tacoma Intl","Seattle","WA",-122.3093131,47.44898194
+238,"San Francisco International","San Francisco","CA",-122.3748433,37.61900194
+239,"Springfield-Branson Regional","Springfield","MO",-93.38685806,37.24432611
+240,"St George Muni","St George","UT",-113.5930556,37.09058333
+241,"Shreveport Regional","Shreveport","LA",-93.82559833,32.4466275
+242,"San Jose International","San Jose","CA",-121.9290089,37.36186194
+243,"San Angelo Regional /Mathis","San Angelo","TX",-100.4963056,31.35775
+244,"Salt Lake City Intl","Salt Lake City","UT",-111.9777731,40.78838778
+245,"McNary Fld","Salem","OR",-123.0025,44.90952778
+246,"Sacramento International","Sacramento","CA",-121.5907669,38.69542167
+247,"Santa Maria Pub/Capt G Allan Hancock","Santa Maria","CA",-120.4575825,34.89924833
+248,"John Wayne /Orange Co","Santa Ana","CA",-117.8682225,33.67565861
+249,"Capital","Springfield","IL",-89.67761861,39.84395194
+250,"Sheppard AFB/Wichita Falls Municipal","Wichita Falls","TX",-98.49189333,33.98879611
+251,"Sarasota Bradenton International","Sarasota","FL",-82.55411111,27.39533333
+252,"Lambert-St Louis International","St Louis","MO",-90.35998972,38.74768694
+253,"Friedman Memorial","Hailey","ID",-114.2965903,43.50484139
+254,"Sioux Gateway","Sioux City","IA",-96.38436694,42.40260333
+255,"Stewart","Newburgh","NY",-74.10483833,41.50409361
+256,"Syracuse-Hancock Intl","Syracuse","NY",-76.10631056,43.11118694
+257,"Telluride Regional","Telluride","CO",-107.90848,37.95375861
+258,"Tallahassee Regional","Tallahassee","FL",-84.35033333,30.39652778
+259,"Toledo Express","Toledo","OH",-83.80783333,41.58680556
+260,"Tampa International","Tampa","FL",-82.53325,27.97547222
+261,"Tri-Cities Regional","Bristol","TN",-82.40742056,36.47521417
+262,"Tulsa International","Tulsa","OK",-95.88824167,36.19837222
+263,"Tupelo Municipal","Tupelo","MS",-88.769895,34.26810833
+264,"Tucson International","Tucson","AZ",-110.9410278,32.11608333
+265,"Cherry Capital","Traverse City","MI",-85.582235,44.74144472
+266,"Joslin Field - Magic Valley","Twin Falls","ID",-114.4877356,42.48180389
+267,"Texarkana Regional-Webb","Texarkana","AR",-93.99102,33.45370806
+268,"Tyler Pounds","Tyler","TX",-95.40238611,32.35413889
+269,"McGhee-Tyson","Knoxville","TN",-83.99285583,35.81248722
+270,"Valdosta Regional","Valdosta","GA",-83.27672222,30.7825
+271,"Eglin Air Force Base","Valparaiso","FL",-86.5254,30.48325
+272,"Yellowstone","West Yellowstone","MT",-111.1176375,44.68839917
+273,"Northwest Arkansas Regional","Fayetteville/Springdale/Rogers","AR",-94.30681111,36.28186944
+274,"Yakima Air Terminal","Yakima","WA",-120.5440594,46.56816972
+275,"Yuma MCAS-Yuma International","Yuma","AZ",-114.6059722,32.65658333

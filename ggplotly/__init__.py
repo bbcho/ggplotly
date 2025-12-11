@@ -42,6 +42,7 @@ from .geoms import (
     geom_vline,
     geom_hline,
     geom_edgebundle,
+    geom_searoute,
     geom_jitter,
     geom_rug,
     geom_abline,
@@ -71,9 +72,11 @@ from .scales import (
     scale_y_log10,
     scale_x_date,
     scale_x_datetime,
+    scale_x_rangeslider,
+    scale_x_rangeselector,
     scale_color_gradient,
 )
-from .guides import labs, annotate
+from .guides import labs, annotate, guides, guide_legend, guide_colorbar
 from .positions import position_dodge, position_jitter, position_stack
 from .utils import ggsave, ggsize
 from .stats import *
@@ -114,6 +117,9 @@ __all__ = [
     "lims",
     "labs",
     "annotate",
+    "guides",
+    "guide_legend",
+    "guide_colorbar",
     "position_dodge",
     "position_jitter",
     "position_stack",
@@ -137,6 +143,7 @@ __all__ = [
     "geom_segment",
     "geom_step",
     "geom_edgebundle",
+    "geom_searoute",
     "geom_jitter",
     "geom_rug",
     "geom_abline",
@@ -164,6 +171,8 @@ __all__ = [
     "scale_y_log10",
     "scale_x_date",
     "scale_x_datetime",
+    "scale_x_rangeslider",
+    "scale_x_rangeselector",
     "scale_color_gradient",
     "stat_count",
     "stat_bin",

@@ -5,6 +5,8 @@ from .scale_y_continuous import scale_y_continuous
 from .scale_x_log10 import scale_x_log10
 from .scale_y_log10 import scale_y_log10
 from .scale_x_date import scale_x_date, scale_x_datetime
+from .scale_x_rangeslider import scale_x_rangeslider
+from .scale_x_rangeselector import scale_x_rangeselector
 from .scale_color_manual import scale_color_manual
 from .scale_color_gradient import scale_color_gradient
 from .scale_fill_gradient import scale_fill_gradient
@@ -23,6 +25,8 @@ __all__ = [
     "scale_y_log10",
     "scale_x_date",
     "scale_x_datetime",
+    "scale_x_rangeslider",
+    "scale_x_rangeselector",
     "scale_color_manual",
     "scale_color_gradient",
     "scale_color_brewer",

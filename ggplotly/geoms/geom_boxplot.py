@@ -7,61 +7,68 @@ import pandas as pd
 
 
 class geom_boxplot(Geom):
-    """
-    Geom for drawing boxplots.
-
-    Automatically handles categorical variables for color and fill.
-    Automatically converts 'group' and 'fill' columns to categorical if necessary.
-
-    Parameters:
-        color (str, optional): Outline color of the boxplot.
-        fill (str, optional): Fill color for the boxplots.
-        alpha (float, optional): Transparency level for the fill color. Default is 1.
-        outlier_colour (str, optional): Color of outlier points. Default is 'black'.
-            Alias: outlier_color.
-        outlier_fill (str, optional): Fill color of outlier points. Default is None (same as outlier_colour).
-        outlier_shape (str or int, optional): Shape of outlier points. Default is 'circle'.
-            Plotly marker symbols: 'circle', 'square', 'diamond', 'cross', etc.
-        outlier_size (float, optional): Size of outlier points. Default is 1.5.
-        outlier_stroke (float, optional): Stroke width of outlier points. Default is 0.5.
-        outlier_alpha (float, optional): Alpha transparency of outlier points. Default is None (use main alpha).
-        notch (bool, optional): If True, draw a notched boxplot. Default is False.
-            Notches display confidence interval around median.
-        varwidth (bool, optional): If True, vary box width by group size. Default is False.
-            Note: Limited support in Plotly.
-        coef (float, optional): Length of whiskers as multiple of IQR. Default is 1.5.
-            Points beyond whiskers are plotted as outliers.
-        width (float, optional): Box width. Default is 0.75.
-        na_rm (bool, optional): If True, silently remove missing values. Default is False.
-
-    Examples:
-        >>> ggplot(df, aes(x='category', y='value')) + geom_boxplot()
-        >>> ggplot(df, aes(x='category', y='value', fill='group')) + geom_boxplot()
-        >>> ggplot(df, aes(x='category', y='value')) + geom_boxplot(notch=True)
-        >>> ggplot(df, aes(x='category', y='value')) + geom_boxplot(outlier_colour='red', outlier_size=3)
-    """
+    """Geom for drawing boxplots."""
 
     def __init__(self, data=None, mapping=None, outlier_colour=None, outlier_color=None,
                  outlier_fill=None, outlier_shape='circle', outlier_size=1.5,
                  outlier_stroke=0.5, outlier_alpha=None, notch=False, varwidth=False,
                  coef=1.5, width=0.75, **params):
         """
-        Initialize the boxplot geom.
+        Create a boxplot geom.
 
-        Parameters:
-            data (DataFrame, optional): Data for this geom.
-            mapping (aes, optional): Aesthetic mappings.
-            outlier_colour (str): Color of outlier points. Alias: outlier_color.
-            outlier_fill (str): Fill color of outlier points.
-            outlier_shape (str): Shape of outlier points.
-            outlier_size (float): Size of outlier points.
-            outlier_stroke (float): Stroke width of outlier points.
-            outlier_alpha (float): Alpha of outlier points.
-            notch (bool): Whether to draw notched boxplot.
-            varwidth (bool): Whether to vary width by sample size.
-            coef (float): IQR multiplier for whiskers.
-            width (float): Box width.
-            **params: Additional parameters.
+        Automatically handles categorical variables for color and fill.
+        Automatically converts 'group' and 'fill' columns to categorical if necessary.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for this geom.
+        mapping : aes, optional
+            Aesthetic mappings.
+        outlier_colour : str, optional
+            Color of outlier points. Default is 'black'. Alias: outlier_color.
+        outlier_color : str, optional
+            Alias for outlier_colour.
+        outlier_fill : str, optional
+            Fill color of outlier points. Default is None (same as outlier_colour).
+        outlier_shape : str or int, default='circle'
+            Shape of outlier points. Plotly marker symbols: 'circle', 'square',
+            'diamond', 'cross', etc.
+        outlier_size : float, default=1.5
+            Size of outlier points.
+        outlier_stroke : float, default=0.5
+            Stroke width of outlier points.
+        outlier_alpha : float, optional
+            Alpha transparency of outlier points. Default is None (use main alpha).
+        notch : bool, default=False
+            If True, draw a notched boxplot. Notches display confidence interval
+            around median.
+        varwidth : bool, default=False
+            If True, vary box width by group size. Note: Limited support in Plotly.
+        coef : float, default=1.5
+            Length of whiskers as multiple of IQR. Points beyond whiskers are
+            plotted as outliers.
+        width : float, default=0.75
+            Box width.
+        **params
+            Additional parameters passed to the geom.
+
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_boxplot, data
+        >>> mpg = data('mpg')
+
+        >>> # Basic boxplot by vehicle class
+        >>> ggplot(mpg, aes(x='class', y='hwy')) + geom_boxplot()
+
+        >>> # Boxplot with fill color by drive type
+        >>> ggplot(mpg, aes(x='class', y='hwy', fill='drv')) + geom_boxplot()
+
+        >>> # Notched boxplot showing confidence interval
+        >>> ggplot(mpg, aes(x='class', y='hwy')) + geom_boxplot(notch=True)
+
+        >>> # Custom outlier styling
+        >>> ggplot(mpg, aes(x='class', y='hwy')) + geom_boxplot(outlier_colour='red', outlier_size=3)
         """
         super().__init__(data, mapping, **params)
         # Support both British and American spelling
@@ -107,14 +114,16 @@ class geom_boxplot(Geom):
         """
         Draw boxplot(s) on the figure.
 
-        Parameters:
-            fig (Figure): Plotly figure object.
-            data (DataFrame, optional): Data subset for faceting.
-            row (int): Row position in subplot. Default is 1.
-            col (int): Column position in subplot. Default is 1.
-
-        Returns:
-            None: Modifies the figure in place.
+        Parameters
+        ----------
+        fig : Figure
+            Plotly figure object.
+        data : DataFrame, optional
+            Data subset for faceting.
+        row : int, default=1
+            Row position in subplot.
+        col : int, default=1
+            Column position in subplot.
         """
         data = data if data is not None else self.data
 

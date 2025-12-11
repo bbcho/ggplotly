@@ -9,52 +9,63 @@ import pandas as pd
 
 
 class geom_density(Geom):
-    """
-    Geom for drawing density plots.
+    """Geom for drawing density plots."""
 
-    Automatically handles categorical variables for color and fill.
-    Automatically converts 'group' and 'fill' columns to categorical if necessary.
+    def __init__(self, data=None, mapping=None, bw='nrd0', adjust=1, kernel='gaussian',
+                 n=512, trim=False, **params):
+        """
+        Create a density plot geom.
 
-    Parameters:
-        bw (str or float, optional): Bandwidth method or value. Options:
+        Automatically handles categorical variables for color and fill.
+        Automatically converts 'group' and 'fill' columns to categorical if necessary.
+
+        Parameters
+        ----------
+        data : DataFrame, optional
+            Data for this geom.
+        mapping : aes, optional
+            Aesthetic mappings.
+        bw : str or float, default='nrd0'
+            Bandwidth method or value. Options:
+
             - 'nrd0': Scott's rule (default, matches R's default)
             - 'nrd': Silverman's rule
             - 'scott': Scott's rule (alias for nrd0)
             - 'silverman': Silverman's rule (alias for nrd)
             - A numeric value for a fixed bandwidth
-        adjust (float, optional): Bandwidth adjustment multiplier. Default is 1.
-            Values > 1 produce smoother curves, < 1 produce more detail.
-        kernel (str, optional): Kernel to use. Default is 'gaussian'.
-            Note: scipy's gaussian_kde only supports gaussian kernel.
-        n (int, optional): Number of evaluation points. Default is 512 to match R.
-        trim (bool, optional): If True, trim density to range of data. Default is False.
-        fill (str, optional): Fill color for the density plot.
-        alpha (float, optional): Transparency level for the fill color. Default is 0.5.
-        linetype (str, optional): Line style of the density plot ('solid', 'dash', etc.).
-        group (str, optional): Grouping variable for the density plots.
-        na_rm (bool, optional): If True, silently remove missing values. Default is False.
+        adjust : float, default=1
+            Bandwidth adjustment multiplier. Values > 1 produce smoother curves,
+            < 1 produce more detail.
+        kernel : str, default='gaussian'
+            Kernel to use. Note: scipy's gaussian_kde only supports gaussian kernel.
+        n : int, default=512
+            Number of evaluation points (matches R's default).
+        trim : bool, default=False
+            If True, trim density to range of data.
+        **params
+            Additional parameters including:
 
-    Examples:
-        >>> ggplot(df, aes(x='value')) + geom_density()
-        >>> ggplot(df, aes(x='value')) + geom_density(adjust=0.5)  # less smoothing
-        >>> ggplot(df, aes(x='value')) + geom_density(bw=0.5)  # fixed bandwidth
-        >>> ggplot(df, aes(x='value', fill='group')) + geom_density(alpha=0.3)
-    """
+            - fill (str): Fill color for the density plot.
+            - alpha (float): Transparency level. Default is 0.5.
+            - linetype (str): Line style ('solid', 'dash', etc.).
+            - na_rm (bool): If True, silently remove missing values.
 
-    def __init__(self, data=None, mapping=None, bw='nrd0', adjust=1, kernel='gaussian',
-                 n=512, trim=False, **params):
-        """
-        Initialize the density geom.
+        Examples
+        --------
+        >>> from ggplotly import ggplot, aes, geom_density, data
+        >>> mpg = data('mpg')
 
-        Parameters:
-            data (DataFrame, optional): Data for this geom.
-            mapping (aes, optional): Aesthetic mappings.
-            bw (str or float): Bandwidth method or fixed value. Default is 'nrd0'.
-            adjust (float): Bandwidth adjustment multiplier. Default is 1.
-            kernel (str): Kernel function (only 'gaussian' supported). Default is 'gaussian'.
-            n (int): Number of evaluation points. Default is 512.
-            trim (bool): Whether to trim density to data range. Default is False.
-            **params: Additional parameters.
+        >>> # Basic density plot of highway MPG
+        >>> ggplot(mpg, aes(x='hwy')) + geom_density()
+
+        >>> # Less smoothing with adjust parameter
+        >>> ggplot(mpg, aes(x='hwy')) + geom_density(adjust=0.5)
+
+        >>> # Fixed bandwidth
+        >>> ggplot(mpg, aes(x='hwy')) + geom_density(bw=2)
+
+        >>> # Grouped density with fill and transparency
+        >>> ggplot(mpg, aes(x='hwy', fill='drv')) + geom_density(alpha=0.3)
         """
         super().__init__(data, mapping, **params)
         self.bw = bw
@@ -90,12 +101,17 @@ class geom_density(Geom):
         """
         Compute KDE for a single group of data.
 
-        Parameters:
-            x_data: Series or array of x values
-            na_rm: Whether to remove NA values
+        Parameters
+        ----------
+        x_data : Series or array
+            X values for density estimation.
+        na_rm : bool, default=False
+            Whether to remove NA values.
 
-        Returns:
-            tuple: (x_grid, y_density) arrays
+        Returns
+        -------
+        tuple
+            (x_grid, y_density) arrays.
         """
         if na_rm:
             x_data = x_data.dropna()

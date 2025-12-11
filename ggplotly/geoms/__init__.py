@@ -21,6 +21,7 @@ from .geom_step import geom_step
 from .geom_vline import geom_vline
 from .geom_hline import geom_hline
 from .geom_edgebundle import geom_edgebundle
+from .geom_searoute import geom_searoute
 from .geom_jitter import geom_jitter
 from .geom_rug import geom_rug
 from .geom_abline import geom_abline
@@ -54,6 +55,7 @@ __all__ = [
     "geom_vline",
     "geom_hline",
     "geom_edgebundle",
+    "geom_searoute",
     "geom_jitter",
     "geom_rug",
     "geom_abline",
