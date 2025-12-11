@@ -6,6 +6,11 @@
   - [ ] 3D plots
   - [ ] waterfall charts
 
+## Base
+
+- [ ] deal with datetime index and Series
+
+
 ## Plotly Functionality I want to port over
 
 - [X] range slider
