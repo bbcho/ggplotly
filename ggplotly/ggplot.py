@@ -12,6 +12,7 @@ from .coords.coord_base import Coord
 from .guides import Labs, Annotate, Guides
 from .utils import Utils, ggsize
 from .stats.stat_base import Stat
+from .data_utils import normalize_data, INDEX_COLUMN
 import copy
 
 
@@ -21,11 +22,47 @@ class ggplot:
         Initialize a ggplot object.
 
         Parameters:
-            data (DataFrame): The dataset to plot. Can be None if geoms provide their own data.
-            mapping (aes): Aesthetic mappings created by aes().
+            data (DataFrame or Series): The dataset to plot. Can be None if geoms provide
+                their own data. Supports automatic index handling:
+
+                - Series: Converted to DataFrame with values as y and index as x
+                - DataFrame: Index can be referenced using x='index' in aes()
+
+            mapping (aes): Aesthetic mappings created by aes(). Supports index references:
+
+                - x='index': Explicitly use the DataFrame/Series index as x-axis
+                - If x is omitted but y is specified, x defaults to the index
+                - Named indices (df.index.name) are used as axis labels
+
+        Examples:
+            # Explicit index reference
+            >>> df = pd.DataFrame({'y': [1, 2, 3]}, index=[10, 20, 30])
+            >>> ggplot(df, aes(x='index', y='y')) + geom_point()
+
+            # Auto-populate x from index (same result as above)
+            >>> ggplot(df, aes(y='y')) + geom_point()
+
+            # Series input (x=index, y=values automatically)
+            >>> s = pd.Series([1, 2, 3], index=['a', 'b', 'c'], name='values')
+            >>> ggplot(s) + geom_point()
+
+            # Named index becomes axis label
+            >>> df.index.name = 'time'
+            >>> ggplot(df, aes(y='y')) + geom_point()  # x-axis labeled 'time'
+
+            # Explicit x column takes precedence over index
+            >>> df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
+            >>> ggplot(df, aes(x='x', y='y')) + geom_point()  # uses column 'x'
         """
-        self.data = data.copy() if data is not None else None
-        self.mapping = mapping.mapping if mapping else {}
+        # Extract mapping dict from aes object
+        mapping_dict = mapping.mapping if mapping else {}
+
+        # Normalize data (handles Series, index references, auto-x)
+        normalized_data, normalized_mapping, index_name = normalize_data(data, mapping_dict)
+
+        self.data = normalized_data
+        self.mapping = normalized_mapping
+        self._index_name = index_name  # Store for axis labeling
         self.layers = []
         self.scales = []
         self.stats = []
@@ -113,7 +150,14 @@ class ggplot:
         """
 
         if geom.data is None:
-            geom.data = self.data.copy()
+            geom.data = self.data.copy() if self.data is not None else None
+        else:
+            # Geom has its own data - normalize it with combined mapping
+            geom_mapping = geom.mapping or {}
+            combined_mapping = {**self.mapping, **geom_mapping}
+            geom.data, normalized_mapping, _ = normalize_data(geom.data, combined_mapping)
+            # Only update geom.mapping with the geom-specific parts that were normalized
+            geom.mapping = {k: normalized_mapping[k] for k in geom_mapping if k in normalized_mapping}
 
         if geom.mapping is None:
             geom.mapping = self.mapping
@@ -129,7 +173,13 @@ class ggplot:
         if len(geom.layers) > 0:
             for tgeom in geom.layers:
                 if tgeom.data is None:
-                    tgeom.data = self.data.copy()
+                    tgeom.data = self.data.copy() if self.data is not None else None
+                else:
+                    # Normalize geom-specific data
+                    tgeom_mapping = tgeom.mapping or {}
+                    combined_mapping = {**self.mapping, **tgeom_mapping}
+                    tgeom.data, normalized_mapping, _ = normalize_data(tgeom.data, combined_mapping)
+                    tgeom.mapping = {k: normalized_mapping[k] for k in tgeom_mapping if k in normalized_mapping}
 
                 if tgeom.mapping is None:
                     tgeom.mapping = self.mapping
@@ -213,6 +263,12 @@ class ggplot:
         # Apply labels
         if self.labs:
             self.labs.apply(self.fig)
+
+        # Set default x-axis label if using index and no explicit label set
+        if (self.mapping.get('x') == INDEX_COLUMN and
+            self._index_name and
+            (not self.labs or not hasattr(self.labs, 'x') or self.labs.x is None)):
+            self.fig.update_xaxes(title_text=self._index_name)
 
         # Apply guides
         if self.guides_obj:

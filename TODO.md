@@ -8,7 +8,7 @@
 
 ## Base
 
-- [ ] deal with datetime index and Series
+- [X] deal with datetime index and Series
 
 
 ## Plotly Functionality I want to port over
