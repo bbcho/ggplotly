@@ -149,7 +149,7 @@ class RequiredAestheticError(GgplotlyError):
 
         msg_parts = [
             f"{geom_name} requires aesthetics: {missing_aesthetics}",
-            f"Add them using aes(). Example: aes({', '.join(f'{a}=\"column_name\"' for a in missing_aesthetics)})"
+            "Add them using aes(). Example: aes(" + ', '.join(f"{a}='column_name'" for a in missing_aesthetics) + ")"
         ]
 
         if example:

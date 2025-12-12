@@ -1,4 +1,6 @@
 import warnings
+from typing import Optional
+
 import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
@@ -63,7 +65,7 @@ class Facet:
         geom._global_color_map = global_color_map
         geom._global_shape_map = global_shape_map
 
-    def apply(self, plot) -> None | Figure:
+    def apply(self, plot) -> Optional[Figure]:
         """
         Apply faceting to the plot.
 
