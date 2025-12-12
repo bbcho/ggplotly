@@ -1,0 +1,107 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ggplotly"
+version = "0.3.2"
+description = "A grammar of graphics for Python built on Plotly"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Ben Cho"}
+]
+keywords = [
+    "ggplot",
+    "ggplot2",
+    "plotly",
+    "visualization",
+    "data visualization",
+    "grammar of graphics",
+    "plotting",
+    "charts",
+    "graphs"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "pandas>=1.3.0",
+    "plotly>=5.0.0",
+    "numpy>=1.20.0",
+    "scikit-learn>=1.0.0",
+    "scipy>=1.7.0",
+    "statsmodels>=0.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings>=0.24.0",
+    "mkdocstrings-python>=1.0.0",
+]
+geo = [
+    "geopandas>=0.12.0",
+    "shapely>=2.0.0",
+]
+network = [
+    "igraph>=0.10.0",
+    "searoute>=1.0.0",
+]
+all = [
+    "ggplotly[dev,docs,geo,network]",
+]
+
+[project.urls]
+Homepage = "https://github.com/bbcho/ggplotly"
+Documentation = "https://bbcho.github.io/ggplotly"
+Repository = "https://github.com/bbcho/ggplotly"
+Issues = "https://github.com/bbcho/ggplotly/issues"
+Changelog = "https://github.com/bbcho/ggplotly/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ggplotly*"]
+
+[tool.setuptools.package-data]
+ggplotly = ["data/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["pytest"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
