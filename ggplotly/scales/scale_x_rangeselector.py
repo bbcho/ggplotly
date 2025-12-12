@@ -6,6 +6,24 @@ from .scale_base import Scale
 class scale_x_rangeselector(Scale):
     """Add range selector buttons to the x-axis."""
 
+    aesthetic = 'x_rangeselector'  # Unique aesthetic so it doesn't conflict with scale_x_*
+
+    # String shortcuts for common button configurations
+    BUTTON_SHORTCUTS = {
+        '1d': dict(count=1, label='1d', step='day', stepmode='backward'),
+        '7d': dict(count=7, label='7d', step='day', stepmode='backward'),
+        '1w': dict(count=7, label='1w', step='day', stepmode='backward'),
+        '2w': dict(count=14, label='2w', step='day', stepmode='backward'),
+        '1m': dict(count=1, label='1m', step='month', stepmode='backward'),
+        '3m': dict(count=3, label='3m', step='month', stepmode='backward'),
+        '6m': dict(count=6, label='6m', step='month', stepmode='backward'),
+        'ytd': dict(count=1, label='YTD', step='year', stepmode='todate'),
+        '1y': dict(count=1, label='1y', step='year', stepmode='backward'),
+        '2y': dict(count=2, label='2y', step='year', stepmode='backward'),
+        '5y': dict(count=5, label='5y', step='year', stepmode='backward'),
+        'all': dict(step='all'),
+    }
+
     def __init__(self, buttons=None, visible=True, bgcolor='white',
                  bordercolor='#444', borderwidth=0, font=None,
                  x=None, y=None, xanchor='left', yanchor='bottom'):
@@ -18,8 +36,12 @@ class scale_x_rangeselector(Scale):
 
         Parameters
         ----------
-        buttons : list of dict, optional
-            List of button configurations. Each button is a dict with:
+        buttons : list of str or dict, optional
+            List of button configurations. Can be string shortcuts or dicts:
+
+            String shortcuts: '1d', '7d', '1w', '2w', '1m', '3m', '6m', 'ytd', '1y', '2y', '5y', 'all'
+
+            Or dicts with:
 
             - count (int): Number of steps
             - label (str): Button label text
@@ -54,6 +76,10 @@ class scale_x_rangeselector(Scale):
         >>> # Basic range selector with default buttons (1m, 6m, YTD, 1y, All)
         >>> ggplot(economics, aes(x='date', y='unemploy')) + geom_line() + scale_x_rangeselector()
 
+        >>> # String shortcuts for common ranges
+        >>> ggplot(economics, aes(x='date', y='unemploy')) + geom_line() + \\
+        ...     scale_x_rangeselector(buttons=['1m', '3m', '6m', 'ytd', '1y', 'all'])
+
         >>> # Custom buttons for weekly and monthly views
         >>> ggplot(economics, aes(x='date', y='unemploy')) + geom_line() + \\
         ...     scale_x_rangeselector(buttons=[
@@ -74,6 +100,12 @@ class scale_x_rangeselector(Scale):
                 dict(count=1, label="YTD", step="year", stepmode="todate"),
                 dict(count=1, label="1y", step="year", stepmode="backward"),
                 dict(step="all"),
+            ]
+        else:
+            # Parse string shortcuts
+            buttons = [
+                self.BUTTON_SHORTCUTS.get(b.lower(), b) if isinstance(b, str) else b
+                for b in buttons
             ]
 
         self.buttons = buttons

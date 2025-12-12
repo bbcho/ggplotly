@@ -2,9 +2,7 @@
 
 from .geom_base import Geom
 import plotly.graph_objects as go
-import numpy as np
-import plotly.express as px
-import pandas as pd
+from ..stats.stat_ecdf import stat_ecdf
 
 
 class geom_step(Geom):
@@ -22,12 +20,6 @@ class geom_step(Geom):
         stat (str, optional): The statistical transformation to use. Default is 'identity'.
     """
 
-    def compute_ecdf(self, x):
-        """Compute the ECDF values for a given array of x values."""
-        x_sorted = np.sort(x)
-        y_values = np.arange(1, len(x_sorted) + 1) / len(x_sorted)
-        return x_sorted, y_values
-
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:
             self.params["size"] = 2
@@ -38,17 +30,11 @@ class geom_step(Geom):
         if "size" in self.mapping:
             del self.mapping["size"]
 
-        # Handle ECDF transformation before calling _transform_fig
+        # Handle ECDF transformation using stat_ecdf
         stat = self.params.get("stat", "identity")
         if stat == "ecdf":
-            x = data[self.mapping["x"]]
-            x_sorted, y_values = self.compute_ecdf(x)
-            # For ECDF, create y mapping if it doesn't exist
-            y_col = self.mapping.get("y", "ecdf_y")
-            data = pd.DataFrame({self.mapping["x"]: x_sorted, y_col: y_values})
-            # Temporarily add y mapping for _transform_fig
-            if "y" not in self.mapping:
-                self.mapping["y"] = y_col
+            ecdf_stat = stat_ecdf(mapping=self.mapping)
+            data, self.mapping = ecdf_stat.compute(data)
 
         plot = go.Scatter
         line_dash = self.params.get("linetype", "solid")

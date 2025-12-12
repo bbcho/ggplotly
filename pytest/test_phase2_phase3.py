@@ -150,29 +150,25 @@ class TestGeomDensityBandwidth:
     """Test geom_density bandwidth parameters."""
 
     def test_adjust_parameter_affects_smoothing(self, sample_df):
-        """Test that adjust parameter changes bandwidth."""
+        """Test that adjust parameter changes bandwidth via stat_density."""
+        from ggplotly.stats.stat_density import stat_density
+
         # With adjust=0.5, should have more detail (less smoothing)
-        geom1 = geom_density(adjust=0.5)
-        geom1.data = sample_df
-        geom1.mapping = {'x': 'x'}
+        stat1 = stat_density(adjust=0.5)
+        bw1 = stat1._compute_bandwidth(sample_df['x'].values)
 
         # With adjust=2, should have less detail (more smoothing)
-        geom2 = geom_density(adjust=2)
-        geom2.data = sample_df
-        geom2.mapping = {'x': 'x'}
-
-        bw1 = geom1._compute_bandwidth(sample_df['x'], 'nrd0', 0.5)
-        bw2 = geom2._compute_bandwidth(sample_df['x'], 'nrd0', 2)
+        stat2 = stat_density(adjust=2)
+        bw2 = stat2._compute_bandwidth(sample_df['x'].values)
 
         assert bw1 < bw2  # Lower adjust = smaller bandwidth
 
     def test_numeric_bw_parameter(self, sample_df):
-        """Test that numeric bw parameter is used directly."""
-        geom = geom_density(bw=1.0)
-        geom.data = sample_df
-        geom.mapping = {'x': 'x'}
+        """Test that numeric bw parameter is used directly via stat_density."""
+        from ggplotly.stats.stat_density import stat_density
 
-        bw = geom._compute_bandwidth(sample_df['x'], 1.0, 1)
+        stat = stat_density(bw=1.0)
+        bw = stat._compute_bandwidth(sample_df['x'].values)
         assert bw == 1.0
 
     def test_n_parameter_controls_points(self, sample_df):

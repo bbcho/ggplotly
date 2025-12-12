@@ -263,10 +263,10 @@ class TestStatDensity:
         assert stat.trim is True
 
     def test_stat_density_compute_returns_all_variables(self):
-        """Test that compute returns all expected variables."""
+        """Test that compute_array returns all expected variables."""
         from ggplotly.stats.stat_density import stat_density
         stat = stat_density()
-        result = stat.compute(np.random.randn(100))
+        result = stat.compute_array(np.random.randn(100))
         assert 'x' in result
         assert 'y' in result
         assert 'density' in result
@@ -275,10 +275,10 @@ class TestStatDensity:
         assert 'ndensity' in result
 
     def test_stat_density_compute_n_points(self):
-        """Test that compute returns n points."""
+        """Test that compute_array returns n points."""
         from ggplotly.stats.stat_density import stat_density
         stat = stat_density(n=256)
-        result = stat.compute(np.random.randn(100))
+        result = stat.compute_array(np.random.randn(100))
         assert len(result['x']) == 256
 
     def test_stat_density_trim_affects_range(self):
@@ -287,10 +287,10 @@ class TestStatDensity:
         data = np.array([1, 2, 3, 4, 5])
 
         stat_notrim = stat_density(trim=False)
-        result_notrim = stat_notrim.compute(data)
+        result_notrim = stat_notrim.compute_array(data)
 
         stat_trim = stat_density(trim=True)
-        result_trim = stat_trim.compute(data)
+        result_trim = stat_trim.compute_array(data)
 
         # Trimmed should stay within data range
         assert result_trim['x'].min() >= data.min()

@@ -5,6 +5,7 @@ from .stat_density import stat_density
 from .stat_ecdf import stat_ecdf
 from .stat_count import stat_count
 from .stat_summary import stat_summary
+from .stat_contour import stat_contour
 
 __all__ = [
     "stat_identity",
@@ -14,4 +15,5 @@ __all__ = [
     "stat_ecdf",
     "stat_count",
     "stat_summary",
+    "stat_contour",
 ]

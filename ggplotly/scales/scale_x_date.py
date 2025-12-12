@@ -6,6 +6,8 @@ from .scale_base import Scale
 class scale_x_date(Scale):
     """Date scale for the x-axis."""
 
+    aesthetic = 'x'
+
     def __init__(
         self,
         name=None,

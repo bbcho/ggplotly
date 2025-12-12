@@ -5,6 +5,8 @@ import numpy as np
 
 
 class scale_fill_gradient(Scale):
+    aesthetic = 'fill'
+
     def __init__(self, low="blue", high="red", name=None):
         """
         Create a continuous color gradient for fill aesthetics.

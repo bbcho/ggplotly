@@ -5,6 +5,8 @@ import numpy as np
 
 
 class scale_y_continuous(Scale):
+    aesthetic = 'y'
+
     def __init__(self, name=None, limits=None, breaks=None, labels=None, trans=None):
         """
         Continuous position scale for the y-axis.

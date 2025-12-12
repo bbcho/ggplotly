@@ -4,6 +4,8 @@ from .scale_base import Scale
 
 
 class scale_color_manual(Scale):
+    aesthetic = 'color'
+
     def __init__(self, values, name=None, breaks=None, labels=None):
         """
         Manually set colors for discrete color scales.

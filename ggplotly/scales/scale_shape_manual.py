@@ -4,6 +4,8 @@ from .scale_base import Scale
 
 
 class scale_shape_manual(Scale):
+    aesthetic = 'shape'
+
     def __init__(self, values, name=None, breaks=None, labels=None):
         """
         Manually set shapes for discrete shape scales.

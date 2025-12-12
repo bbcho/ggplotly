@@ -1,7 +1,9 @@
 """Identity stat - passes data through unchanged."""
 
+from .stat_base import Stat
 
-class stat_identity:
+
+class stat_identity(Stat):
     """
     Identity statistical transformation (no transformation).
 
@@ -9,9 +11,27 @@ class stat_identity:
     geoms when you want to display raw data values without any aggregation
     or transformation.
 
+    Parameters:
+        data (DataFrame, optional): Data to use for this stat.
+        mapping (dict, optional): Aesthetic mappings.
+        **params: Additional parameters for the stat.
+
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point(stat='identity')
     """
+
+    __name__ = "identity"
+
+    def __init__(self, data=None, mapping=None, **params):
+        """
+        Initialize the stat_identity.
+
+        Parameters:
+            data (DataFrame, optional): Data to use for this stat.
+            mapping (dict, optional): Aesthetic mappings.
+            **params: Additional parameters.
+        """
+        super().__init__(data, mapping, **params)
 
     def compute(self, data):
         """
@@ -21,6 +41,6 @@ class stat_identity:
             data (DataFrame): The input data.
 
         Returns:
-            DataFrame: The unchanged data.
+            tuple: (unchanged data, unchanged mapping)
         """
-        return data
+        return data, self.mapping

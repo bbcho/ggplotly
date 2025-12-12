@@ -6,6 +6,8 @@ from .scale_base import Scale
 class scale_x_rangeslider(Scale):
     """Add an interactive range slider to the x-axis."""
 
+    aesthetic = 'x_rangeslider'  # Unique aesthetic so it doesn't conflict with scale_x_*
+
     def __init__(self, visible=True, bgcolor='white', bordercolor='#444',
                  borderwidth=0, thickness=0.15, range=None, yaxis_rangemode='match'):
         """

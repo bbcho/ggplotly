@@ -5,6 +5,7 @@ from itertools import product
 from ..aes import aes
 from ..stats.stat_base import Stat
 from ..aesthetic_mapper import AestheticMapper
+from ..trace_builders import get_trace_builder
 import copy
 
 
@@ -232,6 +233,22 @@ class Geom:
     def _transform_fig(
         self, plot, fig, data, payload, color_targets, row, col, **layout
     ):
+        """
+        Transform data into Plotly traces using the appropriate builder strategy.
+
+        This method delegates trace building to specialized TraceBuilder classes
+        based on the grouping strategy (by group, color, shape, continuous, etc.).
+
+        Parameters:
+            plot: Plotly graph object class (e.g., go.Scatter)
+            fig: Plotly figure object
+            data: DataFrame with the data to plot
+            payload: Additional trace parameters
+            color_targets: Dict mapping aesthetics to trace property names
+            row: Row position in subplot
+            col: Column position in subplot
+            **layout: Additional layout parameters
+        """
         # Create aesthetic mapper for this geom, passing global maps for faceting
         mapper = AestheticMapper(
             data, self.mapping, self.params, self.theme,
@@ -239,267 +256,23 @@ class Geom:
             global_shape_map=self._global_shape_map
         )
         style_props = mapper.get_style_properties()
-
-        # Extract commonly used values
-        group_values = style_props['group_series']
         alpha = style_props['alpha']
-        shape_series = style_props.get('shape_series')
-        shape_map = style_props.get('shape_map')
 
-        # Get x and y data
-        x = data[self.mapping["x"]] if "x" in self.mapping else None
-        y = data[self.mapping["y"]] if "y" in self.mapping else None
-
-        # For faceted plots, track which legend groups have been shown
-        # to avoid duplicates while ensuring all groups appear
-        base_showlegend = self.params.get("showlegend", True)
-
-        # Get or create a set to track shown legend groups on this figure
-        if not hasattr(fig, '_shown_legendgroups'):
-            fig._shown_legendgroups = set()
-
-        def should_show_legend(legendgroup):
-            """Show legend only the first time this group appears."""
-            if not base_showlegend:
-                return False
-            if legendgroup in fig._shown_legendgroups:
-                return False
-            fig._shown_legendgroups.add(legendgroup)
-            return True
-
-        # Determine the grouping strategy
-        # Priority: explicit group > color/fill mapping > shape mapping
-        # If multiple aesthetics are mapped, we need to create traces for each combination
-
-        # Check for continuous color mapping (numeric data)
-        has_continuous_color = style_props.get('color_is_continuous', False) or style_props.get('fill_is_continuous', False)
-
-        # Only use categorical grouping if color/fill is NOT continuous
-        has_color_grouping = (style_props['color_series'] is not None or style_props['fill_series'] is not None) and not has_continuous_color
-        has_shape_grouping = shape_series is not None
-
-        # Get categorical aesthetic info
-        if style_props['color_series'] is not None:
-            cat_col = style_props['color']
-            cat_map = style_props['color_map']
-        elif style_props['fill_series'] is not None:
-            cat_col = style_props['fill']
-            cat_map = style_props['fill_map']
-        else:
-            cat_col = None
-            cat_map = None
-
-        shape_col = style_props.get('shape') if has_shape_grouping else None
-
-        # Remove 'name' from payload if it exists (we set it explicitly)
-        payload_copy = {k: v for k, v in payload.items() if k != 'name'}
-
-        # Case 1: Grouped by explicit 'group' aesthetic
-        if group_values is not None:
-            for group in group_values.unique():
-                group_mask = group_values == group
-
-                # Determine color and shape keys
-                color_key = group if has_color_grouping else None
-                shape_key = group if has_shape_grouping else None
-
-                trace_props = self._apply_color_targets(
-                    color_targets, style_props,
-                    value_key=color_key, data_mask=group_mask, shape_key=shape_key
-                )
-
-                legend_name = str(group)
-                fig.add_trace(
-                    plot(
-                        x=x[group_mask],
-                        y=y[group_mask],
-                        showlegend=should_show_legend(legend_name),
-                        legendgroup=legend_name,
-                        opacity=alpha,
-                        name=legend_name,
-                        **payload_copy,
-                        **trace_props,
-                    ),
-                    row=row,
-                    col=col,
-                )
-
-        # Case 2: Both color/fill AND shape are mapped to columns
-        # Need to create traces for each combination
-        elif has_color_grouping and has_shape_grouping:
-            # Check if color and shape are mapped to the same column
-            same_column = cat_col == shape_col
-
-            color_values = list(cat_map.keys())
-            shape_values = list(shape_map.keys())
-
-            for color_val in color_values:
-                for shape_val in shape_values:
-                    # Filter data for this combination
-                    combo_mask = (data[cat_col] == color_val) & (data[shape_col] == shape_val)
-
-                    # Skip if no data for this combination
-                    if not combo_mask.any():
-                        continue
-
-                    x_subset = x[combo_mask] if x is not None else None
-                    y_subset = y[combo_mask] if y is not None else None
-
-                    trace_props = self._apply_color_targets(
-                        color_targets, style_props,
-                        value_key=color_val, data_mask=combo_mask, shape_key=shape_val
-                    )
-
-                    # Create legend name - use single value if same column, otherwise combine
-                    if same_column:
-                        legend_name = str(color_val)
-                    else:
-                        legend_name = f"{color_val}, {shape_val}"
-
-                    fig.add_trace(
-                        plot(
-                            x=x_subset,
-                            y=y_subset,
-                            opacity=alpha,
-                            name=legend_name,
-                            showlegend=should_show_legend(legend_name),
-                            legendgroup=legend_name,
-                            **payload_copy,
-                            **trace_props,
-                        ),
-                        row=row,
-                        col=col,
-                    )
-
-        # Case 3: Only color/fill mapped (no shape grouping)
-        elif has_color_grouping:
-            for cat_value in cat_map.keys():
-                cat_mask = data[cat_col] == cat_value
-
-                # Skip if no data for this category (can happen when faceting)
-                if not cat_mask.any():
-                    continue
-
-                x_subset = x[cat_mask] if x is not None else None
-                y_subset = y[cat_mask] if y is not None else None
-
-                trace_props = self._apply_color_targets(
-                    color_targets, style_props,
-                    value_key=cat_value, data_mask=cat_mask, shape_key=None
-                )
-
-                legend_name = str(cat_value)
-                fig.add_trace(
-                    plot(
-                        x=x_subset,
-                        y=y_subset,
-                        opacity=alpha,
-                        name=legend_name,
-                        showlegend=should_show_legend(legend_name),
-                        legendgroup=legend_name,
-                        **payload_copy,
-                        **trace_props,
-                    ),
-                    row=row,
-                    col=col,
-                )
-
-        # Case 4: Only shape mapped (no color grouping)
-        elif has_shape_grouping:
-            for shape_val in shape_map.keys():
-                shape_mask = data[shape_col] == shape_val
-
-                # Skip if no data for this shape value (can happen when faceting)
-                if not shape_mask.any():
-                    continue
-
-                x_subset = x[shape_mask] if x is not None else None
-                y_subset = y[shape_mask] if y is not None else None
-
-                trace_props = self._apply_color_targets(
-                    color_targets, style_props,
-                    value_key=None, data_mask=shape_mask, shape_key=shape_val
-                )
-
-                legend_name = str(shape_val)
-                fig.add_trace(
-                    plot(
-                        x=x_subset,
-                        y=y_subset,
-                        opacity=alpha,
-                        name=legend_name,
-                        showlegend=should_show_legend(legend_name),
-                        legendgroup=legend_name,
-                        **payload_copy,
-                        **trace_props,
-                    ),
-                    row=row,
-                    col=col,
-                )
-
-        # Case 5: Continuous color mapping - single trace with colorscale
-        elif has_continuous_color:
-            # Get the continuous color data
-            if style_props.get('color_is_continuous'):
-                color_values = style_props['color_series']
-            else:
-                color_values = style_props['fill_series']
-
-            # Build marker dict - only include properties supported by the trace type
-            marker_dict = dict(
-                color=color_values,
-                colorscale='Viridis',  # Default, will be overridden by scale_color_gradient
-                showscale=True,
-            )
-
-            # Only add size/symbol if they're in color_targets (i.e., the trace type supports them)
-            if 'size' in color_targets:
-                if style_props['size_series'] is not None:
-                    marker_dict['size'] = style_props['size_series']
-                else:
-                    marker_dict['size'] = style_props['size']
-            if 'shape' in color_targets:
-                shape_val = style_props.get('shape')
-                marker_dict['symbol'] = shape_val if shape_val else 'circle'
-
-            # For continuous color, we pass the numeric values and let Plotly handle the colorscale
-            # The scale_color_gradient will apply the colorscale later
-            fig.add_trace(
-                plot(
-                    x=x,
-                    y=y,
-                    opacity=alpha,
-                    showlegend=False,  # Colorbar serves as legend for continuous
-                    marker=marker_dict,
-                    **payload_copy,
-                ),
-                row=row,
-                col=col,
-            )
-
-        # Case 6: No grouping - single trace
-        else:
-            trace_props = self._apply_color_targets(
-                color_targets, style_props,
-                data_mask=None, shape_key=None
-            )
-
-            # Get the trace name for legendgroup
-            trace_name = payload.get('name', 'trace')
-
-            fig.add_trace(
-                plot(
-                    x=x,
-                    y=y,
-                    opacity=alpha,
-                    showlegend=should_show_legend(trace_name),
-                    legendgroup=trace_name,
-                    **payload,
-                    **trace_props,
-                ),
-                row=row,
-                col=col,
-            )
+        # Get the appropriate trace builder and build traces
+        builder = get_trace_builder(
+            fig=fig,
+            plot=plot,
+            data=data,
+            mapping=self.mapping,
+            style_props=style_props,
+            color_targets=color_targets,
+            payload=payload,
+            row=row,
+            col=col,
+            alpha=alpha,
+            params=self.params
+        )
+        builder.build(self._apply_color_targets)
 
         fig.update_yaxes(rangemode="tozero")
         fig.update_layout(**layout)

@@ -1,10 +1,12 @@
 """Density estimation stat for density plots."""
 
 import numpy as np
+import pandas as pd
 from scipy.stats import gaussian_kde
+from .stat_base import Stat
 
 
-class stat_density:
+class stat_density(Stat):
     """
     Compute kernel density estimate for continuous data.
 
@@ -12,6 +14,8 @@ class stat_density:
     the distribution of a continuous variable as a smooth curve.
 
     Parameters:
+        data (DataFrame, optional): Data to use for this stat.
+        mapping (dict, optional): Aesthetic mappings.
         bw (str or float): Bandwidth method or value. Options:
             - 'nrd0' (default): Silverman's rule-of-thumb (R default)
             - 'nrd': Scott's variation of Silverman's rule
@@ -27,6 +31,7 @@ class stat_density:
         trim (bool): If True, trim the density curve to the data range.
             Default is False (extend slightly beyond data range).
         na_rm (bool): If True, remove NA values. Default is False.
+        **params: Additional parameters for the stat.
 
     Computed variables:
         - x: Evaluation points
@@ -42,19 +47,25 @@ class stat_density:
         >>> stat_density(n=256, trim=True)  # Fewer points, trimmed to data range
     """
 
-    def __init__(self, bw='nrd0', adjust=1, kernel='gaussian', n=512,
-                 trim=False, na_rm=False):
+    __name__ = "density"
+
+    def __init__(self, data=None, mapping=None, bw='nrd0', adjust=1,
+                 kernel='gaussian', n=512, trim=False, na_rm=False, **params):
         """
         Initialize the density stat.
 
         Parameters:
+            data (DataFrame, optional): Data to use for this stat.
+            mapping (dict, optional): Aesthetic mappings.
             bw (str or float): Bandwidth method or value. Default is 'nrd0'.
             adjust (float): Bandwidth adjustment multiplier. Default is 1.
             kernel (str): Kernel function. Default is 'gaussian'.
             n (int): Number of evaluation points. Default is 512.
             trim (bool): Trim to data range. Default is False.
             na_rm (bool): Remove NA values. Default is False.
+            **params: Additional parameters.
         """
+        super().__init__(data, mapping, **params)
         self.bw = bw
         self.adjust = adjust
         self.kernel = kernel
@@ -96,25 +107,39 @@ class stat_density:
             return bandwidth * self.adjust
         return None
 
-    def compute(self, x):
+    def compute(self, data):
         """
         Estimates density for density plots.
 
         Parameters:
-            x (array-like): Data for density estimation.
+            data (DataFrame or array-like): Data for density estimation.
+                If DataFrame, uses the column specified in mapping['x'].
 
         Returns:
-            dict: Contains 'x', 'y', 'density', 'count', 'scaled', 'ndensity'.
+            tuple: (DataFrame with density data, updated mapping dict)
         """
-        x = np.array(x)
+        # Handle both DataFrame and array input for backward compatibility
+        if isinstance(data, pd.DataFrame):
+            x_col = self.mapping.get('x')
+            if x_col is None:
+                raise ValueError("stat_density requires 'x' aesthetic mapping")
+            x = data[x_col].values
+        else:
+            x = np.asarray(data)
 
         # Remove NA values if requested
         if self.na_rm:
             x = x[~np.isnan(x)]
 
         if len(x) == 0:
-            return {"x": np.array([]), "y": np.array([]), "density": np.array([]),
-                    "count": np.array([]), "scaled": np.array([]), "ndensity": np.array([])}
+            result = pd.DataFrame({
+                "x": [], "y": [], "density": [],
+                "count": [], "scaled": [], "ndensity": []
+            })
+            new_mapping = self.mapping.copy()
+            new_mapping['x'] = 'x'
+            new_mapping['y'] = 'y'
+            return result, new_mapping
 
         # Compute bandwidth
         bw = self._compute_bandwidth(x)
@@ -141,6 +166,62 @@ class stat_density:
         y_vals = density.evaluate(x_vals)
 
         # Compute additional variables
+        count = y_vals * len(x)
+        max_density = y_vals.max() if len(y_vals) > 0 else 1
+        scaled = y_vals / max_density if max_density > 0 else y_vals
+
+        result = pd.DataFrame({
+            "x": x_vals,
+            "y": y_vals,
+            "density": y_vals,
+            "count": count,
+            "scaled": scaled,
+            "ndensity": scaled,
+        })
+
+        # Update mapping to reflect computed columns
+        new_mapping = self.mapping.copy()
+        new_mapping['x'] = 'x'
+        new_mapping['y'] = 'y'
+
+        return result, new_mapping
+
+    def compute_array(self, x):
+        """
+        Compute density for a given array (backward compatibility).
+
+        Parameters:
+            x (array-like): Data for density estimation.
+
+        Returns:
+            dict: Contains 'x', 'y', 'density', 'count', 'scaled', 'ndensity'.
+        """
+        x = np.array(x)
+
+        if self.na_rm:
+            x = x[~np.isnan(x)]
+
+        if len(x) == 0:
+            return {"x": np.array([]), "y": np.array([]), "density": np.array([]),
+                    "count": np.array([]), "scaled": np.array([]), "ndensity": np.array([])}
+
+        bw = self._compute_bandwidth(x)
+
+        if bw is not None:
+            density = gaussian_kde(x, bw_method=bw / np.std(x, ddof=1))
+        else:
+            density = gaussian_kde(x)
+
+        x_min, x_max = x.min(), x.max()
+        data_range = x_max - x_min
+
+        if self.trim:
+            x_vals = np.linspace(x_min, x_max, self.n)
+        else:
+            extend = data_range * 0.05
+            x_vals = np.linspace(x_min - extend, x_max + extend, self.n)
+
+        y_vals = density.evaluate(x_vals)
         count = y_vals * len(x)
         max_density = y_vals.max() if len(y_vals) > 0 else 1
         scaled = y_vals / max_density if max_density > 0 else y_vals

@@ -3,8 +3,7 @@
 import plotly.graph_objects as go
 from .geom_base import Geom
 from ..aesthetic_mapper import AestheticMapper
-import numpy as np
-from scipy.stats import gaussian_kde
+from ..stats.stat_contour import stat_contour
 
 
 class geom_contour_filled(Geom):
@@ -48,6 +47,37 @@ class geom_contour_filled(Geom):
         self.gridsize = params.get('gridsize', 100)
         self.palette = params.get('palette', 'Viridis')
 
+    def _compute_contour_grid(self, data):
+        """
+        Compute 2D grid using stat_contour.
+
+        Parameters
+        ----------
+        data : DataFrame
+            Data with x, y, and optionally z columns.
+
+        Returns
+        -------
+        dict
+            Contains x, y, z grid arrays.
+        """
+        x_col = self.mapping.get("x")
+        y_col = self.mapping.get("y")
+        z_col = self.mapping.get("z")
+
+        mapping = {'x': x_col, 'y': y_col}
+        if z_col and z_col in data.columns:
+            mapping['z'] = z_col
+
+        contour_stat = stat_contour(
+            mapping=mapping,
+            gridsize=self.gridsize,
+            na_rm=self.params.get('na_rm', False)
+        )
+
+        result, _ = contour_stat.compute(data)
+        return result
+
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
 
@@ -59,51 +89,17 @@ class geom_contour_filled(Geom):
 
         x_col = self.mapping.get("x")
         y_col = self.mapping.get("y")
-        z_col = self.mapping.get("z")
 
-        x = data[x_col].values if x_col and x_col in data.columns else None
-        y = data[y_col].values if y_col and y_col in data.columns else None
-
-        if x is None or y is None:
+        if not x_col or not y_col:
             raise ValueError("geom_contour_filled requires both x and y aesthetics")
 
         alpha = style_props['alpha']
 
-        # Check if z is provided (gridded data) or need to compute KDE
-        if z_col and z_col in data.columns:
-            # Use provided z values
-            z = data[z_col].values
-
-            # Try to reshape if data appears to be gridded
-            x_unique = np.unique(x)
-            y_unique = np.unique(y)
-
-            if len(x_unique) * len(y_unique) == len(z):
-                # Data is gridded, reshape
-                z_grid = z.reshape(len(y_unique), len(x_unique))
-                x_grid = x_unique
-                y_grid = y_unique
-            else:
-                # Irregular data, interpolate to grid
-                from scipy.interpolate import griddata
-                x_grid = np.linspace(x.min(), x.max(), self.gridsize)
-                y_grid = np.linspace(y.min(), y.max(), self.gridsize)
-                X, Y = np.meshgrid(x_grid, y_grid)
-                z_grid = griddata((x, y), z, (X, Y), method='linear')
-        else:
-            # Compute 2D KDE
-            x_grid = np.linspace(x.min(), x.max(), self.gridsize)
-            y_grid = np.linspace(y.min(), y.max(), self.gridsize)
-            X, Y = np.meshgrid(x_grid, y_grid)
-            positions = np.vstack([X.ravel(), Y.ravel()])
-
-            # Handle case where all points are identical or nearly so
-            try:
-                kernel = gaussian_kde(np.vstack([x, y]))
-                z_grid = kernel(positions).reshape(X.shape)
-            except np.linalg.LinAlgError:
-                # Singular matrix - points are too clustered
-                z_grid = np.zeros(X.shape)
+        # Compute grid using stat_contour
+        grid_data = self._compute_contour_grid(data)
+        x_grid = grid_data['x']
+        y_grid = grid_data['y']
+        z_grid = grid_data['z']
 
         # Create filled contour trace
         fig.add_trace(

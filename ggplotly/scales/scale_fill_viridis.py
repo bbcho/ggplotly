@@ -5,6 +5,8 @@ import numpy as np
 
 
 class scale_fill_viridis_c(Scale):
+    aesthetic = 'fill'
+
     def __init__(self, option="viridis", name=None, direction=1):
         """
         Create a viridis continuous color scale for fill aesthetics.

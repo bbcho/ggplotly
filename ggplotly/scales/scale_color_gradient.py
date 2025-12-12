@@ -7,6 +7,8 @@ class scale_color_gradient(Scale):
     """
     Create a two-color continuous gradient for the color aesthetic.
 
+    Aesthetic: color
+
     Maps numeric values to a color gradient between two colors,
     useful for visualizing continuous variables.
 
@@ -27,6 +29,8 @@ class scale_color_gradient(Scale):
         >>> ggplot(df, aes(x='x', y='y', color='value')) + geom_point() + scale_color_gradient(low='white', high='red')
         >>> ggplot(df, aes(x='x', y='y', color='temp')) + geom_point() + scale_color_gradient(low='blue', high='orange', name='Temperature')
     """
+
+    aesthetic = 'color'
 
     def __init__(self, low="#132B43", high="#56B1F7", name=None, limits=None,
                  breaks=None, labels=None, na_value='grey50', guide='colourbar',

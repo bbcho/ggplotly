@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.subplots as sp
 from .aes import aes
 from .geoms.geom_base import Geom
-from .scales.scale_base import Scale
+from .scales.scale_base import Scale, ScaleRegistry
 from .themes import Theme
 from .facets import Facet
 from .coords.coord_base import Coord
@@ -64,7 +64,7 @@ class ggplot:
         self.mapping = normalized_mapping
         self._index_name = index_name  # Store for axis labeling
         self.layers = []
-        self.scales = []
+        self._scale_registry = ScaleRegistry()  # Use registry for scale management
         self.stats = []
         self.theme = Theme()
         self.facets = None
@@ -133,15 +133,51 @@ class ggplot:
 
     def add_stat(self, stat):
         """
-        Add stat to last geom in layer list
-        """
-        geom = self.layers[-1].copy()
-        geom = geom + stat
-        self.layers[-1] = geom
+        Add stat as a new layer with its own geom.
 
-    #     stat.data = self.data.copy()
-    #     stat.mapping = self.mapping.copy()
-    #     self.stats.append(stat)
+        In ggplot2, stats create their own layer rather than modifying the previous one.
+        The stat's 'geom' parameter determines which geom to use for rendering.
+        """
+        import inspect
+        from . import geoms as geoms_module
+
+        # Get the geom class from stat's geom parameter
+        geom_name = getattr(stat, 'geom', 'point')
+        geom_class_name = f'geom_{geom_name}'
+
+        # Dynamically get the geom class from the geoms module
+        if hasattr(geoms_module, geom_class_name):
+            geom_class = getattr(geoms_module, geom_class_name)
+        else:
+            # Fallback to geom_point if the specified geom doesn't exist
+            geom_class = geoms_module.geom_point
+
+        # Get stat-specific params by inspecting the stat's __init__ signature
+        # These are params defined on the stat class, not general geom params
+        stat_init_params = set(inspect.signature(stat.__class__.__init__).parameters.keys())
+        stat_init_params.discard('self')
+        stat_init_params.discard('data')
+        stat_init_params.discard('mapping')
+        stat_init_params.discard('params')
+        stat_init_params.discard('kwargs')
+
+        # Also exclude 'geom' as it's used to select the geom class, not passed to it
+        stat_init_params.add('geom')
+
+        # Extract params that should be passed to the geom (exclude stat-specific params)
+        geom_params = {k: v for k, v in stat.params.items() if k not in stat_init_params}
+
+        # Create a new geom with the stat's params
+        new_geom = geom_class(data=self.data.copy(), mapping=aes(**self.mapping), **geom_params)
+
+        # Copy stat's mapping and data before attaching
+        stat_copy = stat.copy()
+        stat_copy.mapping = {**self.mapping, **stat.mapping}
+        stat_copy.data = self.data.copy()
+
+        new_geom.stats = [stat_copy]
+
+        self.add_geom(new_geom)
 
     def add_geom(self, geom):
         """
@@ -193,14 +229,22 @@ class ggplot:
         else:
             self.layers.append(geom)
 
+    @property
+    def scales(self):
+        """Return scales as a list for backward compatibility."""
+        return self._scale_registry.to_list()
+
     def add_scale(self, scale):
         """
         Add a scale to the plot.
 
+        If a scale already exists for the same aesthetic, it will be replaced
+        with a warning (matching ggplot2 behavior).
+
         Parameters:
             scale (Scale): The scale to add.
         """
-        self.scales.append(scale)
+        self._scale_registry.add(scale)
 
     def set_theme(self, theme):
         """

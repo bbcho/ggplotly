@@ -5,6 +5,8 @@ import numpy as np
 
 
 class scale_size(Scale):
+    aesthetic = 'size'
+
     def __init__(self, range=(2, 10), name=None):
         """
         Map a continuous variable to size aesthetic.

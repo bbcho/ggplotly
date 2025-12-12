@@ -4,6 +4,7 @@ from .geom_base import Geom
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+from ..stats.stat_bin import stat_bin
 
 
 class geom_histogram(Geom):
@@ -64,6 +65,35 @@ class geom_histogram(Geom):
         self.center = center
         self.barmode = barmode
 
+    def _compute_bins_for_group(self, data, x_col, na_rm=False):
+        """
+        Compute histogram bins for a group of data using stat_bin.
+
+        Parameters
+        ----------
+        data : DataFrame
+            Data to bin.
+        x_col : str
+            Column name for x values.
+        na_rm : bool, default=False
+            Whether to remove NA values.
+
+        Returns
+        -------
+        DataFrame
+            Binned data with x (centers), count, width, xmin, xmax columns.
+        """
+        bin_stat = stat_bin(
+            mapping={'x': x_col},
+            bins=self.bins,
+            binwidth=self.binwidth,
+            boundary=self.boundary,
+            center=self.center,
+            na_rm=na_rm
+        )
+
+        return bin_stat.compute(data)
+
     def draw(self, fig, data=None, row=1, col=1):
         """
         Draw histogram(s) on the figure.
@@ -77,38 +107,58 @@ class geom_histogram(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        payload = dict()
         data = data if data is not None else self.data
 
-        plot = go.Histogram
+        # Handle na_rm parameter
+        na_rm = self.params.get("na_rm", False)
 
+        x_col = self.mapping.get("x")
+
+        # Determine grouping column from fill, color, or group mapping
+        group_col = None
+        for aesthetic in ['fill', 'color', 'group']:
+            if aesthetic in self.mapping:
+                potential_col = self.mapping[aesthetic]
+                if potential_col in data.columns:
+                    group_col = potential_col
+                    break
+
+        # Compute bins - either grouped or ungrouped
+        if group_col is not None:
+            # Grouped histogram: compute separate bins for each group
+            binned_frames = []
+            for group_value in data[group_col].unique():
+                group_data = data[data[group_col] == group_value].copy()
+                binned_data = self._compute_bins_for_group(group_data, x_col, na_rm)
+                binned_data[group_col] = group_value
+                binned_frames.append(binned_data)
+
+            if binned_frames:
+                computed_data = pd.concat(binned_frames, ignore_index=True)
+            else:
+                computed_data = pd.DataFrame({'x': [], 'count': [], 'width': [], group_col: []})
+        else:
+            # Ungrouped histogram
+            computed_data = self._compute_bins_for_group(data, x_col, na_rm)
+
+        # Update mapping for bar chart rendering
+        self.mapping["x"] = "x"
+        self.mapping["y"] = "count"
+
+        payload = dict()
         payload["name"] = self.params.get("name", "Histogram")
 
-        # Handle bin specification: binwidth takes precedence over bins
-        if self.binwidth is not None:
-            # Use xbins with size for binwidth
-            xbins_config = {"size": self.binwidth}
-            if self.boundary is not None:
-                xbins_config["start"] = self.boundary
-            elif self.center is not None:
-                # Adjust start to align with center
-                xbins_config["start"] = self.center - self.binwidth / 2
-            payload["xbins"] = xbins_config
-        else:
-            payload["nbinsx"] = self.bins
+        # Use Bar trace with width from stat_bin
+        plot = go.Bar
 
         color_targets = dict(
-            # fill="marker_fill",
-            # fill="fillcolor",
             color="marker_color",
-            # size="line",
-            # marker=dict(color=fill, size=size),
         )
 
         self._transform_fig(
             plot,
             fig,
-            data,
+            computed_data,
             payload,
             color_targets,
             row,

@@ -7,6 +7,8 @@ class scale_x_log10(Scale):
     """
     Transform the x-axis to a log10 scale.
 
+    Aesthetic: x
+
     This scale is useful for data that spans several orders of magnitude,
     making patterns in the lower range more visible.
 
@@ -31,6 +33,8 @@ class scale_x_log10(Scale):
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + scale_x_log10(name='Value (log scale)')
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + scale_x_log10(breaks=[1, 10, 100, 1000])
     """
+
+    aesthetic = 'x'
 
     def __init__(self, name=None, breaks=None, minor_breaks=None, labels=None,
                  limits=None, expand=(0.05, 0), oob='censor', na_value=None,

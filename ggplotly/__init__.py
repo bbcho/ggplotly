@@ -82,6 +82,7 @@ from .utils import ggsave, ggsize
 from .stats import *
 from .datasets import data
 from .map_data import map_data
+from .layer import Layer, layer
 
 __all__ = [
     "ggplot",
@@ -178,4 +179,6 @@ __all__ = [
     "stat_bin",
     "data",
     "map_data",
+    "Layer",
+    "layer",
 ]

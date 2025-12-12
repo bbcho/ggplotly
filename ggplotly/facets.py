@@ -300,7 +300,7 @@ class facet_grid(Facet):
         return fig
 
 
-def label_value(value):
+def label_value(variable, value):
     """Default labeller - just returns the value as string."""
     return str(value)
 

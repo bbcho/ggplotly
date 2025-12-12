@@ -4,21 +4,42 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from statsmodels.nonparametric.smoothers_lowess import lowess
-from scipy import stats
+from scipy import stats as scipy_stats
+from .stat_base import Stat
 
 
-class stat_smooth:
+class stat_smooth(Stat):
     """
     Stat for computing smoothed lines (LOESS, linear regression, etc.).
 
     Handles the computation of smoothed values, which are then passed to geom_smooth for visualization.
+
+    Parameters:
+        data (DataFrame, optional): Data to use for this stat.
+        mapping (dict, optional): Aesthetic mappings.
+        method (str): The smoothing method. Options:
+            - 'loess': Custom LOESS with degree-2 polynomials (default, matches R)
+            - 'lowess': statsmodels lowess (degree-1, faster)
+            - 'lm': Linear regression
+        span (float): The smoothing parameter for LOESS (fraction of points to use).
+            Default is 2/3 to match R's loess default.
+        se (bool): Whether to compute standard errors. Default is True.
+        level (float): Confidence level for intervals. Default is 0.95 (95% CI),
+            matching R's ggplot2 default.
+        degree (int): Polynomial degree for LOESS fitting (1 or 2). Default is 2.
+        **params: Additional parameters for the stat.
     """
 
-    def __init__(self, method="loess", span=2/3, se=True, level=0.95, degree=2):
+    __name__ = "smooth"
+
+    def __init__(self, data=None, mapping=None, method="loess", span=2/3,
+                 se=True, level=0.95, degree=2, **params):
         """
         Initializes the smoothing stat.
 
         Parameters:
+            data (DataFrame, optional): Data to use for this stat.
+            mapping (dict, optional): Aesthetic mappings.
             method (str): The smoothing method. Options:
                          - 'loess': Custom LOESS with degree-2 polynomials (default, matches R)
                          - 'lowess': statsmodels lowess (degree-1, faster)
@@ -29,7 +50,9 @@ class stat_smooth:
             level (float): Confidence level for intervals. Default is 0.95 (95% CI),
                          matching R's ggplot2 default.
             degree (int): Polynomial degree for LOESS fitting (1 or 2). Default is 2.
+            **params: Additional parameters.
         """
+        super().__init__(data, mapping, **params)
         self.method = method
         self.span = span
         self.se = se
@@ -185,6 +208,52 @@ class stat_smooth:
         else:
             raise ValueError(f"Unsupported method: {self.method}")
 
+    def compute(self, data):
+        """
+        Compute smoothed values for the data.
+
+        Parameters:
+            data (DataFrame): Input data with x and y columns.
+
+        Returns:
+            tuple: (DataFrame with smoothed values, updated mapping dict)
+        """
+        x_col = self.mapping.get('x')
+        y_col = self.mapping.get('y')
+
+        if x_col is None or y_col is None:
+            raise ValueError("stat_smooth requires both 'x' and 'y' aesthetics")
+
+        # Sort data by x values for proper smoothing
+        result = data.sort_values(by=x_col).reset_index(drop=True).copy()
+
+        x = result[x_col]
+        y = result[y_col]
+
+        # Apply smoothing - get hat matrix diagonal if computing CIs for LOESS
+        if self.se and self.method == "loess":
+            smoothed_y, hat_diag = self.apply_smoothing(x, y, return_hat_diag=True)
+        else:
+            smoothed_y = self.apply_smoothing(x, y, return_hat_diag=False)
+            hat_diag = None
+
+        # Replace original 'y' with smoothed 'y'
+        result[y_col] = smoothed_y
+
+        # Compute confidence intervals if requested
+        if self.se:
+            ymin, ymax = self.compute_confidence_intervals(x, y, smoothed_y, hat_diag)
+            result['ymin'] = ymin
+            result['ymax'] = ymax
+
+        # Update mapping
+        new_mapping = self.mapping.copy()
+        if self.se:
+            new_mapping['ymin'] = 'ymin'
+            new_mapping['ymax'] = 'ymax'
+
+        return result, new_mapping
+
     def compute_stat(self, data, x_col='x', y_col='y'):
         """
         Computes the stat for smoothing, modifying the data with smoothed values.
@@ -250,7 +319,7 @@ class stat_smooth:
 
             # Calculate confidence interval using t-distribution
             df = max(n - 2, 1)
-            t_value = stats.t.ppf((1 + self.level) / 2, df)
+            t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
 
             for i in range(n):
                 # Pointwise standard error using hat matrix
@@ -285,13 +354,13 @@ class stat_smooth:
 
                 # Calculate confidence interval using t-distribution
                 df = max(n - 2, 1)
-                t_value = stats.t.ppf((1 + self.level) / 2, df)
+                t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
 
                 margin[i] = t_value * se_i
         else:
             # For linear models, use constant margin
             df = max(n - 2, 1)
-            t_value = stats.t.ppf((1 + self.level) / 2, df)
+            t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
             margin = t_value * residual_std
 
         # Confidence interval bounds

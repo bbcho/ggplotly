@@ -11,6 +11,8 @@ class scale_x_continuous(Scale):
     Position scales control how data values are mapped to visual positions.
     This scale handles continuous numeric data on the x-axis.
 
+    Aesthetic: x
+
     Parameters:
         name (str, optional): Label for the x-axis.
         limits (tuple, optional): Two-element tuple (min, max) specifying the axis limits.
@@ -48,6 +50,8 @@ class scale_x_continuous(Scale):
         >>> scale_x_continuous(expand=(0.1, 0))  # 10% expansion on each side
         >>> scale_x_continuous(labels=lambda x: [f'${v}' for v in x])
     """
+
+    aesthetic = 'x'
 
     def __init__(self, name=None, limits=None, breaks=None, minor_breaks=None,
                  n_breaks=5, labels=None, expand=(0.05, 0), oob='censor',

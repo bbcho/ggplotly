@@ -7,6 +7,8 @@ import plotly.express as px
 class scale_fill_brewer(Scale):
     """Scale for mapping a categorical variable to a ColorBrewer palette for fill aesthetic."""
 
+    aesthetic = 'fill'
+
     def __init__(self, type="seq", palette=1, direction=1):
         """
         Map a categorical variable to a ColorBrewer palette for fill aesthetic.

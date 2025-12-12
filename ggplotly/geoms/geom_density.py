@@ -3,9 +3,9 @@
 from .geom_base import Geom
 import plotly.graph_objects as go
 import numpy as np
-from scipy.stats import gaussian_kde
 import plotly.express as px
 import pandas as pd
+from ..stats.stat_density import stat_density
 
 
 class geom_density(Geom):
@@ -74,37 +74,16 @@ class geom_density(Geom):
         self.n = n
         self.trim = trim
 
-    def _compute_bandwidth(self, x, bw, adjust):
-        """Compute bandwidth using specified method."""
-        n = len(x)
-        std = np.std(x, ddof=1)
-        iqr = np.percentile(x, 75) - np.percentile(x, 25)
-
-        if isinstance(bw, (int, float)):
-            return bw * adjust
-
-        # Scott's rule (nrd0) - R's default
-        if bw in ('nrd0', 'scott'):
-            # R's bw.nrd0: 0.9 * min(sd, IQR/1.34) * n^(-1/5)
-            bandwidth = 0.9 * min(std, iqr / 1.34) * n ** (-0.2)
-        # Silverman's rule (nrd)
-        elif bw in ('nrd', 'silverman'):
-            # R's bw.nrd: 1.06 * min(sd, IQR/1.34) * n^(-1/5)
-            bandwidth = 1.06 * min(std, iqr / 1.34) * n ** (-0.2)
-        else:
-            # Fall back to scipy's default (Scott's rule)
-            bandwidth = std * n ** (-0.2)
-
-        return bandwidth * adjust
-
-    def _compute_density_for_group(self, x_data, na_rm=False):
+    def _compute_density_for_group(self, x_data, x_col, na_rm=False):
         """
-        Compute KDE for a single group of data.
+        Compute KDE for a single group of data using stat_density.
 
         Parameters
         ----------
         x_data : Series or array
             X values for density estimation.
+        x_col : str
+            Column name for x values.
         na_rm : bool, default=False
             Whether to remove NA values.
 
@@ -113,35 +92,34 @@ class geom_density(Geom):
         tuple
             (x_grid, y_density) arrays.
         """
-        if na_rm:
-            x_data = x_data.dropna()
-
         # Need at least 2 points for KDE
         if len(x_data) < 2:
             return None, None
-
-        # Compute bandwidth
-        bandwidth = self._compute_bandwidth(x_data, self.bw, self.adjust)
 
         # Handle edge case where std is 0
         std = np.std(x_data, ddof=1)
         if std == 0:
             return None, None
 
-        # Create KDE with custom bandwidth
-        kde = gaussian_kde(x_data, bw_method=bandwidth / std)
+        # Use stat_density for computation
+        density_stat = stat_density(
+            mapping={'x': x_col},
+            bw=self.bw,
+            adjust=self.adjust,
+            kernel=self.kernel,
+            n=self.n,
+            trim=self.trim,
+            na_rm=na_rm
+        )
 
-        # Generate evaluation points
-        if self.trim:
-            x_grid = np.linspace(x_data.min(), x_data.max(), self.n)
-        else:
-            # Extend beyond data range like R does (by 3 bandwidths)
-            x_min = x_data.min() - 3 * bandwidth
-            x_max = x_data.max() + 3 * bandwidth
-            x_grid = np.linspace(x_min, x_max, self.n)
+        # Create a DataFrame for the stat
+        group_df = pd.DataFrame({x_col: x_data})
+        result_df, _ = density_stat.compute(group_df)
 
-        y = kde(x_grid)
-        return x_grid, y
+        if len(result_df) == 0:
+            return None, None
+
+        return result_df['x'].values, result_df['density'].values
 
     def draw(self, fig, data=None, row=1, col=1):
         if "size" not in self.params:
@@ -175,7 +153,7 @@ class geom_density(Geom):
                 group_data = data[data[group_col] == group_value]
                 x_data = group_data[x_col]
 
-                x_grid, y_density = self._compute_density_for_group(x_data, na_rm)
+                x_grid, y_density = self._compute_density_for_group(x_data, x_col, na_rm)
 
                 if x_grid is not None:
                     group_df = pd.DataFrame({
@@ -193,7 +171,7 @@ class geom_density(Geom):
         else:
             # Ungrouped density: single KDE for all data
             x_data = data[x_col]
-            x_grid, y_density = self._compute_density_for_group(x_data, na_rm)
+            x_grid, y_density = self._compute_density_for_group(x_data, x_col, na_rm)
 
             if x_grid is not None:
                 computed_data = pd.DataFrame({x_col: x_grid, 'density': y_density})

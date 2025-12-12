@@ -1400,26 +1400,26 @@ shipping_routes = pd.DataFrame({
 
 # Basic sea route (requires searoute package)
 # Uncomment to run (requires: pip install searoute)
-# (ggplot(shipping_routes, aes(x='x', y='y', xend='xend', yend='yend'))
-#  + geom_map(map_type='world')
-#  + geom_searoute(color='steelblue', linewidth=1.0)
-#  + theme_dark()
-#  + labs(title='Maritime Shipping Routes'))
+(ggplot(shipping_routes, aes(x='x', y='y', xend='xend', yend='yend'))
+ + geom_map(map_type='world')
+ + geom_searoute(color='steelblue', linewidth=1.0)
+ + theme_dark()
+ + labs(title='Maritime Shipping Routes'))
 
 # %%
 # Sea routes with restrictions (avoid Suez Canal - routes go around Africa)
-# (ggplot(shipping_routes, aes(x='x', y='y', xend='xend', yend='yend'))
-#  + geom_map(map_type='world')
-#  + geom_searoute(
-#      restrictions=['suez'],  # Force routes around Cape of Good Hope
-#      color='#ff6b35',
-#      show_highlight=True,
-#      show_ports=True,
-#      port_color='#00ff88',
-#      verbose=True  # Shows route distances
-#  )
-#  + theme_dark()
-#  + labs(title='Shipping Routes Avoiding Suez Canal'))
+(ggplot(shipping_routes, aes(x='x', y='y', xend='xend', yend='yend'))
+ + geom_map(map_type='world')
+ + geom_searoute(
+     restrictions=['suez'],  # Force routes around Cape of Good Hope
+     color='#ff6b35',
+     show_highlight=True,
+     show_ports=True,
+     port_color='#00ff88',
+     verbose=True  # Shows route distances
+ )
+ + theme_dark()
+ + labs(title='Shipping Routes Avoiding Suez Canal'))
 
 # %% [markdown]
 # ## 13.4 Edge Bundling on Maps
@@ -1613,3 +1613,5 @@ df = pd.DataFrame({'x': range(1, 6), 'y': [2, 4, 3, 5, 4]})
 # - data() to list/load datasets, map_data() for geographic data
 #
 # For more details, see the documentation at https://ggplotly.readthedocs.io
+
+# %%

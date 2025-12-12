@@ -4,6 +4,8 @@ from .scale_base import Scale
 class scale_fill_manual(Scale):
     """Scale for manually defining fill colors based on a categorical variable."""
 
+    aesthetic = 'fill'
+
     def __init__(self, values, name=None, breaks=None, labels=None, na_value='gray',
                  aesthetics='fill', guide='legend'):
         """

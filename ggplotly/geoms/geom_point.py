@@ -28,6 +28,10 @@ class geom_point(Geom):
     def draw(self, fig, data=None, row=1, col=1):
         data = data if data is not None else self.data
 
+        # Apply any stats to transform the data
+        for stat in self.stats:
+            data, self.mapping = stat.compute(data)
+
         # Set default point size to 8 if not specified
         if "size" not in self.params:
             self.params["size"] = 8
