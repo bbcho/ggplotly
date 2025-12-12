@@ -1,9 +1,8 @@
 # geoms/geom_boxplot.py
 
-from .geom_base import Geom
 import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
+
+from .geom_base import Geom
 
 
 class geom_boxplot(Geom):

@@ -1,10 +1,8 @@
 import warnings
 from typing import Optional
 
-import pandas as pd
-import plotly.express as px
-from plotly.subplots import make_subplots
 from plotly.graph_objects import Figure
+from plotly.subplots import make_subplots
 
 from .constants import SHAPE_PALETTE, get_color_palette
 from .exceptions import FacetColumnNotFoundError, TooManyFacetsWarning
@@ -79,8 +77,6 @@ class Facet:
 
 
 # facets/facet_grid.py
-
-from plotly.subplots import make_subplots
 
 
 class facet_grid(Facet):

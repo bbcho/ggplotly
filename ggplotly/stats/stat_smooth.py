@@ -1,10 +1,10 @@
 # stats/stat_smooth.py
 
 import numpy as np
-import pandas as pd
+from scipy import stats as scipy_stats
 from sklearn.linear_model import LinearRegression
 from statsmodels.nonparametric.smoothers_lowess import lowess
-from scipy import stats as scipy_stats
+
 from .stat_base import Stat
 
 

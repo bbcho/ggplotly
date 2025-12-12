@@ -1,8 +1,8 @@
 # geoms/geom_abline.py
 
 import plotly.graph_objects as go
+
 from .geom_base import Geom
-import numpy as np
 
 
 class geom_abline(Geom):

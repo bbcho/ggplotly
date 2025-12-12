@@ -1,8 +1,8 @@
 # geoms/geom_path.py
 
 import plotly.graph_objects as go
+
 from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
 
 
 class geom_path(Geom):

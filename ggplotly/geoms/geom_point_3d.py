@@ -1,10 +1,9 @@
 # geoms/geom_point_3d.py
 
 import plotly.graph_objects as go
-from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
-import pandas as pd
 
+from ..aesthetic_mapper import AestheticMapper
+from .geom_base import Geom
 
 # Valid 3D marker symbols in Plotly
 # See: https://plotly.com/python/reference/scatter3d/#scatter3d-marker-symbol

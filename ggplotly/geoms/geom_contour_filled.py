@@ -1,9 +1,10 @@
 # geoms/geom_contour_filled.py
 
 import plotly.graph_objects as go
-from .geom_base import Geom
+
 from ..aesthetic_mapper import AestheticMapper
 from ..stats.stat_contour import stat_contour
+from .geom_base import Geom
 
 
 class geom_contour_filled(Geom):

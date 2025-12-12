@@ -1,10 +1,10 @@
 # geoms/geom_histogram.py
 
-from .geom_base import Geom
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
+
 from ..stats.stat_bin import stat_bin
+from .geom_base import Geom
 
 
 class geom_histogram(Geom):

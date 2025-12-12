@@ -1,10 +1,9 @@
 # geoms/geom_surface.py
 
-import plotly.graph_objects as go
-from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
-import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
+
+from .geom_base import Geom
 
 
 class geom_surface(Geom):
@@ -70,7 +69,7 @@ class geom_surface(Geom):
 
         x_vals = data[x_col]
         y_vals = data[y_col]
-        z_vals = data[z_col]
+        data[z_col]
 
         # Get unique sorted values for x and y
         x_unique = np.sort(x_vals.unique())

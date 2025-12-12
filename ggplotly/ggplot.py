@@ -1,19 +1,20 @@
 # ggplot.py
 
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.subplots as sp
-from .aes import aes
-from .geoms.geom_base import Geom
-from .scales.scale_base import Scale, ScaleRegistry
-from .themes import Theme
-from .facets import Facet
-from .coords.coord_base import Coord
-from .guides import Labs, Annotate, Guides
-from .utils import Utils, ggsize
-from .stats.stat_base import Stat
-from .data_utils import normalize_data, INDEX_COLUMN
 import copy
+
+import plotly.graph_objects as go
+import plotly.subplots as sp
+
+from .aes import aes
+from .coords.coord_base import Coord
+from .data_utils import INDEX_COLUMN, normalize_data
+from .facets import Facet
+from .geoms.geom_base import Geom
+from .guides import Annotate, Guides, Labs
+from .scales.scale_base import Scale, ScaleRegistry
+from .stats.stat_base import Stat
+from .themes import Theme
+from .utils import Utils, ggsize
 
 
 class ggplot:
@@ -139,6 +140,7 @@ class ggplot:
         The stat's 'geom' parameter determines which geom to use for rendering.
         """
         import inspect
+
         from . import geoms as geoms_module
 
         # Get the geom class from stat's geom parameter

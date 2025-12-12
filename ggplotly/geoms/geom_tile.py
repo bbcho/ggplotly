@@ -1,9 +1,10 @@
 # geoms/geom_tile.py
 
-from .geom_base import Geom
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+from .geom_base import Geom
 
 
 class geom_tile(Geom):
@@ -25,7 +26,7 @@ class geom_tile(Geom):
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         z = data[self.mapping["fill"]] if "fill" in self.mapping else None
-        group_values = data[self.mapping["group"]] if "group" in self.mapping else None
+        data[self.mapping["group"]] if "group" in self.mapping else None
         alpha = self.params.get("alpha", 1)
 
         # Handle fill mapping if fill is categorical or continuous

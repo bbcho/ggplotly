@@ -1,10 +1,9 @@
 # geoms/geom_area.py
 
-from .geom_base import Geom
+
 import plotly.graph_objects as go
-import pandas as pd
-import plotly.express as px
-from itertools import permutations
+
+from .geom_base import Geom
 
 
 class geom_area(Geom):

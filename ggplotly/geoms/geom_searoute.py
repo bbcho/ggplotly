@@ -7,10 +7,11 @@ similar to geom_edgebundle but using actual shipping lanes.
 Automatically detects geo context and uses Scattergeo when a map is present.
 """
 
-import plotly.graph_objects as go
-import pandas as pd
 import numpy as np
+import plotly.graph_objects as go
+
 from .geom_base import Geom
+
 
 def _get_searoute():
     """Lazy import of searoute package."""

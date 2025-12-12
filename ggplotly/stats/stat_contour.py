@@ -29,9 +29,9 @@ contour lines or filled contours.
 """
 
 import numpy as np
-import pandas as pd
-from scipy.stats import gaussian_kde
 from scipy.interpolate import griddata
+from scipy.stats import gaussian_kde
+
 from .stat_base import Stat
 
 

@@ -1,17 +1,12 @@
 # geoms/geom_ribbon.py
 
-from .geom_base import Geom
-import plotly.graph_objects as go
-import numpy as np
-import plotly.express as px
-import pandas as pd
-from .geom_line import geom_line
+
 from ..aes import aes
+from .geom_base import Geom
+from .geom_line import geom_line
 
 # geoms/geom_ribbon.py
 
-import plotly.graph_objects as go
-import plotly.express as px
 
 
 class geom_ribbon(Geom):

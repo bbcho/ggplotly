@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
+
 from .stat_base import Stat
 
 

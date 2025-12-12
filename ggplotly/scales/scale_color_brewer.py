@@ -1,7 +1,7 @@
-from .scale_base import Scale
-
 # scales/scale_color_brewer.py
 import plotly.express as px
+
+from .scale_base import Scale
 
 
 class scale_color_brewer(Scale):

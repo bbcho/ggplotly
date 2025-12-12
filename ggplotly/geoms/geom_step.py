@@ -1,8 +1,9 @@
 # geoms/geom_step.py
 
-from .geom_base import Geom
 import plotly.graph_objects as go
+
 from ..stats.stat_ecdf import stat_ecdf
+from .geom_base import Geom
 
 
 class geom_step(Geom):

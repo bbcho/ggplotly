@@ -8,11 +8,11 @@ Automatically detects geo context and uses Scattergeo when a map is present.
 Supports igraph Graph objects for convenient graph visualization.
 """
 
-import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
-from .geom_base import Geom
+import plotly.graph_objects as go
+
 from ..stats.stat_edgebundle import stat_edgebundle
+from .geom_base import Geom
 
 
 def _extract_graph_data(graph, weight_attr=None):

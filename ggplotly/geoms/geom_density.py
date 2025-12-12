@@ -1,11 +1,11 @@
 # geoms/geom_density.py
 
-from .geom_base import Geom
-import plotly.graph_objects as go
 import numpy as np
-import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
+
 from ..stats.stat_density import stat_density
+from .geom_base import Geom
 
 
 class geom_density(Geom):

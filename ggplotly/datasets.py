@@ -2,16 +2,16 @@
 """
 Built-in datasets for ggplotly, mirroring those available in ggplot2.
 """
+from __future__ import annotations
+
+from pathlib import Path
 
 import pandas as pd
-from pathlib import Path
-from typing import Optional, List
-
 
 _DATA_DIR = Path(__file__).parent / "data"
 
 
-def _list_datasets() -> List[str]:
+def _list_datasets() -> list[str]:
     """Return sorted list of available dataset names."""
     return sorted([f.stem for f in _DATA_DIR.glob("*.csv")])
 
@@ -54,7 +54,7 @@ def _load_us_flights():
     return g
 
 
-def data(name: Optional[str] = None):
+def data(name: str | None = None):
     """
     List available datasets or load a dataset by name.
 

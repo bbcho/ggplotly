@@ -1,11 +1,10 @@
 # geoms/geom_smooth.py
 
-import plotly.graph_objects as go
-import plotly.express as px
-from ..stats.stat_smooth import stat_smooth
-import numpy as np
-from .geom_base import Geom
 import pandas as pd
+import plotly.graph_objects as go
+
+from ..stats.stat_smooth import stat_smooth
+from .geom_base import Geom
 
 
 class geom_smooth(Geom):

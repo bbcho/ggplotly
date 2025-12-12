@@ -28,15 +28,17 @@ Examples:
     >>> df.index.name = 'time'
     >>> ggplot(df, aes(y='y')) + geom_point()  # x-axis labeled 'time'
 """
+from __future__ import annotations
+
+from typing import Any
 
 import pandas as pd
-from typing import Tuple, Dict, Any, Optional
 
 # Reserved column name for index data
 INDEX_COLUMN = '_ggplotly_index'
 
 
-def normalize_data(data, mapping: Dict[str, Any]) -> Tuple[Optional[pd.DataFrame], Dict[str, Any], Optional[str]]:
+def normalize_data(data, mapping: dict[str, Any]) -> tuple[pd.DataFrame | None, dict[str, Any], str | None]:
     """
     Normalize input data and mapping for ggplotly consumption.
 
@@ -94,7 +96,7 @@ def normalize_data(data, mapping: Dict[str, Any]) -> Tuple[Optional[pd.DataFrame
     return data, mapping, index_name
 
 
-def _normalize_series(series: pd.Series, mapping: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any], str]:
+def _normalize_series(series: pd.Series, mapping: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any], str]:
     """
     Convert a Series to a DataFrame for plotting.
 
@@ -131,7 +133,7 @@ def _normalize_series(series: pd.Series, mapping: Dict[str, Any]) -> Tuple[pd.Da
     return df, mapping, index_name
 
 
-def _handle_index_references(data: pd.DataFrame, mapping: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+def _handle_index_references(data: pd.DataFrame, mapping: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Handle 'index' keyword in aesthetic mappings.
 
@@ -170,7 +172,7 @@ def _handle_index_references(data: pd.DataFrame, mapping: Dict[str, Any]) -> Tup
     return data, mapping
 
 
-def _auto_populate_x(data: pd.DataFrame, mapping: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+def _auto_populate_x(data: pd.DataFrame, mapping: dict[str, Any]) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Auto-populate x aesthetic from index when not specified.
 
@@ -203,7 +205,7 @@ def _auto_populate_x(data: pd.DataFrame, mapping: Dict[str, Any]) -> Tuple[pd.Da
     return data, mapping
 
 
-def get_index_label(index_name: Optional[str]) -> str:
+def get_index_label(index_name: str | None) -> str:
     """
     Get the appropriate label for the index axis.
 

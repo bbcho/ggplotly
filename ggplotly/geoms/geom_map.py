@@ -1,11 +1,13 @@
 # geoms/geom_map.py
 
-import plotly.graph_objects as go
-import plotly.express as px
-from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
-import pandas as pd
 import json
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+
+from ..aesthetic_mapper import AestheticMapper
+from .geom_base import Geom
 
 
 def _has_geopandas():
@@ -126,7 +128,7 @@ class geom_map(Geom):
         # ggplot2 uses map_id aesthetic for choropleths
         map_id_col = self.mapping.get("map_id") if self.mapping else None
         fill_col = self.mapping.get("fill") if self.mapping else None
-        geometry_col = self.mapping.get("geometry") if self.mapping else None
+        self.mapping.get("geometry") if self.mapping else None
 
         # Determine the mode:
         # 1. GeoJSON mode (sf-like) - when geojson is provided or data is GeoDataFrame
@@ -173,7 +175,7 @@ class geom_map(Geom):
             locations = data[map_id_col]
             fill_values = data[fill_col] if fill_col and fill_col in data.columns else None
 
-        alpha = style_props['alpha']
+        style_props['alpha']
         border_color = self.params.get('color', 'white')
         border_width = self.params.get('linewidth', 0.5)
 

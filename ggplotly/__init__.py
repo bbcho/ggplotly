@@ -1,88 +1,97 @@
 # __init__.py
 
-from .ggplot import ggplot
-from .ggtitle import ggtitle
 from .aes import aes
-from .themes import (
-    theme_default,
-    theme,
-    theme_ggplot2,
-    theme_nytimes,
-    theme_minimal,
-    theme_bbc,
-    # theme_bw,
-    theme_dark,
-    theme_classic,
-    theme_custom,
-    element_text,
-    element_line,
-    element_rect,
-)
-from .facets import Facet, facet_wrap, facet_grid, label_value, label_both
-from .coords import Coord, coord_flip, coord_polar, coord_cartesian, coord_sf
-from .limits import xlim, ylim, lims
+from .coords import Coord, coord_cartesian, coord_flip, coord_polar, coord_sf
+from .datasets import data
+from .facets import Facet, facet_grid, facet_wrap, label_both, label_value
 from .geoms import (
-    geom_point,
-    geom_line,
-    geom_path,
-    geom_bar,
-    geom_col,
-    geom_histogram,
-    geom_boxplot,
-    geom_smooth,
-    geom_area,
-    geom_density,
-    geom_violin,
-    geom_ribbon,
-    geom_tile,
-    geom_text,
-    geom_errorbar,
-    geom_segment,
-    geom_step,
-    geom_vline,
-    geom_hline,
-    geom_edgebundle,
-    geom_searoute,
-    geom_jitter,
-    geom_rug,
     geom_abline,
+    geom_area,
+    geom_bar,
+    geom_boxplot,
+    geom_candlestick,
+    geom_col,
     geom_contour,
     geom_contour_filled,
+    geom_density,
+    geom_edgebundle,
+    geom_errorbar,
+    geom_histogram,
+    geom_hline,
+    geom_jitter,
+    geom_line,
     geom_map,
-    geom_sf,
-    geom_range,
-    geom_point_3d,
-    geom_surface,
-    geom_wireframe,
-    geom_candlestick,
     geom_ohlc,
+    geom_path,
+    geom_point,
+    geom_point_3d,
+    geom_range,
+    geom_ribbon,
+    geom_rug,
+    geom_searoute,
+    geom_segment,
+    geom_sf,
+    geom_smooth,
+    geom_step,
+    geom_surface,
+    geom_text,
+    geom_tile,
+    geom_violin,
+    geom_vline,
+    geom_wireframe,
 )
+from .ggplot import ggplot
+from .ggtitle import ggtitle
+from .guides import annotate, guide_colorbar, guide_legend, guides, labs
+from .layer import Layer, layer
+from .limits import lims, xlim, ylim
+from .map_data import map_data
+from .positions import position_dodge, position_jitter, position_stack
 from .scales import (
-    scale_x_continuous,
-    scale_y_continuous,
-    scale_color_manual,
     scale_color_brewer,
+    scale_color_gradient,
+    scale_color_manual,
+    scale_fill_brewer,
     scale_fill_gradient,
     scale_fill_manual,
-    scale_fill_brewer,
     scale_fill_viridis_c,
     scale_shape_manual,
     scale_size,
-    scale_x_log10,
-    scale_y_log10,
+    scale_x_continuous,
     scale_x_date,
     scale_x_datetime,
-    scale_x_rangeslider,
+    scale_x_log10,
     scale_x_rangeselector,
-    scale_color_gradient,
+    scale_x_rangeslider,
+    scale_y_continuous,
+    scale_y_log10,
 )
-from .guides import labs, annotate, guides, guide_legend, guide_colorbar
-from .positions import position_dodge, position_jitter, position_stack
+from .stats import (
+    stat_bin,
+    stat_contour,
+    stat_count,
+    stat_density,
+    stat_ecdf,
+    stat_identity,
+    stat_smooth,
+    stat_summary,
+)
+from .themes import (
+    element_line,
+    element_rect,
+    element_text,
+    theme,
+    theme_bbc,
+    theme_classic,
+    theme_custom,
+    # theme_bw,
+    theme_dark,
+    theme_default,
+    theme_ggplot2,
+    theme_minimal,
+    theme_nytimes,
+)
 from .utils import ggsave, ggsize
-from .stats import *
-from .datasets import data
-from .map_data import map_data
-from .layer import Layer, layer
 
 __all__ = [
     "ggplot",
@@ -175,8 +184,14 @@ __all__ = [
     "scale_x_rangeslider",
     "scale_x_rangeselector",
     "scale_color_gradient",
-    "stat_count",
+    "stat_identity",
+    "stat_smooth",
     "stat_bin",
+    "stat_density",
+    "stat_ecdf",
+    "stat_count",
+    "stat_summary",
+    "stat_contour",
     "data",
     "map_data",
     "Layer",

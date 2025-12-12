@@ -1,9 +1,10 @@
 # geoms/geom_rug.py
 
-import plotly.graph_objects as go
-from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
 import numpy as np
+import plotly.graph_objects as go
+
+from ..aesthetic_mapper import AestheticMapper
+from .geom_base import Geom
 
 
 class geom_rug(Geom):

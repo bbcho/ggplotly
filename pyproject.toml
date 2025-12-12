@@ -97,8 +97,13 @@ target-version = ["py39", "py310", "py311", "py312"]
 [tool.ruff]
 line-length = 88
 target-version = "py39"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP"]
-ignore = ["E501"]
+ignore = ["E501", "E741"]  # E741: ambiguous variable name - used in edge bundling algorithm
+
+[tool.ruff.lint.per-file-ignores]
+"ggplotly/geoms/geom_map.py" = ["F401"]  # geopandas import is used to check availability
 
 [tool.mypy]
 python_version = "3.9"

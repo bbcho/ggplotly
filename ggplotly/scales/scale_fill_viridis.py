@@ -1,7 +1,7 @@
 # scales/scale_fill_viridis.py
 
+
 from .scale_base import Scale
-import numpy as np
 
 
 class scale_fill_viridis_c(Scale):

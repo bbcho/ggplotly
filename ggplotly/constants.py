@@ -7,7 +7,6 @@ the library to avoid duplication and ensure consistency.
 
 import plotly.express as px
 
-
 # Default shape palette matching ggplot2's defaults
 # Maps to Plotly marker symbols
 # See: https://plotly.com/python/marker-style/

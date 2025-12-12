@@ -5,10 +5,11 @@ Based on Holten & Van Wijk (2009) algorithm.
 Re-implementation from edgebundleexample with vectorized operations.
 """
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from typing import Optional
 
 
 def _euclidean_distance(p1, p2):

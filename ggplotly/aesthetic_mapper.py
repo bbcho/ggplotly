@@ -5,14 +5,16 @@ Centralized aesthetic mapping system for ggplotly.
 This module provides a clean interface for resolving aesthetic mappings
 and determining whether aesthetic values are column references or literal values.
 """
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import Any
 
 import pandas as pd
-import plotly.express as px
-from functools import lru_cache
-from typing import Any, Dict, Optional, Union, Tuple
 
-from .constants import SHAPE_PALETTE, get_color_palette as _get_color_palette
-from .exceptions import ColumnNotFoundError, InvalidColorError
+from .constants import SHAPE_PALETTE
+from .constants import get_color_palette as _get_color_palette
+from .exceptions import ColumnNotFoundError
 
 
 # Module-level cache for color conversions (expensive Plotly operations)
@@ -103,8 +105,8 @@ class AestheticMapper:
     - Literal values (colors, sizes, etc. to be used directly)
     """
 
-    def __init__(self, data: pd.DataFrame, mapping: Dict[str, Any], params: Dict[str, Any], theme=None,
-                 global_color_map: Dict[Any, str] = None, global_shape_map: Dict[Any, str] = None,
+    def __init__(self, data: pd.DataFrame, mapping: dict[str, Any], params: dict[str, Any], theme=None,
+                 global_color_map: dict[Any, str] = None, global_shape_map: dict[Any, str] = None,
                  validate: bool = True):
         """
         Initialize the aesthetic mapper.
@@ -171,8 +173,8 @@ class AestheticMapper:
         """
         if column not in self._column_set:
             raise ColumnNotFoundError(column, list(self.data.columns), aesthetic)
-    
-    def resolve_aesthetic(self, aesthetic: str) -> Tuple[Any, Optional[pd.Series], Optional[Dict]]:
+
+    def resolve_aesthetic(self, aesthetic: str) -> tuple[Any, pd.Series | None, dict | None]:
         """
         Resolve an aesthetic from both mapping and params.
 
@@ -202,7 +204,7 @@ class AestheticMapper:
         else:
             # It's a literal value
             return value, None, None
-    
+
     def _is_continuous(self, series: pd.Series) -> bool:
         """
         Determine if a series should be treated as continuous (numeric) or categorical.
@@ -237,7 +239,7 @@ class AestheticMapper:
 
         return False
 
-    def _create_color_map(self, series: pd.Series) -> Dict[Any, str]:
+    def _create_color_map(self, series: pd.Series) -> dict[Any, str]:
         """
         Create a mapping from unique values to colors.
 
@@ -261,7 +263,7 @@ class AestheticMapper:
 
         return color_map
 
-    def _create_shape_map(self, series: pd.Series) -> Dict[Any, str]:
+    def _create_shape_map(self, series: pd.Series) -> dict[Any, str]:
         """
         Create a mapping from unique values to marker shapes.
 
@@ -278,8 +280,8 @@ class AestheticMapper:
             shape_map[val] = SHAPE_PALETTE[i % len(SHAPE_PALETTE)]
 
         return shape_map
-    
-    def get_style_properties(self) -> Dict[str, Any]:
+
+    def get_style_properties(self) -> dict[str, Any]:
         """
         Extract all relevant style properties for a geom.
 
@@ -368,8 +370,8 @@ class AestheticMapper:
         # Cache the result for subsequent calls
         self._style_props_cache = result
         return result
-    
-    def get_color_for_value(self, value_key: Any, style_props: Dict[str, Any] = None,
+
+    def get_color_for_value(self, value_key: Any, style_props: dict[str, Any] = None,
                             prefer_fill: bool = False) -> str:
         """
         Get the resolved color for a specific value/group.
@@ -411,7 +413,7 @@ class AestheticMapper:
 
         return style_props['default_color']
 
-    def get_color_with_alpha(self, value_key: Any = None, style_props: Dict[str, Any] = None,
+    def get_color_with_alpha(self, value_key: Any = None, style_props: dict[str, Any] = None,
                             prefer_fill: bool = False, alpha_override: float = None) -> str:
         """
         Get color with alpha channel as RGBA string.
@@ -457,7 +459,7 @@ class AestheticMapper:
         return _cached_color_to_rgba(color, alpha)
 
     def apply_style_to_trace(self, trace_kwargs: dict, style_props: dict,
-                            target_mapping: dict, value_key: Optional[Any] = None) -> dict:
+                            target_mapping: dict, value_key: Any | None = None) -> dict:
         """
         Apply style properties to a trace dictionary based on target mapping.
 
@@ -496,17 +498,17 @@ class AestheticMapper:
         return trace_kwargs
 
 
-def create_aesthetic_mapper(data: pd.DataFrame, mapping: Dict[str, Any], 
-                           params: Dict[str, Any], theme=None) -> AestheticMapper:
+def create_aesthetic_mapper(data: pd.DataFrame, mapping: dict[str, Any],
+                           params: dict[str, Any], theme=None) -> AestheticMapper:
     """
     Factory function to create an AestheticMapper instance.
-    
+
     Parameters:
         data: The DataFrame containing the plot data
         mapping: Dictionary of aesthetic mappings from aes()
         params: Dictionary of parameters passed to the geom
         theme: Optional theme object
-        
+
     Returns:
         AestheticMapper instance
     """

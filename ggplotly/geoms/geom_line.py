@@ -1,9 +1,8 @@
 # geoms/geom_line.py
 
 import plotly.graph_objects as go
-import plotly.express as px
+
 from .geom_base import Geom
-import pandas as pd
 
 
 class geom_line(Geom):

@@ -1,7 +1,8 @@
 # scales/scale_x_continuous.py
 
-from .scale_base import Scale
 import numpy as np
+
+from .scale_base import Scale
 
 
 class scale_x_continuous(Scale):

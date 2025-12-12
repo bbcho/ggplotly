@@ -1,9 +1,8 @@
 # geoms/geom_text.py
 
-from .geom_base import Geom
 import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
+
+from .geom_base import Geom
 
 
 class geom_text(Geom):
@@ -128,14 +127,13 @@ class geom_text(Geom):
             textposition = self._hjust_vjust_to_textposition(hjust, vjust)
 
         # Get angle parameter (note: Plotly uses clockwise, R uses counter-clockwise)
-        angle = self.params.get("angle", 0)
-        textangle = -angle if angle != 0 else None  # Convert to Plotly convention
+        self.params.get("angle", 0)
 
         # Get text styling parameters
-        text_size = self.params.get("size", 11)
-        font_family = self.params.get("family", None)
+        self.params.get("size", 11)
+        self.params.get("family", None)
         fontface = self.params.get("fontface", "plain")
-        font_props = self._fontface_to_plotly(fontface)
+        self._fontface_to_plotly(fontface)
 
         alpha = style_props['alpha']
         group_values = style_props['group_series']
@@ -169,7 +167,7 @@ class geom_text(Geom):
                 )
         elif style_props['color_series'] is not None:
             # Case 2: Colored by categorical variable
-            cat_series = style_props['color_series']
+            style_props['color_series']
             cat_map = style_props['color_map']
             cat_col = style_props['color']
 

@@ -2,6 +2,7 @@
 
 import numpy as np
 import plotly.graph_objects as go
+
 from .coord_base import Coord
 
 

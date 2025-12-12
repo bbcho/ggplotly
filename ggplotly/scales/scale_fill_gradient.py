@@ -1,7 +1,8 @@
 # scales/scale_fill_gradient.py
 
-from .scale_base import Scale
 import numpy as np
+
+from .scale_base import Scale
 
 
 class scale_fill_gradient(Scale):

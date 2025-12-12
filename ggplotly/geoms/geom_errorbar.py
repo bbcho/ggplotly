@@ -1,9 +1,8 @@
 # geoms/geom_errorbar.py
 
-from .geom_base import Geom
 import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
+
+from .geom_base import Geom
 
 
 class geom_errorbar(Geom):
@@ -81,7 +80,7 @@ class geom_errorbar(Geom):
                 )
         elif style_props['color_series'] is not None:
             # Case 2: Colored by categorical variable
-            cat_series = style_props['color_series']
+            style_props['color_series']
             cat_map = style_props['color_map']
             cat_col = style_props['color']
 

@@ -1,12 +1,8 @@
-import plotly.express as px
-import plotly.graph_objects as go
-import pandas as pd
-from itertools import product
+import copy
+
 from ..aes import aes
-from ..stats.stat_base import Stat
 from ..aesthetic_mapper import AestheticMapper
 from ..trace_builders import get_trace_builder
-import copy
 
 
 class Geom:

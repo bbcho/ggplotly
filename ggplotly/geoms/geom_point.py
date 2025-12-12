@@ -1,10 +1,10 @@
 # geoms/geom_point.py
 
-import plotly.graph_objects as go
-import plotly.express as px
-from .geom_base import Geom
-from ..aesthetic_mapper import AestheticMapper
 import pandas as pd
+import plotly.graph_objects as go
+
+from ..aesthetic_mapper import AestheticMapper
+from .geom_base import Geom
 
 
 class geom_point(Geom):
@@ -68,8 +68,8 @@ class geom_point(Geom):
         # x = longitude, y = latitude (ggplot2 convention)
         lon_col = self.mapping.get("x")
         lat_col = self.mapping.get("y")
-        color_col = self.mapping.get("color")
-        size_col = self.mapping.get("size")
+        self.mapping.get("color")
+        self.mapping.get("size")
         label_col = self.mapping.get("label")
 
         if lat_col is None or lon_col is None:

@@ -1,11 +1,11 @@
-from .stat_identity import stat_identity
-from .stat_smooth import stat_smooth
 from .stat_bin import stat_bin
+from .stat_contour import stat_contour
+from .stat_count import stat_count
 from .stat_density import stat_density
 from .stat_ecdf import stat_ecdf
-from .stat_count import stat_count
+from .stat_identity import stat_identity
+from .stat_smooth import stat_smooth
 from .stat_summary import stat_summary
-from .stat_contour import stat_contour
 
 __all__ = [
     "stat_identity",

@@ -1,9 +1,9 @@
 # geoms/geom_range.py
 
-import plotly.graph_objects as go
+
 import pandas as pd
-import numpy as np
-from datetime import datetime
+import plotly.graph_objects as go
+
 from .geom_base import Geom
 
 
