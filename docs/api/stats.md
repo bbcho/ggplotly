@@ -43,3 +43,15 @@ Statistical transformations for data.
 ::: ggplotly.stats.stat_ecdf.stat_ecdf
     options:
       show_root_heading: true
+
+## stat_stl
+
+::: ggplotly.stats.stat_stl.stat_stl
+    options:
+      show_root_heading: true
+
+## stat_fanchart
+
+::: ggplotly.stats.stat_fanchart.stat_fanchart
+    options:
+      show_root_heading: true

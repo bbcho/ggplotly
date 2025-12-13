@@ -1,6 +1,7 @@
 # geoms/__init__.py
 
 from .geom_abline import geom_abline
+from .geom_acf import geom_acf
 from .geom_area import geom_area
 from .geom_bar import geom_bar
 from .geom_base import Geom
@@ -12,11 +13,14 @@ from .geom_contour_filled import geom_contour_filled
 from .geom_density import geom_density
 from .geom_edgebundle import geom_edgebundle
 from .geom_errorbar import geom_errorbar
+from .geom_fanchart import geom_fanchart
 from .geom_histogram import geom_histogram
 from .geom_hline import geom_hline
 from .geom_jitter import geom_jitter
 from .geom_line import geom_line
+from .geom_lines import geom_lines
 from .geom_map import geom_map, geom_sf
+from .geom_pacf import geom_pacf
 from .geom_path import geom_path
 from .geom_point import geom_point
 from .geom_point_3d import geom_point_3d
@@ -27,6 +31,7 @@ from .geom_searoute import geom_searoute
 from .geom_segment import geom_segment
 from .geom_smooth import geom_smooth
 from .geom_step import geom_step
+from .geom_stl import geom_stl
 from .geom_surface import geom_surface, geom_wireframe
 from .geom_text import geom_text
 from .geom_tile import geom_tile
@@ -37,6 +42,7 @@ __all__ = [
     "Geom",
     "geom_point",
     "geom_line",
+    "geom_lines",
     "geom_path",
     "geom_bar",
     "geom_histogram",
@@ -55,6 +61,7 @@ __all__ = [
     "geom_vline",
     "geom_hline",
     "geom_edgebundle",
+    "geom_fanchart",
     "geom_searoute",
     "geom_jitter",
     "geom_rug",
@@ -69,4 +76,7 @@ __all__ = [
     "geom_wireframe",
     "geom_candlestick",
     "geom_ohlc",
+    "geom_stl",
+    "geom_acf",
+    "geom_pacf",
 ]
