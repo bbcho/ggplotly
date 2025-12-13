@@ -20,8 +20,11 @@ from .geom_jitter import geom_jitter
 from .geom_line import geom_line
 from .geom_lines import geom_lines
 from .geom_map import geom_map, geom_sf
+from .geom_norm import geom_norm
 from .geom_pacf import geom_pacf
 from .geom_path import geom_path
+from .geom_qq import geom_qq
+from .geom_qq_line import geom_qq_line
 from .geom_point import geom_point
 from .geom_point_3d import geom_point_3d
 from .geom_range import geom_range
@@ -79,4 +82,7 @@ __all__ = [
     "geom_stl",
     "geom_acf",
     "geom_pacf",
+    "geom_norm",
+    "geom_qq",
+    "geom_qq_line",
 ]

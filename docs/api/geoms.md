@@ -50,6 +50,10 @@ Geometric objects (geoms) are the visual elements used to represent data in a pl
     options:
       show_root_heading: true
 
+::: ggplotly.geoms.geom_norm.geom_norm
+    options:
+      show_root_heading: true
+
 ## Area Geoms
 
 ::: ggplotly.geoms.geom_area.geom_area
@@ -67,6 +71,14 @@ Geometric objects (geoms) are the visual elements used to represent data in a pl
 ## Statistical Geoms
 
 ::: ggplotly.geoms.geom_smooth.geom_smooth
+    options:
+      show_root_heading: true
+
+::: ggplotly.geoms.geom_qq.geom_qq
+    options:
+      show_root_heading: true
+
+::: ggplotly.geoms.geom_qq_line.geom_qq_line
     options:
       show_root_heading: true
 

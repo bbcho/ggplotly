@@ -180,12 +180,13 @@ class ggplot:
         geom_params = {k: v for k, v in stat.params.items() if k not in stat_init_params}
 
         # Create a new geom with the stat's params
-        new_geom = geom_class(data=self.data.copy(), mapping=aes(**self.mapping), **geom_params)
+        geom_data = self.data.copy() if self.data is not None else None
+        new_geom = geom_class(data=geom_data, mapping=aes(**self.mapping), **geom_params)
 
         # Copy stat's mapping and data before attaching
         stat_copy = stat.copy()
         stat_copy.mapping = {**self.mapping, **stat.mapping}
-        stat_copy.data = self.data.copy()
+        stat_copy.data = geom_data
 
         new_geom.stats = [stat_copy]
 

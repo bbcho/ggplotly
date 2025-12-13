@@ -55,3 +55,21 @@ Statistical transformations for data.
 ::: ggplotly.stats.stat_fanchart.stat_fanchart
     options:
       show_root_heading: true
+
+## stat_function
+
+::: ggplotly.stats.stat_function.stat_function
+    options:
+      show_root_heading: true
+
+## stat_qq
+
+::: ggplotly.stats.stat_qq.stat_qq
+    options:
+      show_root_heading: true
+
+## stat_qq_line
+
+::: ggplotly.stats.stat_qq_line.stat_qq_line
+    options:
+      show_root_heading: true
