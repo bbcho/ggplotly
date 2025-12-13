@@ -58,6 +58,9 @@ docs = [
     "mkdocs-material>=9.0.0",
     "mkdocstrings>=0.24.0",
     "mkdocstrings-python>=1.0.0",
+    "mkdocs-jupyter>=0.24.0",
+    "nbconvert>=7.0.0",
+    "ipykernel>=6.0.0",
 ]
 geo = [
     "geopandas>=0.12.0",

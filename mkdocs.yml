@@ -30,6 +30,11 @@ theme:
 
 plugins:
   - search
+  - mkdocs-jupyter:
+      execute: true
+      ignore_h1_titles: true
+      include_source: true
+      theme: dark
   - mkdocstrings:
       handlers:
         python:
@@ -40,16 +45,26 @@ plugins:
             heading_level: 2
 
 nav:
-  - Home: index.md
-  - Getting Started: getting-started.md
+  - Home: index.ipynb
+  - Getting Started: getting-started.ipynb
   - User Guide:
-    - Aesthetics: guide/aesthetics.md
-    - Geoms: guide/geoms.md
-    - Scales: guide/scales.md
-    - Themes: guide/themes.md
-    - Facets: guide/facets.md
-    - Coordinates: guide/coordinates.md
-    - Labels & Annotations: guide/labels.md
+    - Aesthetics: guide/aesthetics.ipynb
+    - Geoms: guide/geoms.ipynb
+    - Scales: guide/scales.ipynb
+    - Themes: guide/themes.ipynb
+    - Facets: guide/facets.ipynb
+    - Coordinates: guide/coordinates.ipynb
+    - Labels & Annotations: guide/labels.ipynb
+  - Gallery:
+    - Overview: gallery/index.md
+    - Basic Charts: gallery/basic.ipynb
+    - Statistical: gallery/statistical.ipynb
+    - Time Series: gallery/timeseries.ipynb
+    - Geographic Maps: gallery/maps.ipynb
+    - 3D Visualizations: gallery/3d.ipynb
+    - Network Graphs: gallery/networks.ipynb
+    - Facets: gallery/facets.ipynb
+    - Theming: gallery/theming.ipynb
   - API Reference:
     - ggplot: api/ggplot.md
     - Geoms: api/geoms.md
