@@ -1,6 +1,6 @@
 # __init__.py
 
-from .aes import aes
+from .aes import aes, after_stat
 from .coords import Coord, coord_cartesian, coord_flip, coord_polar, coord_sf
 from .datasets import data
 from .facets import Facet, facet_grid, facet_wrap, label_both, label_value
@@ -99,6 +99,7 @@ __all__ = [
     "ggsize",
     "ggtitle",
     "aes",
+    "after_stat",
     "theme_default",
     "theme",
     "theme_ggplot2",

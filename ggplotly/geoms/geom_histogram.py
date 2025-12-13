@@ -143,7 +143,34 @@ class geom_histogram(Geom):
 
         # Update mapping for bar chart rendering
         self.mapping["x"] = "x"
-        self.mapping["y"] = "count"
+
+        # Check if user requested a computed stat variable for y
+        # Supports: after_stat('density'), after_stat('count / count.sum()'), '..density..', etc.
+        from ..aes import after_stat
+        y_mapping = self.mapping.get("y", "")
+
+        if isinstance(y_mapping, after_stat):
+            if y_mapping.is_expression():
+                # Evaluate expression and store result in new column
+                computed_data['_after_stat_y'] = y_mapping.evaluate(computed_data)
+                self.mapping["y"] = '_after_stat_y'
+            elif y_mapping.expr in computed_data.columns:
+                self.mapping["y"] = y_mapping.expr
+            else:
+                self.mapping["y"] = "count"
+        elif isinstance(y_mapping, str):
+            # Handle R-style ..var.. syntax or direct column name
+            if y_mapping.startswith("..") and y_mapping.endswith(".."):
+                stat_var = y_mapping[2:-2]  # Strip the dots
+            else:
+                stat_var = y_mapping
+
+            if stat_var in computed_data.columns:
+                self.mapping["y"] = stat_var
+            else:
+                self.mapping["y"] = "count"
+        else:
+            self.mapping["y"] = "count"
 
         payload = dict()
         payload["name"] = self.params.get("name", "Histogram")

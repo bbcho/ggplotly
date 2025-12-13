@@ -1,18 +1,24 @@
 # aes.py
-"""
-Aesthetic mapping functions for ggplotly.
-"""
+"""Aesthetic mapping functions for ggplotly."""
+
+from __future__ import annotations
+
+import re
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 class after_stat:
     """
     Reference a computed statistic in aesthetic mapping.
 
-    Use this to map an aesthetic to a variable computed by a stat,
-    rather than a variable in the original data.
+    Supports both simple variable references and expressions using
+    computed variables, similar to plotnine.
 
     Parameters:
-        var (str): Name of the computed variable to use.
+        expr: Variable name or expression using computed variables.
 
     Common computed variables by stat:
         - stat_count/stat_bin: count, density, ncount, ndensity
@@ -20,15 +26,76 @@ class after_stat:
         - stat_smooth: y, ymin, ymax, se
 
     Examples:
-        >>> aes(x='x', y=after_stat('density'))  # Map y to computed density
-        >>> aes(x='x', y=after_stat('count'))    # Map y to computed count
+        >>> aes(y=after_stat('density'))              # Simple reference
+        >>> aes(y=after_stat('count / count.sum()'))  # Proportion
+        >>> aes(y=after_stat('density * 100'))        # Scaled density
     """
 
-    def __init__(self, var):
-        self.var = var
+    __slots__ = ('expr',)
 
-    def __repr__(self):
-        return f"after_stat('{self.var}')"
+    def __init__(self, expr: str) -> None:
+        self.expr = expr
+
+    def __repr__(self) -> str:
+        return f"after_stat({self.expr!r})"
+
+    def is_expression(self) -> bool:
+        """Check if this contains an expression vs simple variable name."""
+        # Simple identifier: letters, digits, underscores, starting with letter/underscore
+        return not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', self.expr)
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Series:
+        """
+        Evaluate the expression against computed data.
+
+        Parameters:
+            data: DataFrame containing computed stat variables.
+
+        Returns:
+            Series with evaluated results.
+
+        Raises:
+            KeyError: If a simple variable reference is not found.
+            ValueError: If expression evaluation fails.
+        """
+        import numpy as np
+        import pandas as pd
+
+        if not self.is_expression():
+            # Simple variable reference
+            if self.expr not in data.columns:
+                available = ', '.join(data.columns)
+                raise KeyError(
+                    f"Computed variable '{self.expr}' not found. "
+                    f"Available: {available}"
+                )
+            return data[self.expr]
+
+        # Expression evaluation with numpy/pandas in namespace
+        namespace = {
+            'np': np,
+            'numpy': np,
+            'sum': np.sum,
+            'mean': np.mean,
+            'max': np.max,
+            'min': np.min,
+            **{col: data[col] for col in data.columns}
+        }
+
+        try:
+            return pd.eval(self.expr, local_dict=namespace)
+        except Exception as e:
+            available = ', '.join(data.columns)
+            raise ValueError(
+                f"Failed to evaluate expression '{self.expr}': {e}. "
+                f"Available variables: {available}"
+            ) from e
+
+    # Backwards compatibility: allow access via .var
+    @property
+    def var(self) -> str:
+        """Backwards compatible alias for expr."""
+        return self.expr
 
 
 class after_scale:
@@ -39,17 +106,19 @@ class after_scale:
     of scale transformations.
 
     Parameters:
-        expr (str): Expression referencing scaled variables.
+        expr: Expression referencing scaled variables.
 
     Examples:
         >>> aes(fill=after_scale('alpha(color, 0.5)'))
     """
 
-    def __init__(self, expr):
+    __slots__ = ('expr',)
+
+    def __init__(self, expr: str) -> None:
         self.expr = expr
 
-    def __repr__(self):
-        return f"after_scale('{self.expr}')"
+    def __repr__(self) -> str:
+        return f"after_scale({self.expr!r})"
 
 
 class stage:
@@ -61,18 +130,39 @@ class stage:
     and after scale transformation.
 
     Parameters:
-        start: Value at start (before stat)
-        after_stat: Value after stat transformation
-        after_scale: Value after scale transformation
+        start: Value at start (before stat).
+        after_stat: Value after stat transformation.
+        after_scale: Value after scale transformation.
 
     Examples:
         >>> aes(color=stage(start='group', after_scale='alpha(color, 0.5)'))
     """
 
-    def __init__(self, start=None, after_stat=None, after_scale=None):
+    __slots__ = ('start', 'after_stat', 'after_scale')
+
+    def __init__(
+        self,
+        start: Optional[str] = None,
+        after_stat: Optional[str] = None,
+        after_scale: Optional[str] = None
+    ) -> None:
         self.start = start
         self.after_stat = after_stat
         self.after_scale = after_scale
+
+    def __repr__(self) -> str:
+        parts = []
+        if self.start is not None:
+            parts.append(f"start={self.start!r}")
+        if self.after_stat is not None:
+            parts.append(f"after_stat={self.after_stat!r}")
+        if self.after_scale is not None:
+            parts.append(f"after_scale={self.after_scale!r}")
+        return f"stage({', '.join(parts)})"
+
+
+# Type alias for aesthetic values
+AesValue = Union[str, after_stat, after_scale, stage, float, int, None]
 
 
 class aes:
@@ -84,30 +174,45 @@ class aes:
     concept in the grammar of graphics.
 
     Parameters:
-        x (str): Variable for x-axis position
-        y (str): Variable for y-axis position
-        z (str): Variable for z-axis position (3D plots)
-        color/colour (str): Variable for color aesthetic
-        fill (str): Variable for fill color
-        size (str): Variable for point/line size
-        shape (str): Variable for point shape
-        alpha (str): Variable for transparency
-        linetype (str): Variable for line type
-        label (str): Variable for text labels
-        group (str): Variable for grouping
-        **kwargs: Additional aesthetic mappings
+        x: Variable for x-axis position.
+        y: Variable for y-axis position.
+        z: Variable for z-axis position (3D plots).
+        color/colour: Variable for color aesthetic.
+        fill: Variable for fill color.
+        size: Variable for point/line size.
+        shape: Variable for point shape.
+        alpha: Variable for transparency.
+        linetype: Variable for line type.
+        label: Variable for text labels.
+        group: Variable for grouping.
+        **kwargs: Additional aesthetic mappings.
 
     Examples:
         >>> aes(x='mpg', y='hp')
         >>> aes(x='mpg', y='hp', color='cyl')
-        >>> aes(x='mpg', y='hp', color='cyl', size='wt')
-        >>> aes(x='x', y=after_stat('density'))  # Use computed stat
+        >>> aes(x='x', y=after_stat('density'))
+        >>> aes(x='x', y=after_stat('count / count.sum()'))
     """
 
-    def __init__(self, x=None, y=None, z=None, color=None, colour=None,
-                 fill=None, size=None, shape=None, alpha=None, linetype=None,
-                 label=None, group=None, **kwargs):
-        self.mapping = {}
+    __slots__ = ('mapping',)
+
+    def __init__(
+        self,
+        x: Optional[AesValue] = None,
+        y: Optional[AesValue] = None,
+        z: Optional[AesValue] = None,
+        color: Optional[AesValue] = None,
+        colour: Optional[AesValue] = None,
+        fill: Optional[AesValue] = None,
+        size: Optional[AesValue] = None,
+        shape: Optional[AesValue] = None,
+        alpha: Optional[AesValue] = None,
+        linetype: Optional[AesValue] = None,
+        label: Optional[AesValue] = None,
+        group: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        self.mapping: Dict[str, Any] = {}
 
         # Handle standard aesthetics
         if x is not None:
@@ -138,11 +243,11 @@ class aes:
         # Add any additional kwargs
         self.mapping.update(kwargs)
 
-    def __repr__(self):
-        items = ', '.join(f'{k}={repr(v)}' for k, v in self.mapping.items())
+    def __repr__(self) -> str:
+        items = ', '.join(f'{k}={v!r}' for k, v in self.mapping.items())
         return f"aes({items})"
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         """Get an aesthetic mapping value."""
         return self.mapping.get(key, default)
 
@@ -158,21 +263,21 @@ class aes:
         """Get all aesthetic key-value pairs."""
         return self.mapping.items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """Get aesthetic mapping by key."""
         return self.mapping[key]
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """Check if aesthetic is mapped."""
         return key in self.mapping
 
-    def copy(self):
+    def copy(self) -> aes:
         """Create a copy of the aesthetic mapping."""
         new_aes = aes()
         new_aes.mapping = self.mapping.copy()
         return new_aes
 
-    def update(self, other):
+    def update(self, other: Union[aes, Dict[str, Any]]) -> None:
         """Update mappings from another aes or dict."""
         if isinstance(other, aes):
             self.mapping.update(other.mapping)
