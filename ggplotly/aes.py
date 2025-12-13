@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -142,9 +142,9 @@ class stage:
 
     def __init__(
         self,
-        start: Optional[str] = None,
-        after_stat: Optional[str] = None,
-        after_scale: Optional[str] = None
+        start: str | None = None,
+        after_stat: str | None = None,
+        after_scale: str | None = None
     ) -> None:
         self.start = start
         self.after_stat = after_stat
@@ -162,7 +162,7 @@ class stage:
 
 
 # Type alias for aesthetic values
-AesValue = Union[str, after_stat, after_scale, stage, float, int, None]
+AesValue = str | after_stat | after_scale | stage | float | int | None
 
 
 class aes:
@@ -198,21 +198,21 @@ class aes:
 
     def __init__(
         self,
-        x: Optional[AesValue] = None,
-        y: Optional[AesValue] = None,
-        z: Optional[AesValue] = None,
-        color: Optional[AesValue] = None,
-        colour: Optional[AesValue] = None,
-        fill: Optional[AesValue] = None,
-        size: Optional[AesValue] = None,
-        shape: Optional[AesValue] = None,
-        alpha: Optional[AesValue] = None,
-        linetype: Optional[AesValue] = None,
-        label: Optional[AesValue] = None,
-        group: Optional[str] = None,
+        x: AesValue = None,
+        y: AesValue = None,
+        z: AesValue = None,
+        color: AesValue = None,
+        colour: AesValue = None,
+        fill: AesValue = None,
+        size: AesValue = None,
+        shape: AesValue = None,
+        alpha: AesValue = None,
+        linetype: AesValue = None,
+        label: AesValue = None,
+        group: str | None = None,
         **kwargs: Any
     ) -> None:
-        self.mapping: Dict[str, Any] = {}
+        self.mapping: dict[str, Any] = {}
 
         # Handle standard aesthetics
         if x is not None:
@@ -277,7 +277,7 @@ class aes:
         new_aes.mapping = self.mapping.copy()
         return new_aes
 
-    def update(self, other: Union[aes, Dict[str, Any]]) -> None:
+    def update(self, other: aes | dict[str, Any]) -> None:
         """Update mappings from another aes or dict."""
         if isinstance(other, aes):
             self.mapping.update(other.mapping)
