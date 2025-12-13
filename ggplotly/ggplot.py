@@ -128,9 +128,15 @@ class ggplot:
         """Return HTML representation for Jupyter/IPython display."""
         if self.auto_draw:
             fig = self.draw()
-            # return fig._repr_html_()
-            fig.show()
+            return fig._repr_html_()
         return ""
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Return MIME bundle for Jupyter display (preferred by VS Code, JupyterLab)."""
+        if self.auto_draw:
+            fig = self.draw()
+            return fig._repr_mimebundle_(**kwargs)
+        return {}
 
     def add_stat(self, stat):
         """

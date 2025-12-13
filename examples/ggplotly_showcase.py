@@ -115,7 +115,7 @@ diamonds = data('diamonds')
 # %%
 # iris - Classic flower measurements dataset
 iris = data('iris')
-(ggplot(iris, aes(x='Sepal.Length', y='Sepal.Width', color='Species'))
+(ggplot(iris, aes(x='sepal_length', y='sepal_width', color='Species'))
  + geom_point(size=8)
  + labs(title='Iris Dataset'))
 
