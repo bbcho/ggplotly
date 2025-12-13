@@ -135,7 +135,11 @@ class ggplot:
         """Return MIME bundle for Jupyter display (preferred by VS Code, JupyterLab)."""
         if self.auto_draw:
             fig = self.draw()
-            return fig._repr_mimebundle_(**kwargs)
+            bundle = fig._repr_mimebundle_(**kwargs)
+            # Also include text/html for nbconvert/mkdocs-jupyter compatibility
+            if 'text/html' not in bundle:
+                bundle['text/html'] = fig._repr_html_()
+            return bundle
         return {}
 
     def add_stat(self, stat):
