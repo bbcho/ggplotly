@@ -21,15 +21,10 @@ class geom_errorbar(Geom):
         group (str, optional): Grouping variable for the error bars.
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 2
-        data = data if data is not None else self.data
+    default_params = {"size": 2}
 
-        # Create aesthetic mapper for this geom
-        from ..aesthetic_mapper import AestheticMapper
-        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
-        style_props = mapper.get_style_properties()
+    def _draw_impl(self, fig, data, row, col):
+        style_props = self._get_style_props(data)
 
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]

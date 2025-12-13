@@ -21,8 +21,7 @@ class geom_tile(Geom):
         group (str, optional): Grouping variable for the tiles.
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
+    def _draw_impl(self, fig, data, row, col):
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         z = data[self.mapping["fill"]] if "fill" in self.mapping else None

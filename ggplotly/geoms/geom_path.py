@@ -47,7 +47,9 @@ class geom_path(Geom):
 
     __name__ = "geom_path"
 
-    def draw(self, fig, data=None, row=1, col=1):
+    default_params = {"size": 2}
+
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw path(s) on the figure, connecting points in data order.
 
@@ -60,11 +62,6 @@ class geom_path(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
-
-        # Set default line width
-        if "size" not in self.params:
-            self.params["size"] = 2
 
         # Remove size from mapping - paths use constant width
         if "size" in self.mapping:

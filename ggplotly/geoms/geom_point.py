@@ -25,16 +25,9 @@ class geom_point(Geom):
         group (str, optional): Grouping variable for the points.
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
+    default_params = {"size": 8}
 
-        # Apply any stats to transform the data
-        for stat in self.stats:
-            data, self.mapping = stat.compute(data)
-
-        # Set default point size to 8 if not specified
-        if "size" not in self.params:
-            self.params["size"] = 8
+    def _draw_impl(self, fig, data, row, col):
 
         # Check if this figure has geographic traces (from geom_map)
         # If so, use Scattergeo instead of Scatter

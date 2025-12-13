@@ -3,7 +3,6 @@
 import numpy as np
 import plotly.graph_objects as go
 
-from ..aesthetic_mapper import AestheticMapper
 from .geom_base import Geom
 
 
@@ -31,6 +30,8 @@ class geom_jitter(Geom):
         >>> ggplot(df, aes(x='category', y='value', color='group')) + geom_jitter(width=0.3)
     """
 
+    default_params = {"size": 8}
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Initialize the jitter geom.
@@ -45,7 +46,7 @@ class geom_jitter(Geom):
         self.height = params.get('height', 0)
         self.seed = params.get('seed', None)
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw jittered points on the figure.
 
@@ -58,12 +59,6 @@ class geom_jitter(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
-
-        # Set default point size to 8 if not specified
-        if "size" not in self.params:
-            self.params["size"] = 8
-
         # Create a copy of data to add jitter
         data = data.copy()
 
@@ -83,9 +78,7 @@ class geom_jitter(Geom):
         if y_col and y_col in data.columns:
             y_is_categorical = data[y_col].dtype == 'object' or str(data[y_col].dtype) == 'category'
 
-        # Now draw using custom logic to handle categorical axes
-        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
-        style_props = mapper.get_style_properties()
+        style_props = self._get_style_props(data)
 
         alpha = style_props['alpha']
         group_values = style_props['group_series']

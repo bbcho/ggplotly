@@ -10,6 +10,8 @@ class geom_abline(Geom):
 
     __name__ = "geom_abline"
 
+    default_params = {"size": 1}
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Draw lines defined by slope and intercept (y = intercept + slope * x).
@@ -48,9 +50,7 @@ class geom_abline(Geom):
         self.slope = params.get('slope', 1)
         self.intercept = params.get('intercept', 0)
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 1
+    def _draw_impl(self, fig, data, row, col):
 
         # Get color from params, or use theme default
         color = self.params.get("color", None)

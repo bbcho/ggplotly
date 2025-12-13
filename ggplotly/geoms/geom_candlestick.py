@@ -55,7 +55,7 @@ class geom_candlestick(Geom):
         if 'decreasing_color' not in self.params:
             self.params['decreasing_color'] = '#EF5350'  # Red
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw candlestick chart on the figure.
 
@@ -68,7 +68,6 @@ class geom_candlestick(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
 
         # Validate required aesthetics
         required = ['x', 'open', 'high', 'low', 'close']
@@ -170,7 +169,7 @@ class geom_ohlc(Geom):
         if 'decreasing_color' not in self.params:
             self.params['decreasing_color'] = '#EF5350'
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw OHLC chart on the figure.
 
@@ -183,7 +182,6 @@ class geom_ohlc(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
 
         # Validate required aesthetics
         required = ['x', 'open', 'high', 'low', 'close']

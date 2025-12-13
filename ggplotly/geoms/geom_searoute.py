@@ -250,13 +250,12 @@ class geom_searoute(Geom):
         lats = [c[1] for c in coords]
         return np.array(lons), np.array(lats)
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw sea routes on the figure.
 
         Automatically detects geo context and uses appropriate trace type.
         """
-        data = data if data is not None else self.data
 
         if data is None or (hasattr(data, 'empty') and data.empty):
             return fig

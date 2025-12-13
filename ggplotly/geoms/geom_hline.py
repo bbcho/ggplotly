@@ -7,6 +7,8 @@ class geom_hline(Geom):
 
     __name__ = "geom_hline"
 
+    default_params = {"size": 2}
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Draw horizontal lines at specified y-intercepts.
@@ -38,9 +40,7 @@ class geom_hline(Geom):
             params['yintercept'] = data
         super().__init__(None, mapping, **params)
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 2
+    def _draw_impl(self, fig, data, row, col):
 
         # Get yintercept from params (ggplot2 convention)
         y = self.params.get("yintercept", None)

@@ -109,7 +109,7 @@ class geom_boxplot(Geom):
         }
         return shape_map.get(shape, 'circle')
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw boxplot(s) on the figure.
 
@@ -124,7 +124,6 @@ class geom_boxplot(Geom):
         col : int, default=1
             Column position in subplot.
         """
-        data = data if data is not None else self.data
 
         plot = go.Box
 

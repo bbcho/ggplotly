@@ -71,6 +71,8 @@ class geom_point_3d(Geom):
         >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_point_3d(size=10, alpha=0.7)
     """
 
+    default_params = {"size": 6}
+
     def _convert_symbol_to_3d(self, symbol):
         """Convert a 2D symbol to its 3D equivalent."""
         if symbol is None:
@@ -87,13 +89,7 @@ class geom_point_3d(Geom):
             shape_map[val] = SHAPE_PALETTE_3D[i % len(SHAPE_PALETTE_3D)]
         return shape_map
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
-
-        # Set default point size to 6 if not specified (smaller default for 3D)
-        if "size" not in self.params:
-            self.params["size"] = 6
-
+    def _draw_impl(self, fig, data, row, col):
         # Create aesthetic mapper
         mapper = AestheticMapper(
             data, self.mapping, self.params, self.theme,

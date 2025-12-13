@@ -21,10 +21,9 @@ class geom_step(Geom):
         stat (str, optional): The statistical transformation to use. Default is 'identity'.
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 2
-        data = data if data is not None else self.data
+    default_params = {"size": 2}
+
+    def _draw_impl(self, fig, data, row, col):
 
         # Remove size from mapping if present - step lines can't have variable widths
         # Only use size from params (literal values)

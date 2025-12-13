@@ -11,6 +11,8 @@ from .geom_base import Geom
 class geom_density(Geom):
     """Geom for drawing density plots."""
 
+    default_params = {"size": 2}
+
     def __init__(self, data=None, mapping=None, bw='nrd0', adjust=1, kernel='gaussian',
                  n=512, trim=False, **params):
         """
@@ -121,11 +123,7 @@ class geom_density(Geom):
 
         return result_df['x'].values, result_df['density'].values
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 2
-        data = data if data is not None else self.data
-
+    def _draw_impl(self, fig, data, row, col):
         # Remove size from mapping if present - density lines can't have variable widths
         # Only use size from params (literal values)
         if "size" in self.mapping:

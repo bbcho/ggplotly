@@ -132,8 +132,7 @@ class geom_surface(Geom):
 
         return pivot_df.values
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
+    def _draw_impl(self, fig, data, row, col):
 
         # Validate required aesthetics
         if 'x' not in self.mapping or 'y' not in self.mapping or 'z' not in self.mapping:
@@ -268,8 +267,7 @@ class geom_wireframe(Geom):
 
         return x_unique, y_unique, pivot_df.values
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
+    def _draw_impl(self, fig, data, row, col):
 
         if 'x' not in self.mapping or 'y' not in self.mapping or 'z' not in self.mapping:
             raise ValueError("geom_wireframe requires 'x', 'y', and 'z' aesthetics")

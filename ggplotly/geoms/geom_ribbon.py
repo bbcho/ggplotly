@@ -81,5 +81,5 @@ class geom_ribbon(Geom):
         for layer in self.layers:
             layer.setup_data(data, plot_mapping)
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         pass

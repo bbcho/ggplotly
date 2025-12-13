@@ -197,7 +197,7 @@ class geom_range(Geom):
             resampled = resampled.rename(columns={y_col: '_value'})
             return resampled[['_date', '_value']].sort_values('_date')
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw range plot on the figure with historical context.
 
@@ -210,7 +210,6 @@ class geom_range(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
 
         x_col = self.mapping.get('x')
         y_col = self.mapping.get('y')

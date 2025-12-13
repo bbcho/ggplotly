@@ -113,8 +113,7 @@ class geom_map(Geom):
         self.map_type = params.get('map_type', 'state')
         self.palette = params.get('palette', 'Viridis')
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
+    def _draw_impl(self, fig, data, row, col):
 
         if "alpha" not in self.params:
             self.params["alpha"] = 1

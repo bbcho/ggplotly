@@ -33,7 +33,9 @@ class geom_smooth(Geom):
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth(method='lm', se=False)
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
+    default_params = {"size": 3}
+
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw smooth line(s) on the figure.
 
@@ -49,10 +51,6 @@ class geom_smooth(Geom):
         data = (
             data.copy() if data is not None else self.data.copy()
         )  # Ensuring we are working on a copy
-
-        # Set default line width to 3 for smooth lines if not specified
-        if "size" not in self.params:
-            self.params["size"] = 3
 
         # Remove size from mapping if present - smooth lines can't have variable widths
         # Only use size from params (literal values)

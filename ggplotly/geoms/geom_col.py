@@ -22,7 +22,7 @@ class geom_col(Geom):
         >>> ggplot(df, aes(x='category', y='value', fill='group')) + geom_col()
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw column(s) on the figure.
 
@@ -35,7 +35,6 @@ class geom_col(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
 
         payload = dict()
         payload["name"] = self.params.get("name", "Column")

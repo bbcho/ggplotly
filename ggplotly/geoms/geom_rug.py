@@ -3,12 +3,13 @@
 import numpy as np
 import plotly.graph_objects as go
 
-from ..aesthetic_mapper import AestheticMapper
 from .geom_base import Geom
 
 
 class geom_rug(Geom):
     """Geom for drawing rug plots (marginal tick marks on axes)."""
+
+    default_params = {"size": 1, "alpha": 0.5}
 
     def __init__(self, data=None, mapping=None, **params):
         """
@@ -48,17 +49,8 @@ class geom_rug(Geom):
         self.sides = params.get('sides', 'bl')
         self.length = params.get('length', 0.03)
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
-
-        # Set defaults
-        if "size" not in self.params:
-            self.params["size"] = 1
-        if "alpha" not in self.params:
-            self.params["alpha"] = 0.5
-
-        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
-        style_props = mapper.get_style_properties()
+    def _draw_impl(self, fig, data, row, col):
+        style_props = self._get_style_props(data)
 
         x_col = self.mapping.get("x")
         y_col = self.mapping.get("y")

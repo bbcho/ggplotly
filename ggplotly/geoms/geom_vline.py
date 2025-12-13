@@ -7,6 +7,8 @@ class geom_vline(Geom):
 
     __name__ = "geom_vline"
 
+    default_params = {"size": 2}
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Draw vertical lines at specified x-intercepts.
@@ -38,9 +40,7 @@ class geom_vline(Geom):
             params['xintercept'] = data
         super().__init__(None, mapping, **params)
 
-    def draw(self, fig, data=None, row=1, col=1):
-        if "size" not in self.params:
-            self.params["size"] = 2
+    def _draw_impl(self, fig, data, row, col):
 
         # Get xintercept from params (ggplot2 convention)
         x = self.params.get("xintercept", None)

@@ -266,13 +266,12 @@ class geom_edgebundle(Geom):
             for trace in fig.data
         )
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw bundled edges on the figure.
 
         Automatically detects geo context and uses appropriate trace type.
         """
-        data = data if data is not None else self.data
 
         if data is None or (hasattr(data, 'empty') and data.empty):
             return fig

@@ -35,7 +35,15 @@ class geom_bar(Geom):
         >>> ggplot(df, aes(x='category')) + geom_bar(width=0.5)  # narrower bars
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _apply_stats(self, data):
+        """Add default stat_count if no stats and stat='count'."""
+        if self.stats == []:
+            stat = self.params.get("stat", "count")
+            if stat == "count":
+                self.stats.append(stat_count(mapping=self.mapping))
+        return super()._apply_stats(data)
+
+    def _draw_impl(self, fig, data, row, col):
         """
         Draws a bar plot on the given figure.
 
@@ -44,21 +52,12 @@ class geom_bar(Geom):
 
         Parameters:
             fig (Figure): Plotly figure object.
-            data (DataFrame): Optional data subset for faceting.
+            data (DataFrame): Data (already transformed by stats).
             row (int): Row position in subplot (for faceting).
             col (int): Column position in subplot (for faceting).
         """
         payload = dict()
-
-        # need this in case data is passed directly to the geom
-        data = data if data is not None else self.data
         data = pd.DataFrame(data)
-
-        if self.stats == []:
-            stat = self.params.get("stat", "count")
-
-            if stat == "count":
-                self = self + stat_count()
 
         if ("x" in self.mapping) & ("y" not in self.mapping):
             payload["orientation"] = "v"
@@ -66,10 +65,6 @@ class geom_bar(Geom):
             payload["orientation"] = "h"
 
         plot = go.Bar
-
-        for comp in self.stats:
-            # stack all stats on the data
-            data, self.mapping = comp.compute(data)
 
         payload["name"] = self.params.get("name", "Bar")
 

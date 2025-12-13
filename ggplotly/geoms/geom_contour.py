@@ -2,13 +2,14 @@
 
 import plotly.graph_objects as go
 
-from ..aesthetic_mapper import AestheticMapper
 from ..stats.stat_contour import stat_contour
 from .geom_base import Geom
 
 
 class geom_contour(Geom):
     """Geom for drawing contour lines from 2D data."""
+
+    default_params = {"size": 1}
 
     def __init__(self, data=None, mapping=None, **params):
         """
@@ -79,14 +80,8 @@ class geom_contour(Geom):
         result, _ = contour_stat.compute(data)
         return result
 
-    def draw(self, fig, data=None, row=1, col=1):
-        data = data if data is not None else self.data
-
-        if "size" not in self.params:
-            self.params["size"] = 1
-
-        mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
-        style_props = mapper.get_style_properties()
+    def _draw_impl(self, fig, data, row, col):
+        style_props = self._get_style_props(data)
 
         x_col = self.mapping.get("x")
         y_col = self.mapping.get("y")

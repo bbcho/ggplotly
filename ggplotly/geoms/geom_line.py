@@ -31,29 +31,25 @@ class geom_line(Geom):
 
     __name__ = "geom_line"
 
-    def draw(self, fig, data=None, row=1, col=1):
+    default_params = {"size": 2}
+
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw line(s) on the figure, sorted by x-axis values.
 
         Parameters:
             fig (Figure): Plotly figure object.
-            data (DataFrame, optional): Data subset for faceting.
-            row (int): Row position in subplot. Default is 1.
-            col (int): Column position in subplot. Default is 1.
+            data (DataFrame): Data (already transformed by stats).
+            row (int): Row position in subplot.
+            col (int): Column position in subplot.
 
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
-
         # Sort data by x-axis (key difference from geom_path)
         x_col = self.mapping.get("x")
         if x_col and x_col in data.columns:
             data = data.sort_values(by=x_col).reset_index(drop=True)
-
-        # Set default line width to 2 if not specified
-        if "size" not in self.params:
-            self.params["size"] = 2
 
         # Remove size from mapping if present - lines can't have variable widths
         # Only use size from params (literal values)

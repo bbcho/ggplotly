@@ -20,10 +20,9 @@ class geom_violin(Geom):
         group (str, optional): Grouping variable for the violin plots.
     """
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         if "linewidth" not in self.params:
             self.params["linewidth"] = 1
-        data = data if data is not None else self.data
 
         plot = go.Violin
 

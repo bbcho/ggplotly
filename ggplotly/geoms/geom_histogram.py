@@ -65,53 +65,13 @@ class geom_histogram(Geom):
         self.center = center
         self.barmode = barmode
 
-    def _compute_bins_for_group(self, data, x_col, na_rm=False):
+    def _apply_stats(self, data):
         """
-        Compute histogram bins for a group of data using stat_bin.
+        Apply stat_bin to compute histogram bins.
 
-        Parameters
-        ----------
-        data : DataFrame
-            Data to bin.
-        x_col : str
-            Column name for x values.
-        na_rm : bool, default=False
-            Whether to remove NA values.
-
-        Returns
-        -------
-        DataFrame
-            Binned data with x (centers), count, width, xmin, xmax columns.
+        Handles grouping by fill/color/group aesthetics automatically.
         """
-        bin_stat = stat_bin(
-            mapping={'x': x_col},
-            bins=self.bins,
-            binwidth=self.binwidth,
-            boundary=self.boundary,
-            center=self.center,
-            na_rm=na_rm
-        )
-
-        return bin_stat.compute(data)
-
-    def draw(self, fig, data=None, row=1, col=1):
-        """
-        Draw histogram(s) on the figure.
-
-        Parameters:
-            fig (Figure): Plotly figure object.
-            data (DataFrame, optional): Data subset for faceting.
-            row (int): Row position in subplot. Default is 1.
-            col (int): Column position in subplot. Default is 1.
-
-        Returns:
-            None: Modifies the figure in place.
-        """
-        data = data if data is not None else self.data
-
-        # Handle na_rm parameter
         na_rm = self.params.get("na_rm", False)
-
         x_col = self.mapping.get("x")
 
         # Determine grouping column from fill, color, or group mapping
@@ -123,38 +83,61 @@ class geom_histogram(Geom):
                     group_col = potential_col
                     break
 
+        # Create stat_bin with our parameters
+        bin_stat = stat_bin(
+            mapping={'x': x_col},
+            bins=self.bins,
+            binwidth=self.binwidth,
+            boundary=self.boundary,
+            center=self.center,
+            na_rm=na_rm
+        )
+
         # Compute bins - either grouped or ungrouped
         if group_col is not None:
             # Grouped histogram: compute separate bins for each group
             binned_frames = []
             for group_value in data[group_col].unique():
                 group_data = data[data[group_col] == group_value].copy()
-                binned_data = self._compute_bins_for_group(group_data, x_col, na_rm)
+                binned_data = bin_stat.compute(group_data)
                 binned_data[group_col] = group_value
                 binned_frames.append(binned_data)
 
             if binned_frames:
-                computed_data = pd.concat(binned_frames, ignore_index=True)
+                data = pd.concat(binned_frames, ignore_index=True)
             else:
-                computed_data = pd.DataFrame({'x': [], 'count': [], 'width': [], group_col: []})
+                data = pd.DataFrame({'x': [], 'count': [], 'width': [], group_col: []})
         else:
             # Ungrouped histogram
-            computed_data = self._compute_bins_for_group(data, x_col, na_rm)
+            data = bin_stat.compute(data)
 
         # Update mapping for bar chart rendering
         self.mapping["x"] = "x"
 
-        # Check if user requested a computed stat variable for y
-        # Supports: after_stat('density'), after_stat('count / count.sum()'), '..density..', etc.
+        # Resolve y mapping (after_stat expressions, ..var.., etc.)
+        data = self._resolve_y_mapping(data)
+
+        # Apply any additional stats
+        return super()._apply_stats(data)
+
+    def _resolve_y_mapping(self, data):
+        """
+        Resolve the y aesthetic mapping to a computed stat variable.
+
+        Handles:
+        - after_stat('density')
+        - after_stat('count / count.sum()')  # expressions
+        - '..density..'  # R-style syntax
+        """
         from ..aes import after_stat
         y_mapping = self.mapping.get("y", "")
 
         if isinstance(y_mapping, after_stat):
             if y_mapping.is_expression():
                 # Evaluate expression and store result in new column
-                computed_data['_after_stat_y'] = y_mapping.evaluate(computed_data)
+                data['_after_stat_y'] = y_mapping.evaluate(data)
                 self.mapping["y"] = '_after_stat_y'
-            elif y_mapping.expr in computed_data.columns:
+            elif y_mapping.expr in data.columns:
                 self.mapping["y"] = y_mapping.expr
             else:
                 self.mapping["y"] = "count"
@@ -165,13 +148,28 @@ class geom_histogram(Geom):
             else:
                 stat_var = y_mapping
 
-            if stat_var in computed_data.columns:
+            if stat_var in data.columns:
                 self.mapping["y"] = stat_var
             else:
                 self.mapping["y"] = "count"
         else:
             self.mapping["y"] = "count"
 
+        return data
+
+    def _draw_impl(self, fig, data, row, col):
+        """
+        Draw histogram(s) on the figure.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame): Data (already transformed by _apply_stats).
+            row (int): Row position in subplot.
+            col (int): Column position in subplot.
+
+        Returns:
+            None: Modifies the figure in place.
+        """
         payload = dict()
         payload["name"] = self.params.get("name", "Histogram")
 
@@ -185,7 +183,7 @@ class geom_histogram(Geom):
         self._transform_fig(
             plot,
             fig,
-            computed_data,
+            data,
             payload,
             color_targets,
             row,

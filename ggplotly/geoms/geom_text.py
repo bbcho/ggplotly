@@ -79,7 +79,7 @@ class geom_text(Geom):
             return {"weight": "bold", "style": "italic"}
         return {}  # plain
 
-    def draw(self, fig, data=None, row=1, col=1):
+    def _draw_impl(self, fig, data, row, col):
         """
         Draw text labels on the figure.
 
@@ -92,7 +92,6 @@ class geom_text(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        data = data if data is not None else self.data
 
         # Handle na_rm parameter
         na_rm = self.params.get("na_rm", False)

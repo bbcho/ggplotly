@@ -24,6 +24,9 @@ class Geom:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point(color='red', size=3)
     """
 
+    # Default parameters for this geom. Subclasses should override this.
+    default_params: dict = {}
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Initialize the geom.
@@ -41,7 +44,8 @@ class Geom:
             self.data = data
             self.mapping = mapping.mapping if mapping else {}
 
-        self.params = params
+        # Merge default params with user-provided params (user params take precedence)
+        self.params = {**self.default_params, **params}
         self.stats = []
         self.layers = []
         # Track whether this geom has explicit data or inherited from plot
@@ -89,6 +93,9 @@ class Geom:
         """
         Draw the geometry on the figure.
 
+        This method applies any attached stats to transform the data,
+        then delegates to _draw_impl for the actual rendering.
+
         Parameters:
             fig (Figure): Plotly figure object.
             data (DataFrame, optional): Data subset for faceting.
@@ -97,11 +104,64 @@ class Geom:
 
         Returns:
             None: Modifies the figure in place.
+        """
+        data = data if data is not None else self.data
+
+        # Apply any stats to transform the data
+        data = self._apply_stats(data)
+
+        # Delegate to subclass implementation
+        self._draw_impl(fig, data, row, col)
+
+    def _apply_stats(self, data):
+        """
+        Apply all attached stats to transform the data.
+
+        Parameters:
+            data (DataFrame): Input data.
+
+        Returns:
+            DataFrame: Transformed data after all stats applied.
+        """
+        for stat in self.stats:
+            data, self.mapping = stat.compute(data)
+        return data
+
+    def _draw_impl(self, fig, data, row, col):
+        """
+        Implementation of the actual drawing logic.
+
+        Subclasses should override this method instead of draw().
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            data (DataFrame): Data (already transformed by stats).
+            row (int): Row position in subplot (for faceting).
+            col (int): Column position in subplot (for faceting).
 
         Raises:
             NotImplementedError: Must be implemented by subclasses.
         """
-        raise NotImplementedError("The draw method must be implemented by subclasses.")
+        raise NotImplementedError("The _draw_impl method must be implemented by subclasses.")
+
+    def _get_style_props(self, data):
+        """
+        Get style properties from aesthetic mapper.
+
+        This is a convenience method to reduce boilerplate in geom subclasses.
+
+        Parameters:
+            data (DataFrame): The data to use for aesthetic mapping.
+
+        Returns:
+            dict: Style properties from AestheticMapper.
+        """
+        mapper = AestheticMapper(
+            data, self.mapping, self.params, self.theme,
+            global_color_map=self._global_color_map,
+            global_shape_map=self._global_shape_map
+        )
+        return mapper.get_style_properties()
 
     def _apply_color_targets(self, target_props: dict, style_props: dict, value_key=None, data_mask=None, shape_key=None) -> dict:
         """
