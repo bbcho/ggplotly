@@ -8,26 +8,27 @@ This test suite covers:
 4. Manual geoms with proper color handling (geom_text, geom_errorbar, geom_segment)
 """
 
-import sys
 import os
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
+
+import pytest
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../")
 
-from ggplotly import ggplot, aes
-from ggplotly.geoms.geom_line import geom_line
-from ggplotly.geoms.geom_ribbon import geom_ribbon
-from ggplotly.geoms.geom_step import geom_step
-from ggplotly.geoms.geom_smooth import geom_smooth
+from ggplotly import aes, ggplot
 from ggplotly.geoms.geom_density import geom_density
-from ggplotly.geoms.geom_text import geom_text
 from ggplotly.geoms.geom_errorbar import geom_errorbar
-from ggplotly.geoms.geom_segment import geom_segment
+from ggplotly.geoms.geom_line import geom_line
 from ggplotly.geoms.geom_point import geom_point
-
+from ggplotly.geoms.geom_ribbon import geom_ribbon
+from ggplotly.geoms.geom_segment import geom_segment
+from ggplotly.geoms.geom_smooth import geom_smooth
+from ggplotly.geoms.geom_step import geom_step
+from ggplotly.geoms.geom_text import geom_text
 
 # ============================================================================
 # Test Suite 1: Grouped + Color Aesthetic Combinations
@@ -412,7 +413,7 @@ class TestEdgeCases:
         })
 
         # Import additional required functions
-        from ggplotly import scale_color_brewer, facet_wrap, labs, theme_minimal
+        from ggplotly import facet_wrap, labs, scale_color_brewer, theme_minimal
 
         # Complex plot with size aesthetic - should work without errors
         p = (ggplot(df, aes(x='x', y='y', color='category', size='size_var')) +
@@ -450,7 +451,7 @@ class TestEdgeCases:
         })
 
         # Import required functions
-        from ggplotly import geom_ribbon, facet_wrap
+        from ggplotly import facet_wrap, geom_ribbon
 
         # Create plot with geom_ribbon using its own data
         p = (ggplot(df_main, aes(x='x', y='y', color='category')) +
@@ -528,9 +529,16 @@ class TestEdgeCases:
         })
 
         # Import additional required functions
-        from ggplotly import (geom_ribbon, geom_errorbar, geom_text,
-                             facet_wrap, scale_color_brewer, scale_fill_brewer,
-                             labs, theme_dark)
+        from ggplotly import (
+            facet_wrap,
+            geom_errorbar,
+            geom_ribbon,
+            geom_text,
+            labs,
+            scale_color_brewer,
+            scale_fill_brewer,
+            theme_dark,
+        )
 
         # Build the complex plot layer by layer
         p = (ggplot(df_measurements, aes(x='time', y='value', color='region')) +

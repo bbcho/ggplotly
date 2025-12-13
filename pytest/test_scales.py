@@ -1,25 +1,38 @@
 """
 Tests for ggplotly scales.
 """
-import pytest
-import pandas as pd
-import numpy as np
+import sys
 from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
 from ggplotly import (
-    ggplot, aes,
-    geom_point, geom_line, geom_bar, geom_col,
-    scale_x_continuous, scale_y_continuous,
-    scale_x_log10, scale_y_log10,
-    scale_x_date, scale_x_datetime,
-    scale_color_manual, scale_color_brewer, scale_color_gradient,
-    scale_fill_manual, scale_fill_brewer, scale_fill_gradient, scale_fill_viridis_c,
-    scale_shape_manual, scale_size,
-    labs
+    aes,
+    geom_col,
+    geom_line,
+    geom_point,
+    ggplot,
+    scale_color_brewer,
+    scale_color_gradient,
+    scale_color_manual,
+    scale_fill_brewer,
+    scale_fill_gradient,
+    scale_fill_manual,
+    scale_fill_viridis_c,
+    scale_shape_manual,
+    scale_size,
+    scale_x_continuous,
+    scale_x_date,
+    scale_x_datetime,
+    scale_x_log10,
+    scale_y_continuous,
+    scale_y_log10,
 )
 
 

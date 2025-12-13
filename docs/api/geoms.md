@@ -176,6 +176,10 @@ Geometric objects (geoms) are the visual elements used to represent data in a pl
     options:
       show_root_heading: true
 
+::: ggplotly.geoms.geom_waterfall.geom_waterfall
+    options:
+      show_root_heading: true
+
 ## Time Series Geoms
 
 ::: ggplotly.geoms.geom_stl.geom_stl
@@ -197,5 +201,11 @@ Geometric objects (geoms) are the visual elements used to represent data in a pl
       show_root_heading: true
 
 ::: ggplotly.geoms.geom_searoute.geom_searoute
+    options:
+      show_root_heading: true
+
+## Flow Geoms
+
+::: ggplotly.geoms.geom_sankey.geom_sankey
     options:
       show_root_heading: true

@@ -3,19 +3,21 @@ Tests for geom_surface and geom_wireframe - 3D surface plots.
 
 This test suite verifies actual figure output, not just that code runs.
 """
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
-import plotly.graph_objects as go
 
+import pytest
 from ggplotly import (
-    ggplot, aes,
-    geom_surface, geom_wireframe, geom_point_3d,
+    aes,
     facet_wrap,
-    labs,
-    theme_dark, theme_minimal,
+    geom_point_3d,
+    geom_surface,
+    geom_wireframe,
+    ggplot,
     ggsize,
+    labs,
+    theme_minimal,
 )
 
 

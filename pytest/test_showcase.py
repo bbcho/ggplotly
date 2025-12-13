@@ -7,19 +7,19 @@ These tests verify that each example from ggplotly_showcase.py:
 3. Has the correct number of traces where applicable
 """
 
-import sys
-import os
 import math
-import pytest
-import pandas as pd
+import os
+import sys
+
 import numpy as np
-import plotly.graph_objects as go
+import pandas as pd
+
+import pytest
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../")
 
 from ggplotly import *
 from ggplotly.stats import stat_summary
-
 
 # =============================================================================
 # PART 1: BASICS

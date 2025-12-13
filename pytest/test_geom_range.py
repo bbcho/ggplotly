@@ -1,16 +1,17 @@
 """
 Tests for geom_range - 5-year range plots with historical context.
 """
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
-from datetime import datetime, timedelta
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
-from ggplotly import ggplot, aes, geom_range, labs
+from ggplotly import aes, geom_range, ggplot, labs
 
 
 @pytest.fixture

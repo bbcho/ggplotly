@@ -5,19 +5,19 @@ These tests verify that the new ggplot2-compatible parameters actually work
 and produce the expected behavior.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 
-from ggplotly import ggplot, aes
-from ggplotly.geoms.geom_text import geom_text
+import pytest
+from ggplotly import aes, ggplot
 from ggplotly.geoms.geom_bar import geom_bar
-from ggplotly.geoms.geom_histogram import geom_histogram
-from ggplotly.geoms.geom_density import geom_density
 from ggplotly.geoms.geom_boxplot import geom_boxplot
-from ggplotly.scales.scale_fill_manual import scale_fill_manual
+from ggplotly.geoms.geom_density import geom_density
+from ggplotly.geoms.geom_histogram import geom_histogram
+from ggplotly.geoms.geom_text import geom_text
 from ggplotly.scales.scale_color_gradient import scale_color_gradient
+from ggplotly.scales.scale_fill_manual import scale_fill_manual
 from ggplotly.scales.scale_x_continuous import scale_x_continuous
 from ggplotly.scales.scale_x_log10 import scale_x_log10
 from ggplotly.scales.scale_y_log10 import scale_y_log10

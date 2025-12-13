@@ -2,8 +2,8 @@
 
 import plotly.graph_objects as go
 
-from .geom_base import Geom
 from ..stats.stat_fanchart import stat_fanchart
+from .geom_base import Geom
 
 
 class geom_fanchart(Geom):

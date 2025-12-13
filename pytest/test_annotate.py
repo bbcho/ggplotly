@@ -1,19 +1,17 @@
 """
 Tests for ggplotly annotate function.
 """
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
-from ggplotly import (
-    ggplot, aes,
-    geom_point, geom_line, geom_bar, geom_col,
-    annotate, labs
-)
+from ggplotly import aes, annotate, geom_point, ggplot, labs
 
 
 @pytest.fixture

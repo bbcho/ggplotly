@@ -4,22 +4,10 @@ Tests for trace_builders module.
 These tests verify that the trace builder strategies produce correct Plotly traces
 with the expected data, groupings, colors, shapes, and legend behavior.
 """
-import pytest
 import pandas as pd
-import numpy as np
-from plotly.graph_objects import Figure
 
-from ggplotly import ggplot, aes, geom_point, geom_line
-from ggplotly.trace_builders import (
-    TraceBuilder,
-    GroupedTraceBuilder,
-    ColorAndShapeTraceBuilder,
-    ColorOnlyTraceBuilder,
-    ShapeOnlyTraceBuilder,
-    ContinuousColorTraceBuilder,
-    SingleTraceBuilder,
-    get_trace_builder,
-)
+import pytest
+from ggplotly import aes, geom_line, geom_point, ggplot
 
 
 @pytest.fixture

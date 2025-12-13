@@ -66,7 +66,6 @@ class geom_pacf(Geom):
         alpha = self.params.get("alpha", 0.05)
         method = self.params.get("method", "ywm")
         color = self.params.get("color", "steelblue")
-        ci_color = self.params.get("ci_color", "lightblue")
         ci_alpha = self.params.get("ci_alpha", 0.3)
         bar_width = self.params.get("bar_width", 0.3)
 

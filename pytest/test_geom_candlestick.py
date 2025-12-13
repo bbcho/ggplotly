@@ -4,16 +4,20 @@ Comprehensive tests for geom_candlestick and geom_ohlc.
 Tests verify actual behavior, not just that functions run.
 """
 
-import pytest
-import pandas as pd
+
 import numpy as np
-from datetime import datetime, timedelta
+import pandas as pd
 from plotly.graph_objects import Figure
 
+import pytest
 from ggplotly import (
-    ggplot, aes, geom_candlestick, geom_ohlc,
-    labs, theme_minimal, theme_dark,
+    aes,
+    geom_candlestick,
+    geom_ohlc,
+    ggplot,
     ggsize,
+    labs,
+    theme_minimal,
 )
 
 

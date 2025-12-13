@@ -4,20 +4,20 @@ Tests for geom_map, geom_sf, and map_data.
 Tests cover base map layers, choropleths, geo context detection, and GeoJSON support.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
+import pytest
 from ggplotly import (
-    ggplot, aes,
-    geom_map, geom_sf, geom_point,
-    map_data,
+    aes,
     facet_wrap,
-    labs, scale_fill_gradient, scale_fill_viridis_c,
+    geom_map,
+    geom_point,
+    ggplot,
+    map_data,
 )
-from ggplotly.themes import theme_dark, theme_classic, theme_minimal
-
+from ggplotly.themes import theme_classic, theme_dark
 
 # =============================================================================
 # Fixtures

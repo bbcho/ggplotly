@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_line, facet_wrap
+import pytest
+from ggplotly import aes, facet_wrap, geom_line, ggplot
 from ggplotly.stats.stat_stl import stat_stl
 
 

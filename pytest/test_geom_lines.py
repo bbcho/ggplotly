@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_lines
+from ggplotly import aes, geom_lines, ggplot
 
 
 class TestGeomLines:

@@ -3,15 +3,24 @@
 Comprehensive test suite for geom_edgebundle, stat_edgebundle, and map theme styling.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+import pytest
 from ggplotly import (
-    ggplot, aes, geom_edgebundle, geom_point, geom_map,
-    theme_dark, theme_classic, theme_minimal, theme_default,
-    theme_ggplot2, theme_nytimes, theme_bbc,
-    labs
+    aes,
+    geom_edgebundle,
+    geom_map,
+    geom_point,
+    ggplot,
+    labs,
+    theme_bbc,
+    theme_classic,
+    theme_dark,
+    theme_default,
+    theme_ggplot2,
+    theme_minimal,
+    theme_nytimes,
 )
 from ggplotly.stats.stat_edgebundle import stat_edgebundle
 
@@ -1050,7 +1059,6 @@ class TestIgraphSupport:
     def test_igraph_us_flights(self):
         """Test with us_flights dataset."""
         pytest.importorskip("igraph")
-        import igraph as ig
         from ggplotly import data
 
         g = data('us_flights')
@@ -1515,6 +1523,7 @@ class TestCaching:
     def test_cache_survives_stat_deepcopy(self):
         """Test that cache persists across deepcopy of stat objects."""
         import copy
+
         from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
 
         clear_bundling_cache()

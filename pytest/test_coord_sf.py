@@ -3,12 +3,10 @@
 Tests for coord_sf coordinate system.
 """
 
-import pytest
 import pandas as pd
 
-from ggplotly import (
-    ggplot, aes, geom_map, geom_sf, geom_point, coord_sf, theme_dark
-)
+import pytest
+from ggplotly import aes, coord_sf, geom_map, geom_point, geom_sf, ggplot, theme_dark
 
 
 class TestCoordSfBasic:

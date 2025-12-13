@@ -3,22 +3,29 @@ Tests for geom_point_3d - 3D scatter plots.
 
 This test suite verifies actual figure output, not just that code runs.
 """
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
 from ggplotly import (
-    ggplot, aes,
+    aes,
+    facet_grid,
+    facet_wrap,
     geom_point_3d,
-    facet_wrap, facet_grid,
-    labs,
-    theme_dark, theme_classic, theme_minimal, theme_ggplot2,
-    scale_color_manual, scale_color_brewer,
+    ggplot,
     ggsize,
+    labs,
+    scale_color_manual,
+    theme_classic,
+    theme_dark,
+    theme_ggplot2,
+    theme_minimal,
 )
 
 

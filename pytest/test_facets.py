@@ -1,20 +1,29 @@
 """
 Tests for ggplotly faceting (facet_wrap and facet_grid).
 """
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
 from ggplotly import (
-    ggplot, aes,
-    geom_point, geom_line, geom_bar, geom_col, geom_boxplot,
-    geom_smooth, geom_histogram, geom_density,
-    facet_wrap, facet_grid,
-    labs
+    aes,
+    facet_grid,
+    facet_wrap,
+    geom_boxplot,
+    geom_col,
+    geom_density,
+    geom_histogram,
+    geom_line,
+    geom_point,
+    geom_smooth,
+    ggplot,
+    labs,
 )
 
 

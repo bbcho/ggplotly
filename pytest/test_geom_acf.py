@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_acf
+import pytest
+from ggplotly import aes, geom_acf, ggplot
 
 
 class TestGeomAcf:

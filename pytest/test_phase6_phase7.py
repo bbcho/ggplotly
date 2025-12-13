@@ -3,11 +3,7 @@
 Tests for Phase 6 (Facets & Themes) and Phase 7 (Core Functions).
 """
 
-import pytest
-import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
-
 
 # ============================================================================
 # Phase 6 Tests: Facets
@@ -206,7 +202,7 @@ class TestThemeExpansion:
 
     def test_theme_default_params(self):
         """Test theme has default parameters."""
-        from ggplotly.themes import theme, Theme
+        from ggplotly.themes import Theme, theme
 
         t = theme()
         # theme() returns a CustomTheme which inherits from Theme
@@ -216,7 +212,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_title(self):
         """Test axis_title parameter - functional test via apply."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_title=element_text(size=14, color='blue'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -227,7 +223,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_title_x(self):
         """Test axis_title_x parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_title_x=element_text(size=12))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -236,7 +232,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_title_y(self):
         """Test axis_title_y parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_title_y=element_text(size=16, color='red'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -246,7 +242,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_text(self):
         """Test axis_text parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_text=element_text(size=10, color='gray'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -257,7 +253,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_text_x(self):
         """Test axis_text_x parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_text_x=element_text(size=11))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -266,7 +262,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_text_y(self):
         """Test axis_text_y parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(axis_text_y=element_text(size=9))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -275,7 +271,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_line(self):
         """Test axis_line parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(axis_line=element_line(color='black', width=2))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -286,7 +282,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_line_x(self):
         """Test axis_line_x parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(axis_line_x=element_line(color='red', width=1))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -295,7 +291,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_line_y(self):
         """Test axis_line_y parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(axis_line_y=element_line(color='blue', width=1))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -304,7 +300,7 @@ class TestThemeExpansion:
 
     def test_theme_axis_ticks(self):
         """Test axis_ticks parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(axis_ticks=element_line(color='gray', width=1))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -314,7 +310,7 @@ class TestThemeExpansion:
 
     def test_theme_panel_background(self):
         """Test panel_background parameter."""
-        from ggplotly.themes import theme, element_rect
+        from ggplotly.themes import element_rect, theme
 
         t = theme(panel_background=element_rect(fill='#f0f0f0'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -323,7 +319,7 @@ class TestThemeExpansion:
 
     def test_theme_panel_grid(self):
         """Test panel_grid parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(panel_grid=element_line(color='lightgray', width=0.5))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -333,7 +329,7 @@ class TestThemeExpansion:
 
     def test_theme_panel_grid_major(self):
         """Test panel_grid_major parameter."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         t = theme(panel_grid_major=element_line(color='gray', width=1))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -343,7 +339,7 @@ class TestThemeExpansion:
 
     def test_theme_panel_grid_minor(self):
         """Test panel_grid_minor parameter - applies grid color."""
-        from ggplotly.themes import theme, element_line
+        from ggplotly.themes import element_line, theme
 
         # panel_grid_minor is stored but Plotly doesn't have separate minor grid control
         t = theme(panel_grid_minor=element_line(color='lightgray', width=0.25))
@@ -353,7 +349,7 @@ class TestThemeExpansion:
 
     def test_theme_panel_border(self):
         """Test panel_border parameter."""
-        from ggplotly.themes import theme, element_rect
+        from ggplotly.themes import element_rect, theme
 
         # panel_border is stored but may not directly apply in Plotly
         t = theme(panel_border=element_rect(color='black', fill='white'))
@@ -362,7 +358,7 @@ class TestThemeExpansion:
 
     def test_theme_plot_title(self):
         """Test plot_title parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(plot_title=element_text(size=18, color='darkblue'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -372,7 +368,7 @@ class TestThemeExpansion:
 
     def test_theme_plot_subtitle(self):
         """Test plot_subtitle parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         # plot_subtitle is stored for potential future use
         t = theme(plot_subtitle=element_text(size=14, color='gray'))
@@ -380,7 +376,7 @@ class TestThemeExpansion:
 
     def test_theme_plot_caption(self):
         """Test plot_caption parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         # plot_caption is stored for potential future use
         t = theme(plot_caption=element_text(size=10))
@@ -388,7 +384,7 @@ class TestThemeExpansion:
 
     def test_theme_plot_background(self):
         """Test plot_background parameter."""
-        from ggplotly.themes import theme, element_rect
+        from ggplotly.themes import element_rect, theme
 
         t = theme(plot_background=element_rect(fill='#f0f0f0'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -397,7 +393,7 @@ class TestThemeExpansion:
 
     def test_theme_legend_title(self):
         """Test legend_title parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(legend_title=element_text(size=12, color='navy'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -407,7 +403,7 @@ class TestThemeExpansion:
 
     def test_theme_legend_text(self):
         """Test legend_text parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         t = theme(legend_text=element_text(size=10))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -416,7 +412,7 @@ class TestThemeExpansion:
 
     def test_theme_legend_background(self):
         """Test legend_background parameter."""
-        from ggplotly.themes import theme, element_rect
+        from ggplotly.themes import element_rect, theme
 
         t = theme(legend_background=element_rect(fill='white', color='gray'))
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
@@ -426,7 +422,7 @@ class TestThemeExpansion:
 
     def test_theme_strip_text(self):
         """Test strip_text parameter."""
-        from ggplotly.themes import theme, element_text
+        from ggplotly.themes import element_text, theme
 
         # strip_text is stored for faceted plots
         t = theme(strip_text=element_text(size=11))
@@ -434,7 +430,7 @@ class TestThemeExpansion:
 
     def test_theme_strip_background(self):
         """Test strip_background parameter."""
-        from ggplotly.themes import theme, element_rect
+        from ggplotly.themes import element_rect, theme
 
         # strip_background is stored for faceted plots
         t = theme(strip_background=element_rect(fill='#e0e0e0'))
@@ -703,7 +699,7 @@ class TestGuidesFunction:
 
     def test_guides_function_creates_guides_object(self):
         """Test guides() returns Guides object."""
-        from ggplotly.guides import guides, Guides
+        from ggplotly.guides import Guides, guides
 
         g = guides()
         assert isinstance(g, Guides)
@@ -724,7 +720,7 @@ class TestGuidesFunction:
 
     def test_guides_with_guide_legend(self):
         """Test guides with guide_legend."""
-        from ggplotly.guides import guides, guide_legend
+        from ggplotly.guides import guide_legend, guides
 
         g = guides(color=guide_legend(title='Groups'))
         assert isinstance(g.guides['color'], guide_legend)
@@ -732,7 +728,7 @@ class TestGuidesFunction:
 
     def test_guides_with_guide_colorbar(self):
         """Test guides with guide_colorbar."""
-        from ggplotly.guides import guides, guide_colorbar
+        from ggplotly.guides import guide_colorbar, guides
 
         g = guides(fill=guide_colorbar(direction='horizontal'))
         assert isinstance(g.guides['fill'], guide_colorbar)
@@ -740,7 +736,7 @@ class TestGuidesFunction:
 
     def test_guides_multiple_aesthetics(self):
         """Test guides with multiple aesthetics."""
-        from ggplotly.guides import guides, guide_legend, guide_colorbar
+        from ggplotly.guides import guide_colorbar, guide_legend, guides
 
         g = guides(
             color='none',
@@ -769,7 +765,7 @@ class TestGuidesApply:
 
     def test_guides_apply_legend_orientation(self):
         """Test Guides.apply() sets legend orientation."""
-        from ggplotly.guides import guides, guide_legend
+        from ggplotly.guides import guide_legend, guides
 
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
 
@@ -780,7 +776,7 @@ class TestGuidesApply:
 
     def test_guides_apply_legend_title(self):
         """Test Guides.apply() sets legend title."""
-        from ggplotly.guides import guides, guide_legend
+        from ggplotly.guides import guide_legend, guides
 
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
 
@@ -791,7 +787,7 @@ class TestGuidesApply:
 
     def test_guides_apply_legend_reverse(self):
         """Test Guides.apply() reverses legend."""
-        from ggplotly.guides import guides, guide_legend
+        from ggplotly.guides import guide_legend, guides
 
         fig = go.Figure(data=[go.Scatter(x=[1, 2, 3], y=[1, 2, 3])])
 

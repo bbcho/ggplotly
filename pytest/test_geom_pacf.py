@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_pacf
+import pytest
+from ggplotly import aes, geom_pacf, ggplot
 
 
 class TestGeomPacf:

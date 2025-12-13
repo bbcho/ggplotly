@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_fanchart
+from ggplotly import aes, geom_fanchart, ggplot
 
 
 class TestGeomFanchart:

@@ -1,9 +1,9 @@
-import sys
 import os
+import sys
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
 
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -46,7 +46,7 @@ def test_basic_plot_with_labels_and_theme():
     # Assert that the returned object is a Plotly figure
     assert isinstance(plotly_fig, go.Figure), "The plot is not a Plotly figure"
     assert (
-        "Main Title" in plotly_fig.layout.title.text and 
+        "Main Title" in plotly_fig.layout.title.text and
         "This is a subtitle" in plotly_fig.layout.title.text
     )
     assert (

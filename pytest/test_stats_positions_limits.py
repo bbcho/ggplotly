@@ -2,26 +2,34 @@
 Tests for stat_summary, geom_tile, position adjustments, limits, and brewer scales.
 These tests verify actual functionality, not just that functions run.
 """
-import pytest
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 from plotly.graph_objects import Figure
 
-import sys
+import pytest
+
 sys.path.insert(0, '/Users/ben/Projects/ggplotly')
 
 from ggplotly import (
-    ggplot, aes,
-    geom_point, geom_bar, geom_col, geom_tile,
-    scale_color_brewer, scale_fill_brewer,
-    labs
+    aes,
+    geom_col,
+    geom_point,
+    geom_tile,
+    ggplot,
+    scale_color_brewer,
+    scale_fill_brewer,
 )
-from ggplotly.limits import xlim, ylim, lims
+from ggplotly.limits import lims, xlim, ylim
 from ggplotly.positions import position_dodge, position_jitter, position_stack
 from ggplotly.stats.stat_summary import (
-    stat_summary, mean_se, mean_cl_normal, mean_sdl, median_hilow
+    mean_cl_normal,
+    mean_sdl,
+    mean_se,
+    median_hilow,
+    stat_summary,
 )
-
 
 # ============================================================================
 # Fixtures

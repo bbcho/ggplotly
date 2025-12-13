@@ -35,6 +35,7 @@ from .geoms import (
     geom_range,
     geom_ribbon,
     geom_rug,
+    geom_sankey,
     geom_searoute,
     geom_segment,
     geom_sf,
@@ -46,6 +47,7 @@ from .geoms import (
     geom_tile,
     geom_violin,
     geom_vline,
+    geom_waterfall,
     geom_wireframe,
 )
 from .ggplot import ggplot
@@ -189,6 +191,8 @@ __all__ = [
     "geom_norm",
     "geom_qq",
     "geom_qq_line",
+    "geom_sankey",
+    "geom_waterfall",
     "scale_x_continuous",
     "scale_y_continuous",
     "scale_color_manual",

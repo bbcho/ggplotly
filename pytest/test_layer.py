@@ -4,13 +4,11 @@ Tests for the Layer class.
 The Layer class encapsulates the relationship between geoms, stats, data, and mappings
 following the Grammar of Graphics pattern.
 """
-import pytest
 import pandas as pd
-import numpy as np
-from plotly.graph_objects import Figure
 
-from ggplotly import ggplot, aes, geom_point, geom_line, Layer, layer
-from ggplotly.stats import stat_identity, stat_smooth, stat_bin
+import pytest
+from ggplotly import Layer, aes, geom_line, geom_point, layer
+from ggplotly.stats import stat_identity, stat_smooth
 
 
 @pytest.fixture

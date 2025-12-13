@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_ribbon, geom_line
 from ggplotly.stats.stat_fanchart import stat_fanchart
 
 

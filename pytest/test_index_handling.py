@@ -1,14 +1,12 @@
 """Tests for automatic index handling in ggplotly."""
-import sys
 import os
+import sys
 
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../")
 
-from ggplotly import ggplot, aes, geom_point, geom_line, labs
+from ggplotly import aes, geom_line, geom_point, ggplot, labs
 from ggplotly.data_utils import INDEX_COLUMN, normalize_data
 
 

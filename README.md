@@ -32,12 +32,13 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 
 ## ggplot2 Function Coverage
 
-### Geoms (34)
+### Geoms (44)
 
 | Function | Description |
 |----------|-------------|
 | `geom_point` | Scatter plots |
 | `geom_line` | Line plots (sorted by x) |
+| `geom_lines` | Multi-series line plots |
 | `geom_path` | Path plots (unsorted) |
 | `geom_bar` | Bar charts |
 | `geom_col` | Column charts (pre-computed heights) |
@@ -61,18 +62,26 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `geom_contour` | Contour lines |
 | `geom_contour_filled` | Filled contours |
 | `geom_map` | Choropleth maps |
-| `geom_point_map` | Points on maps |
+| `geom_sf` | Simple features (geographic) |
 | `geom_range` | Range plots (min/max/avg) |
 | `geom_edgebundle` | Edge bundling for networks |
-| `geom_sf` | Simple features (geographic) |
 | `geom_searoute` | Maritime shipping routes |
 | `geom_point_3d` | 3D scatter plots |
 | `geom_surface` | 3D surface plots |
 | `geom_wireframe` | 3D wireframe plots |
 | `geom_candlestick` | Candlestick charts (financial) |
 | `geom_ohlc` | OHLC charts (financial) |
+| `geom_waterfall` | Waterfall charts (financial) |
+| `geom_sankey` | Sankey flow diagrams |
+| `geom_fanchart` | Fan charts for uncertainty |
+| `geom_stl` | STL decomposition plots |
+| `geom_acf` | Autocorrelation function plots |
+| `geom_pacf` | Partial autocorrelation plots |
+| `geom_norm` | Normal distribution overlay |
+| `geom_qq` | Q-Q plots (theoretical vs sample quantiles) |
+| `geom_qq_line` | Q-Q reference line through Q1/Q3 |
 
-### Stats (7)
+### Stats (13)
 
 | Function | Description |
 |----------|-------------|
@@ -83,6 +92,12 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `stat_ecdf` | Empirical CDF |
 | `stat_smooth` | Smoothing with CI |
 | `stat_summary` | Summary statistics |
+| `stat_contour` | Contour computation |
+| `stat_fanchart` | Fan chart percentiles |
+| `stat_function` | Apply function to data range |
+| `stat_stl` | STL time series decomposition |
+| `stat_qq` | Compute Q-Q quantiles |
+| `stat_qq_line` | Compute Q-Q reference line |
 
 ### Scales (17)
 
@@ -166,4 +181,4 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `ggsave` | Save plots to file |
 | `ggsize` | Set plot dimensions |
 
-## Total: ~97 ggplot2-equivalent functions
+## Total: ~113 ggplot2-equivalent functions

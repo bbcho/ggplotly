@@ -3,8 +3,8 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .geom_base import Geom
 from ..stats.stat_stl import stat_stl
+from .geom_base import Geom
 
 
 class geom_stl(Geom):

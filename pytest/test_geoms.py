@@ -2,21 +2,35 @@
 Tests for ggplotly geoms.
 Tests verify actual behavior and output, not just that code runs.
 """
-import pytest
-import pandas as pd
+
 import numpy as np
-import math
+import pandas as pd
 from plotly.graph_objects import Figure
 
+import pytest
 from ggplotly import (
-    ggplot, aes, ggsave,
-    geom_point, geom_line, geom_path, geom_bar, geom_col,
-    geom_histogram, geom_boxplot, geom_smooth, geom_area,
-    geom_density, geom_violin, geom_ribbon, geom_tile,
-    geom_text, geom_errorbar, geom_segment, geom_step,
-    geom_vline, geom_hline, geom_jitter, geom_rug,
-    geom_abline, geom_contour, geom_contour_filled,
-    labs
+    aes,
+    geom_abline,
+    geom_area,
+    geom_bar,
+    geom_boxplot,
+    geom_col,
+    geom_density,
+    geom_errorbar,
+    geom_histogram,
+    geom_hline,
+    geom_jitter,
+    geom_line,
+    geom_path,
+    geom_point,
+    geom_rug,
+    geom_segment,
+    geom_smooth,
+    geom_step,
+    geom_text,
+    geom_violin,
+    geom_vline,
+    ggplot,
 )
 
 

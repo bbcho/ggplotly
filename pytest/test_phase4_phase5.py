@@ -4,11 +4,11 @@ Functional tests for Phase 4 (Coordinate Systems) and Phase 5 (Stats Improvement
 Tests verify that the new parameters work correctly and match ggplot2 R behavior.
 """
 
-import pytest
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+import pytest
 
 # =============================================================================
 # Phase 4: Coordinate System Tests

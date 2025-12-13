@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-from ggplotly import ggplot, aes, geom_stl
+import pytest
+from ggplotly import aes, geom_stl, ggplot
 
 
 class TestGeomStl:
