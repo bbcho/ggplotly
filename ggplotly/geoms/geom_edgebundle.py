@@ -183,6 +183,12 @@ class geom_edgebundle(Geom):
 
         Examples
         --------
+        >>> # From igraph (auto-detects 'weight' edge attribute)
+        >>> g = data('us_flights')
+        >>> ggplot() + geom_map(map_type='usa') + geom_edgebundle(graph=g)
+
+        >>> # From igraph with explicit weight attribute
+        >>> ggplot() + geom_map(map_type='usa') + geom_edgebundle(graph=g, weight='passengers')
         >>> # From DataFrame
         >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
         ...  + geom_edgebundle(compatibility_threshold=0.6))
@@ -191,12 +197,6 @@ class geom_edgebundle(Geom):
         >>> (ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend', weight='traffic'))
         ...  + geom_edgebundle())
 
-        >>> # From igraph (auto-detects 'weight' edge attribute)
-        >>> g = data('us_flights')
-        >>> ggplot() + geom_edgebundle(graph=g)
-
-        >>> # From igraph with explicit weight attribute
-        >>> ggplot() + geom_edgebundle(graph=g, weight='passengers')
         """
         super().__init__(data=data, mapping=mapping, **kwargs)
 

@@ -11,6 +11,14 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 
+# Module-level cache for bundling results (survives deepcopy of stat objects)
+_bundling_cache: dict[int, pd.DataFrame] = {}
+
+
+def clear_bundling_cache():
+    """Clear the edge bundling cache."""
+    _bundling_cache.clear()
+
 
 def _euclidean_distance(p1, p2):
     """Calculate Euclidean distance between two points."""
@@ -501,20 +509,27 @@ class stat_edgebundle:
         self.compatibility_threshold = compatibility_threshold
         self.verbose = verbose
 
-        # Cache for computed results
-        self._cached_result = None
-        self._cached_data_hash = None
-
-    def _compute_data_hash(self, data: pd.DataFrame, weights: Optional[np.ndarray] = None) -> int:
-        """Compute a hash of the input data for cache invalidation."""
+    def _compute_cache_key(self, data: pd.DataFrame, weights: Optional[np.ndarray] = None) -> int:
+        """Compute a cache key including data and algorithm parameters."""
         weight_hash = weights.tobytes() if weights is not None else b''
         return hash((
+            # Data
             data.shape,
             data['x'].values.tobytes(),
             data['y'].values.tobytes(),
             data['xend'].values.tobytes(),
             data['yend'].values.tobytes(),
             weight_hash,
+            # Algorithm parameters (different params = different result)
+            self.K,
+            self.E,
+            self.C,
+            self.P,
+            self.S,
+            self.P_rate,
+            self.I,
+            self.I_rate,
+            self.compatibility_threshold,
         ))
 
     def _normalize_weights(self, weights: np.ndarray) -> np.ndarray:
@@ -560,12 +575,12 @@ class stat_edgebundle:
             if len(weights) != len(data):
                 raise ValueError(f"weights length ({len(weights)}) must match data length ({len(data)})")
 
-        # Check cache
-        data_hash = self._compute_data_hash(data, weights)
-        if self._cached_result is not None and self._cached_data_hash == data_hash:
+        # Check module-level cache (survives deepcopy of stat objects)
+        cache_key = self._compute_cache_key(data, weights)
+        if cache_key in _bundling_cache:
             if self.verbose:
                 print("Using cached bundling result")
-            return self._cached_result
+            return _bundling_cache[cache_key]
 
         # Normalize weights if provided
         normalized_weights = None
@@ -584,9 +599,8 @@ class stat_edgebundle:
 
         result = self._bundle_edges(edges_xy, normalized_weights)
 
-        # Cache the result
-        self._cached_result = result
-        self._cached_data_hash = data_hash
+        # Cache the result at module level
+        _bundling_cache[cache_key] = result
 
         return result
 

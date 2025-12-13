@@ -1361,3 +1361,242 @@ class TestEdgeWeights:
         assert mid_y_top - mid_y_bottom > 2.0, (
             f"Weight effect should create >2.0 difference, got {mid_y_top - mid_y_bottom:.2f}"
         )
+
+
+class TestCaching:
+    """Tests for caching functionality in stat_edgebundle and geom_edgebundle."""
+
+    def test_stat_edgebundle_cache_hit(self):
+        """Test that identical calls return cached result."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+
+        # First call - should compute and cache
+        result1 = stat.compute(edges_df)
+        cache_size_after_first = len(_bundling_cache)
+        assert cache_size_after_first == 1
+
+        # Second call with same data - should use cache
+        result2 = stat.compute(edges_df)
+        cache_size_after_second = len(_bundling_cache)
+        assert cache_size_after_second == 1  # No new cache entry
+
+        # Results should be identical
+        pd.testing.assert_frame_equal(result1, result2)
+
+    def test_stat_edgebundle_cache_miss_different_data(self):
+        """Test that different data creates new cache entry."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df1 = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        edges_df2 = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 2],  # Different y value
+            'xend': [10, 10],
+            'yend': [0, 2]
+        })
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+
+        stat.compute(edges_df1)
+        assert len(_bundling_cache) == 1
+
+        stat.compute(edges_df2)
+        assert len(_bundling_cache) == 2  # New cache entry
+
+    def test_stat_edgebundle_cache_miss_different_params(self):
+        """Test that different algorithm parameters create new cache entry."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat1 = stat_edgebundle(C=2, I=5, verbose=False)
+        stat2 = stat_edgebundle(C=3, I=5, verbose=False)  # Different C
+
+        stat1.compute(edges_df)
+        assert len(_bundling_cache) == 1
+
+        stat2.compute(edges_df)
+        assert len(_bundling_cache) == 2  # New cache entry due to different params
+
+    def test_stat_edgebundle_cache_miss_different_weights(self):
+        """Test that different weights create new cache entry."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+
+        weights1 = np.array([1.0, 1.0])
+        weights2 = np.array([10.0, 1.0])  # Different weights
+
+        stat.compute(edges_df, weights=weights1)
+        assert len(_bundling_cache) == 1
+
+        stat.compute(edges_df, weights=weights2)
+        assert len(_bundling_cache) == 2  # New cache entry
+
+    def test_stat_edgebundle_cache_hit_with_weights(self):
+        """Test cache hit when same weights are used."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+        weights = np.array([5.0, 10.0])
+
+        result1 = stat.compute(edges_df, weights=weights)
+        assert len(_bundling_cache) == 1
+
+        result2 = stat.compute(edges_df, weights=weights.copy())  # Same values
+        assert len(_bundling_cache) == 1  # Cache hit
+
+        pd.testing.assert_frame_equal(result1, result2)
+
+    def test_clear_bundling_cache(self):
+        """Test that clear_bundling_cache clears the cache."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat = stat_edgebundle(C=2, I=5, verbose=False)
+        stat.compute(edges_df)
+        assert len(_bundling_cache) >= 1
+
+        clear_bundling_cache()
+        assert len(_bundling_cache) == 0
+
+    def test_cache_survives_stat_deepcopy(self):
+        """Test that cache persists across deepcopy of stat objects."""
+        import copy
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        stat1 = stat_edgebundle(C=2, I=5, verbose=False)
+        result1 = stat1.compute(edges_df)
+        assert len(_bundling_cache) == 1
+
+        # Deep copy the stat (this happens during ggplot processing)
+        stat2 = copy.deepcopy(stat1)
+
+        # Compute with the copy - should hit cache
+        result2 = stat2.compute(edges_df)
+        assert len(_bundling_cache) == 1  # Still just one entry
+
+        pd.testing.assert_frame_equal(result1, result2)
+
+    def test_geom_edgebundle_uses_cache(self):
+        """Test that geom_edgebundle uses the stat cache correctly."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        # First plot - should populate cache
+        fig1 = (
+            ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
+            + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
+        ).draw()
+        cache_size_after_first = len(_bundling_cache)
+        assert cache_size_after_first >= 1
+
+        # Second plot with same data and params - should use cache
+        fig2 = (
+            ggplot(edges_df, aes(x='x', y='y', xend='xend', yend='yend'))
+            + geom_edgebundle(C=2, I=5, verbose=False, show_highlight=False)
+        ).draw()
+        cache_size_after_second = len(_bundling_cache)
+        assert cache_size_after_second == cache_size_after_first
+
+    def test_cache_key_includes_all_params(self):
+        """Test that cache key includes all relevant algorithm parameters."""
+        from ggplotly.stats.stat_edgebundle import _bundling_cache, clear_bundling_cache
+
+        clear_bundling_cache()
+
+        edges_df = pd.DataFrame({
+            'x': [0, 0],
+            'y': [0, 1],
+            'xend': [10, 10],
+            'yend': [0, 1]
+        })
+
+        # Create stats with different parameter variations
+        param_variations = [
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},
+            {'K': 2.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},  # Different K
+            {'K': 1.0, 'E': 2.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},  # Different E
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 2, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},  # Different P
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.08, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},  # Different S
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 3, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.6},  # Different P_rate
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 10, 'I_rate': 2/3, 'compatibility_threshold': 0.6}, # Different I
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 0.5, 'compatibility_threshold': 0.6},  # Different I_rate
+            {'K': 1.0, 'E': 1.0, 'C': 2, 'P': 1, 'S': 0.04, 'P_rate': 2, 'I': 5, 'I_rate': 2/3, 'compatibility_threshold': 0.8},  # Different threshold
+        ]
+
+        for params in param_variations:
+            stat = stat_edgebundle(verbose=False, **params)
+            stat.compute(edges_df)
+
+        # Each parameter variation should create a unique cache entry
+        assert len(_bundling_cache) == len(param_variations)
