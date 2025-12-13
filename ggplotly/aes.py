@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -163,7 +163,6 @@ class stage:
 
 # Type alias for aesthetic values
 # Using Union for runtime compatibility with Python 3.9
-from typing import Union
 AesValue = Union[str, after_stat, after_scale, stage, float, int, None]
 
 
