@@ -162,7 +162,9 @@ class stage:
 
 
 # Type alias for aesthetic values
-AesValue = str | after_stat | after_scale | stage | float | int | None
+# Using Union for runtime compatibility with Python 3.9
+from typing import Union
+AesValue = Union[str, after_stat, after_scale, stage, float, int, None]
 
 
 class aes:
