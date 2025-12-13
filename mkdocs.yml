@@ -34,7 +34,6 @@ plugins:
       execute: true
       ignore_h1_titles: true
       include_source: true
-      theme: dark
   - mkdocstrings:
       handlers:
         python:
