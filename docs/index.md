@@ -48,6 +48,19 @@ pip install ggplotly
 | **Coords** | 4 | `coord_flip`, `coord_polar`, `coord_sf` |
 | **Facets** | 2 | `facet_wrap`, `facet_grid` |
 
+## Gallery
+
+Explore examples organized by visualization type:
+
+- **[Basic Charts](gallery/basic.md)** - Scatter, line, bar, histograms, box plots
+- **[Statistical](gallery/statistical.md)** - Smoothing, density, error bars, summaries
+- **[Time Series](gallery/timeseries.md)** - Date axes, range plots, candlesticks, OHLC
+- **[Geographic Maps](gallery/maps.md)** - Choropleths, projections, point maps
+- **[3D Visualizations](gallery/3d.md)** - Scatter, surfaces, wireframes
+- **[Network Graphs](gallery/networks.md)** - Edge bundling, sea routes
+- **[Multi-Panel (Facets)](gallery/facets.md)** - Small multiples, facet_wrap, facet_grid
+- **[Theming](gallery/theming.md)** - Custom themes, publication-ready styling
+
 ## Coming from R?
 
 ggplotly aims for API compatibility with ggplot2. Most code translates directly:
