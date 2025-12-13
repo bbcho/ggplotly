@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ggplotly"
-version = "0.3.3"
+version = "0.3.4"
 description = "A grammar of graphics for Python built on Plotly"
 readme = "README.md"
 license = {text = "MIT"}

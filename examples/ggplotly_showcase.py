@@ -1,7 +1,3 @@
-# ggplotly Comprehensive Showcase
-# A complete demonstration of all ggplotly features organized from simple to complex.
-# Run cells individually in VS Code or Jupyter using the `# %%` markers.
-
 # %% [markdown]
 # # ggplotly: A Grammar of Graphics for Plotly
 #
