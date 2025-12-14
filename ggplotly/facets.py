@@ -142,6 +142,10 @@ class facet_grid(Facet):
                 return True
         return False
 
+    def _is_no_facet(self, value):
+        """Check if value means 'no faceting on this dimension'."""
+        return value is None or value == '.'
+
     def apply(self, plot):
         """
         Apply facet grid to the plot.
@@ -155,16 +159,20 @@ class facet_grid(Facet):
         Raises:
             FacetColumnNotFoundError: If row or column variable doesn't exist in the data.
         """
-        # Validate row facet column exists
-        if self.rows not in plot.data.columns:
+        # Check if rows/cols are disabled (None or '.')
+        has_rows = not self._is_no_facet(self.rows)
+        has_cols = not self._is_no_facet(self.cols)
+
+        # Validate row facet column exists (if specified)
+        if has_rows and self.rows not in plot.data.columns:
             raise FacetColumnNotFoundError(
                 self.rows,
                 list(plot.data.columns),
                 facet_type="facet_grid rows"
             )
 
-        # Validate column facet column exists
-        if self.cols not in plot.data.columns:
+        # Validate column facet column exists (if specified)
+        if has_cols and self.cols not in plot.data.columns:
             raise FacetColumnNotFoundError(
                 self.cols,
                 list(plot.data.columns),
@@ -172,8 +180,8 @@ class facet_grid(Facet):
             )
 
         # Get unique values for the row and column variables
-        row_facets = plot.data[self.rows].unique()
-        col_facets = plot.data[self.cols].unique()
+        row_facets = plot.data[self.rows].unique() if has_rows else [None]
+        col_facets = plot.data[self.cols].unique() if has_cols else [None]
 
         nrows = len(row_facets)
         ncols = len(col_facets)
@@ -192,14 +200,22 @@ class facet_grid(Facet):
         shared_y = self.scales in ('fixed', 'free_x')
 
         # Generate labels
-        labels = [self._get_label(self.rows, row, self.cols, col)
-                  for row in row_facets for col in col_facets]
+        def get_facet_label(row, col):
+            if has_rows and has_cols:
+                return self._get_label(self.rows, row, self.cols, col)
+            elif has_rows:
+                return str(row)
+            elif has_cols:
+                return str(col)
+            else:
+                return ""
+        labels = [get_facet_label(row, col) for row in row_facets for col in col_facets]
 
         # Calculate column widths and row heights based on space parameter
         column_widths = None
         row_heights = None
 
-        if self.space in ('free', 'free_x'):
+        if self.space in ('free', 'free_x') and has_cols:
             # Calculate width proportional to x-axis data range per column
             x_col = plot.mapping.get('x')
             if x_col and x_col in plot.data.columns:
@@ -214,7 +230,7 @@ class facet_grid(Facet):
                 if total > 0:
                     column_widths = [r / total for r in col_ranges]
 
-        if self.space in ('free', 'free_y'):
+        if self.space in ('free', 'free_y') and has_rows:
             # Calculate height proportional to y-axis data range per row
             y_col = plot.mapping.get('y')
             if y_col and y_col in plot.data.columns:
@@ -269,10 +285,17 @@ class facet_grid(Facet):
                     scene_key = None
 
                 # Subset data for the current facet (row and column combination)
-                facet_data = plot.data[
-                    (plot.data[self.rows] == row_value)
-                    & (plot.data[self.cols] == col_value)
-                ]
+                if has_rows and has_cols:
+                    facet_data = plot.data[
+                        (plot.data[self.rows] == row_value)
+                        & (plot.data[self.cols] == col_value)
+                    ]
+                elif has_rows:
+                    facet_data = plot.data[plot.data[self.rows] == row_value]
+                elif has_cols:
+                    facet_data = plot.data[plot.data[self.cols] == col_value]
+                else:
+                    facet_data = plot.data
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
@@ -281,10 +304,17 @@ class facet_grid(Facet):
 
                     # If geom has its own explicit data, use that for faceting instead of plot.data
                     if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[
-                            (geom.data[self.rows] == row_value)
-                            & (geom.data[self.cols] == col_value)
-                        ]
+                        if has_rows and has_cols:
+                            geom_facet_data = geom.data[
+                                (geom.data[self.rows] == row_value)
+                                & (geom.data[self.cols] == col_value)
+                            ]
+                        elif has_rows:
+                            geom_facet_data = geom.data[geom.data[self.rows] == row_value]
+                        elif has_cols:
+                            geom_facet_data = geom.data[geom.data[self.cols] == col_value]
+                        else:
+                            geom_facet_data = geom.data
                         geom.setup_data(geom_facet_data, plot.mapping)
                     else:
                         geom.setup_data(facet_data, plot.mapping)

@@ -131,15 +131,23 @@ class geom_point_3d(Geom):
             fig._shown_legendgroups.add(legendgroup)
             return True
 
-        # Determine grouping strategy
-        has_color_grouping = style_props['color_series'] is not None or style_props['fill_series'] is not None
+        # Check for continuous (numeric) color mapping
+        has_continuous_color = (
+            style_props.get('color_is_continuous', False) or
+            style_props.get('fill_is_continuous', False)
+        )
+
+        # Determine grouping strategy - only count as categorical if not continuous
+        has_color_grouping = (
+            style_props['color_series'] is not None or style_props['fill_series'] is not None
+        ) and not has_continuous_color
         has_shape_grouping = shape_series is not None
 
         # Get categorical aesthetic info
-        if style_props['color_series'] is not None:
+        if style_props['color_series'] is not None and not has_continuous_color:
             cat_col = style_props['color']
             cat_map = style_props['color_map']
-        elif style_props['fill_series'] is not None:
+        elif style_props['fill_series'] is not None and not has_continuous_color:
             cat_col = style_props['fill']
             cat_map = style_props['fill_map']
         else:
@@ -233,7 +241,46 @@ class geom_point_3d(Geom):
                     trace_props, alpha, legend_name, should_show_legend, row, col
                 )
 
-        # Case 5: No grouping - single trace
+        # Case 5: Continuous color mapping (numeric values with colorscale)
+        elif has_continuous_color:
+            # Get the numeric color values
+            if style_props.get('color_is_continuous'):
+                color_values = style_props['color_series']
+            else:
+                color_values = style_props['fill_series']
+
+            # Build marker dict with colorscale
+            marker_dict = dict(
+                size=style_props['size'],
+                color=color_values,
+                colorscale='Viridis',  # Default, may be overridden by scale
+                showscale=True,
+                opacity=alpha,
+            )
+
+            # Get colorscale from scale if available
+            colorscale = style_props.get('colorscale')
+            if colorscale:
+                marker_dict['colorscale'] = colorscale
+
+            # Use scene key for faceted plots (3D traces use scene, not row/col)
+            scene_key = self.params.get('_scene_key', 'scene')
+
+            trace_name = self.params.get('name', '3D Scatter')
+            fig.add_trace(
+                go.Scatter3d(
+                    x=x,
+                    y=y,
+                    z=z,
+                    mode='markers',
+                    marker=marker_dict,
+                    name=trace_name,
+                    showlegend=False,  # Colorbar replaces discrete legend
+                    scene=scene_key,
+                )
+            )
+
+        # Case 6: No grouping - single trace
         else:
             trace_props = self._apply_color_targets(
                 {'color': 'marker_color', 'size': 'marker_size', 'shape': 'marker_symbol'},

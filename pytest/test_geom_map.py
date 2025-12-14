@@ -297,17 +297,24 @@ class TestGeomMapBaseLayer:
 class TestGeomMapChoropleth:
     """Tests for choropleth functionality."""
 
-    def test_choropleth_requires_map_id(self):
-        """Test that choropleth mode requires map_id aesthetic."""
+    def test_fill_without_map_id_creates_base_map(self):
+        """Test that fill without map_id creates base map (fill is ignored).
+
+        This allows geom_map to be used as a background when fill is inherited
+        from ggplot aes but intended for other geoms like geom_tile.
+        """
         data = pd.DataFrame({
             'value': [100, 200, 300],
         })
 
-        with pytest.raises(ValueError, match="map_id"):
-            fig = (
-                ggplot(data, aes(fill='value'))
-                + geom_map()
-            ).draw()
+        # Should not raise - creates base map, fill is ignored
+        fig = (
+            ggplot(data, aes(fill='value'))
+            + geom_map()
+        ).draw()
+
+        # Base map doesn't add data traces, just sets up geo layout
+        assert fig is not None
 
     def test_choropleth_with_fill_creates_choropleth_trace(self):
         """Test choropleth with numeric fill creates correct trace type."""

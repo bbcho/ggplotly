@@ -131,13 +131,15 @@ class geom_map(Geom):
 
         # Determine the mode:
         # 1. GeoJSON mode (sf-like) - when geojson is provided or data is GeoDataFrame
-        # 2. Choropleth mode - when map_id is provided
-        # 3. Base map mode - no data aesthetics
+        # 2. Choropleth mode - when map_id is provided (with optional fill)
+        # 3. Base map mode - no map_id (fill is ignored - may be inherited from other geoms)
         is_geojson_mode = geojson is not None
-        is_base_map = map_id_col is None and fill_col is None and not is_geojson_mode
+        is_choropleth = map_id_col is not None
+        is_base_map = not is_geojson_mode and not is_choropleth
 
         if is_base_map:
             # Just set up the geo layout - no data traces needed
+            # Note: fill may be inherited from ggplot aes but is ignored for base maps
             self._setup_geo_layout(fig)
             return
 
@@ -146,9 +148,7 @@ class geom_map(Geom):
             self._draw_geojson(fig, data, geojson, fill_col)
             return
 
-        # Choropleth mode - require map_id
-        if map_id_col is None:
-            raise ValueError("geom_map choropleth requires a 'map_id' aesthetic")
+        # Choropleth mode - map_id is required (already checked above)
 
         mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
         style_props = mapper.get_style_properties()
