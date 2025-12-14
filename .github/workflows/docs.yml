@@ -30,7 +30,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e ".[all]"
-          pip install igraph networkx searoute
 
       - name: Build docs
         run: mkdocs build
