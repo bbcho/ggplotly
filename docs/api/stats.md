@@ -73,3 +73,9 @@ Statistical transformations for data.
 ::: ggplotly.stats.stat_qq_line.stat_qq_line
     options:
       show_root_heading: true
+
+## stat_contour
+
+::: ggplotly.stats.stat_contour.stat_contour
+    options:
+      show_root_heading: true
