@@ -602,3 +602,47 @@ class TestDataPreservation:
         p.draw()
 
         pd.testing.assert_frame_equal(simple_data, original)
+
+
+class TestDictInput:
+    """Tests for dict input support."""
+
+    def test_ggplot_accepts_dict(self):
+        """Test that ggplot accepts a dict and converts to DataFrame."""
+        data = {'x': [1, 2, 3], 'y': [4, 5, 6]}
+        p = ggplot(data, aes(x='x', y='y')) + geom_point()
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        assert len(fig.data) == 1
+        assert list(fig.data[0].x) == [1, 2, 3]
+        assert list(fig.data[0].y) == [4, 5, 6]
+
+    def test_dict_with_geom_bar(self):
+        """Test dict input with geom_bar (uses stat_count)."""
+        np.random.seed(42)
+        data = {'x': np.random.randint(10, size=100)}
+        p = ggplot(data, aes(x='x')) + geom_bar()
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        assert fig.data[0].type == 'bar'
+
+    def test_dict_with_multiple_geoms(self):
+        """Test dict input with multiple geoms."""
+        np.random.seed(42)
+        data = {'x': np.random.randint(10, size=100)}
+        p = ggplot(data, aes(x='x')) + geom_bar() + geom_bar(data, aes(x='x'), name='Second')
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        assert len(fig.data) == 2
+
+    def test_dict_with_numpy_arrays(self):
+        """Test dict containing numpy arrays."""
+        data = {'x': np.array([1, 2, 3, 4, 5]), 'y': np.array([2, 4, 6, 8, 10])}
+        p = ggplot(data, aes(x='x', y='y')) + geom_line()
+        fig = p.draw()
+
+        assert isinstance(fig, Figure)
+        assert len(fig.data[0].x) == 5

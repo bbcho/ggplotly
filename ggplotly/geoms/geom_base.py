@@ -165,6 +165,9 @@ class Geom:
         Returns:
             None: Modifies the geom in place.
         """
+        # Store original geom mapping before merging (for validation filtering)
+        self._original_mapping = self.mapping.copy()
+
         # Merge plot mapping and geom mapping, with geom mapping taking precedence
         combined_mapping = {**plot_mapping, **self.mapping}
         self.mapping = combined_mapping
@@ -202,9 +205,17 @@ class Geom:
             columns = frozenset(data.columns)
             all_aes = self.required_aes + self.optional_aes
 
+            # Get original mapping to identify inherited vs explicit aesthetics
+            original_mapping = getattr(self, '_original_mapping', {})
+
             for aes_name in all_aes:
                 value = self.mapping.get(aes_name)
                 if value is not None and isinstance(value, str):
+                    # Skip validation for inherited aesthetics when geom has explicit data
+                    # (inherited aesthetics reference columns in the global data, not geom's data)
+                    if self._has_explicit_data and aes_name not in original_mapping:
+                        continue
+
                     # Check if it's supposed to be a column reference
                     if aes_name in ('x', 'y', 'xend', 'yend', 'xmin', 'xmax', 'ymin', 'ymax',
                                    'label', 'group', 'weight'):

@@ -75,6 +75,12 @@ pytest pytest/ -v
 # Run specific test file
 pytest pytest/test_geoms.py -v
 
+# Run example notebooks as tests (catches real-world usage bugs)
+pytest --nbmake examples/*.ipynb
+
+# Run all tests including notebooks
+pytest pytest/ -v && pytest --nbmake examples/*.ipynb
+
 # Build docs
 mkdocs build
 
@@ -602,3 +608,11 @@ normalized_df, mapping = normalize_data(df, aes(x='x', y='y'))
 4. **Ask "why" before flagging** - If something looks wrong, investigate whether it's intentional design (e.g., `stat_edgebundle` doesn't inherit from `Stat` because it has a different API contract)
 
 5. **Check existing tests** - If tests pass for a "broken" feature, the feature probably works
+
+6. **Test diverse input types** - Don't just test the happy path. Test edge cases like:
+   - Dict input vs DataFrame vs Series
+   - Empty data, single row, large data
+   - Different column types (numeric, categorical, datetime)
+   - Missing values, NaN handling
+
+   Example: The test suite only used DataFrames, so dict input to `ggplot()` was broken and went undetected.

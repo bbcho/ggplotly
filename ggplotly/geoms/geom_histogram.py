@@ -74,7 +74,10 @@ class geom_histogram(Geom):
         Handles grouping by fill/color/group aesthetics automatically.
         """
         na_rm = self.params.get("na_rm", False)
-        x_col = self.mapping.get("x")
+        # Store original x column name (mapping may have been modified by previous facet panel)
+        if not hasattr(self, '_original_x_col'):
+            self._original_x_col = self.mapping.get("x")
+        x_col = self._original_x_col
 
         # Determine grouping column from fill, color, or group mapping
         group_col = None

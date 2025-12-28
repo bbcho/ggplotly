@@ -48,17 +48,22 @@ class stat_count(Stat):
         grouping = list(set([v for k, v in self.mapping.items()]))
         grouping = [g for g in grouping if g in data.columns]
 
-        # if x XOR y in grouping
-        # if ("x" in grouping_keys) ^ ("y" in grouping_keys):
-        if len(data[grouping].columns) == 1:
+        # Get the actual column names mapped to x and y
+        x_col = self.mapping.get('x')
+        y_col = self.mapping.get('y')
 
-            # if len(data.columns)  == 1:
+        # Use value_counts when we only have one grouping column
+        # OR when all data columns would be used for grouping (nothing left to count)
+        non_grouping_cols = [c for c in data.columns if c not in grouping]
+
+        if len(grouping) == 1 or len(non_grouping_cols) == 0:
+            # Use value_counts - works when grouping by all columns
             tf = data[grouping].value_counts()
         else:
-            # if both x and y are in the grouping, remove y.
-            # Assume that y is the metric we want to summarize
-            if ("x" in grouping) & ("y" in grouping):
-                grouping.remove("y")
+            # If both x and y columns are in the grouping, remove y
+            # (y will become the count result)
+            if x_col in grouping and y_col in grouping:
+                grouping.remove(y_col)
                 self.mapping.pop("y")
 
             tf = data.groupby(grouping).agg(stat).iloc[:, [0]]
