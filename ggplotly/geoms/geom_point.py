@@ -25,8 +25,15 @@ class geom_point(Geom):
         stroke (float, optional): Width of the point border/outline. Default is 0.
             In ggplot2, this applies to shapes 21-25 (filled shapes with borders).
         group (str, optional): Grouping variable for the points.
+
+    Required Aesthetics:
+        x, y
+
+    Optional Aesthetics:
+        color, fill, size, shape, alpha, group
     """
 
+    required_aes = ['x', 'y']
     default_params = {"size": 8, "stroke": 0}
 
     def _draw_impl(self, fig, data, row, col):

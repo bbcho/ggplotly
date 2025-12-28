@@ -9,6 +9,7 @@ from .geom_base import Geom
 class geom_contour(Geom):
     """Geom for drawing contour lines from 2D data."""
 
+    required_aes = ['x', 'y']  # z is optional (computed from KDE if not provided)
     default_params = {"size": 1}
 
     def __init__(self, data=None, mapping=None, **params):

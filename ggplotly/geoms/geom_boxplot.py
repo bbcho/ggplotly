@@ -8,6 +8,8 @@ from .geom_base import Geom
 class geom_boxplot(Geom):
     """Geom for drawing boxplots."""
 
+    required_aes = ['x', 'y']
+
     def __init__(self, data=None, mapping=None, outlier_colour=None, outlier_color=None,
                  outlier_fill=None, outlier_shape='circle', outlier_size=1.5,
                  outlier_stroke=0.5, outlier_alpha=None, notch=False, varwidth=False,

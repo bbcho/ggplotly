@@ -106,8 +106,12 @@ class TraceBuilder(ABC):
         # Initialize legend tracking on the figure if not present.
         # This set tracks which legend groups have been shown to prevent
         # duplicate legend entries in faceted plots.
-        if not hasattr(fig, '_shown_legendgroups'):
-            fig._shown_legendgroups = set()
+        # Note: We use a namespaced attribute to avoid conflicts with Plotly internals.
+        # This is stored on the figure because legend state must persist across
+        # multiple geom draws in the same plot.
+        self._legendgroups_attr = '_ggplotly_shown_legendgroups'
+        if not hasattr(fig, self._legendgroups_attr):
+            setattr(fig, self._legendgroups_attr, set())
 
         # Respect the showlegend parameter from geom params
         self.base_showlegend = params.get("showlegend", True)
@@ -129,11 +133,13 @@ class TraceBuilder(ABC):
         # If showlegend=False was set on the geom, never show legend
         if not self.base_showlegend:
             return False
+        # Get the shown groups set from the figure
+        shown_groups = getattr(self.fig, self._legendgroups_attr)
         # If we've already shown this group, don't show again
-        if legendgroup in self.fig._shown_legendgroups:
+        if legendgroup in shown_groups:
             return False
         # Mark this group as shown and return True
-        self.fig._shown_legendgroups.add(legendgroup)
+        shown_groups.add(legendgroup)
         return True
 
     @abstractmethod

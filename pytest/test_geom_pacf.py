@@ -44,10 +44,12 @@ class TestGeomPacf:
 
     def test_missing_y_raises(self):
         """Test that missing y aesthetic raises error."""
+        from ggplotly.exceptions import RequiredAestheticError
+
         df = pd.DataFrame({'x': range(100), 'value': np.random.randn(100)})
 
         plot = ggplot(df, aes(x='x')) + geom_pacf()
-        with pytest.raises(ValueError, match="requires y aesthetic"):
+        with pytest.raises(RequiredAestheticError, match="requires aesthetics.*y"):
             plot.draw()
 
     def test_starts_at_lag_one(self):

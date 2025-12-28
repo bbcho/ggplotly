@@ -15,19 +15,29 @@ class geom_area(Geom):
 
     Parameters:
         mapping (aes): Aesthetic mappings created by aes().
-        color (str, optional): Color of the area. If a categorical variable is mapped to color, different colors will be assigned.
+        color (str, optional): Color of the area outline.
+        colour (str, optional): Alias for color (British spelling).
         linetype (str, optional): Line type ('solid', 'dash', etc.). Default is 'solid'.
+        size (float, optional): Line width. Default is 1.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
         group (str, optional): Grouping variable for the areas.
-        fill (str, optional): Fill color for the area. Default is 'lightblue'.
+        fill (str, optional): Fill color for the area.
         alpha (float, optional): Transparency level for the fill color. Default is 0.5.
-        showlegend (bool, optional): Whether to show legend entries. Default is True.
+        position (str, optional): Position adjustment. Options:
+            - 'identity': No stacking (default)
+            - 'stack': Stack areas on top of each other
+        show_legend (bool, optional): Whether to show legend entries. Default is True.
+        showlegend (bool, optional): Alias for show_legend.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_area()
         >>> ggplot(df, aes(x='x', y='y', fill='group')) + geom_area(alpha=0.5)
+        >>> ggplot(df, aes(x='x', y='y', fill='group')) + geom_area(position='stack')
     """
 
-    default_params = {"size": 1}
+    required_aes = ['x', 'y']
+    default_params = {"size": 1, "alpha": 0.5, "position": "identity"}
 
     def _draw_impl(self, fig, data, row, col):
         """
@@ -48,13 +58,24 @@ class geom_area(Geom):
         if "size" in self.mapping:
             del self.mapping["size"]
 
+        # Handle position parameter for stacking
+        position = self.params.get("position", "identity")
+
         plot = go.Scatter
         payload = dict(
             mode="lines",
-            fill="tozeroy",
             line_dash=self.params.get("linetype", "solid"),
             name=self.params.get("name", "Area"),
         )
+
+        # Set fill mode based on position
+        if position == "stack":
+            # Use stackgroup for stacked areas
+            payload["stackgroup"] = "one"
+            payload["fill"] = "tonexty"
+        else:
+            # Default: fill to zero
+            payload["fill"] = "tozeroy"
 
         color_targets = dict(
             # fill="line",

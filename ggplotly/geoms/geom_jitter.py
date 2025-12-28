@@ -30,6 +30,7 @@ class geom_jitter(Geom):
         >>> ggplot(df, aes(x='category', y='value', color='group')) + geom_jitter(width=0.3)
     """
 
+    required_aes = ['x', 'y']
     default_params = {"size": 8}
 
     def __init__(self, data=None, mapping=None, **params):

@@ -76,8 +76,6 @@ class ggplot:
         self.guides_obj = None  # Initialize guides
         self.fig = go.Figure()
         self.auto_draw = True  # Automatically draw after adding components by default
-        self.color_map = None
-        self.is_geo = False  # Track if plot uses geographic coordinates
 
     def copy(self):
         """

@@ -11,6 +11,7 @@ from .geom_base import Geom
 class geom_density(Geom):
     """Geom for drawing density plots."""
 
+    required_aes = ['x']  # y is computed by KDE
     default_params = {"size": 2}
 
     def __init__(self, data=None, mapping=None, bw='nrd0', adjust=1, kernel='gaussian',
@@ -48,9 +49,14 @@ class geom_density(Geom):
             Additional parameters including:
 
             - fill (str): Fill color for the density plot.
+            - color (str): Line color for the density curve.
+            - colour (str): Alias for color (British spelling).
             - alpha (float): Transparency level. Default is 0.5.
+            - size (float): Line width. Default is 2.
+            - linewidth (float): Alias for size (ggplot2 3.4+ compatibility).
             - linetype (str): Line style ('solid', 'dash', etc.).
             - na_rm (bool): If True, silently remove missing values.
+            - show_legend (bool): Whether to show in legend. Default is True.
 
         Examples
         --------

@@ -9,16 +9,26 @@
 ### [Unreleased]
 
 #### Added
+- `geom_rect` for drawing rectangles (highlight regions, backgrounds)
+- `geom_label` for text labels with background boxes
+- `scale_x_reverse` and `scale_y_reverse` for reversed axes
+- `coord_fixed` for fixed aspect ratio plots
 - `stroke` parameter for `geom_point` (marker border width)
 - `arrow` and `arrow_size` parameters for `geom_segment`
 - `width` parameter for `geom_errorbar` (cap width)
 - `parse` parameter for `geom_text` (MathJax/LaTeX support)
 - `linewidth` as alias for `size` (ggplot2 3.4+ compatibility)
 - Exported position functions: `position_fill`, `position_nudge`, `position_identity`, `position_dodge2`
+- Parameter audit complete: standardized `na_rm`, `show_legend`, `colour` alias across all geoms
+- `width` parameter for `geom_col` (bar width control)
+- `fullrange` parameter for `geom_smooth` (extend to full x-axis)
+- `position` parameter for `geom_area` (stacking support)
+- Updated docstrings with `linewidth` alias documentation
+- 36 new tests for parameter audit features
 - Comprehensive MkDocs documentation
 - GitHub Actions workflow for automatic docs deployment
 - pyproject.toml for modern Python packaging
-- 61 new parameter tests with full coverage
+- 106 new tests with full coverage (parameters + geom_rect/label)
 
 #### Changed
 - Migrated from setup.py to pyproject.toml
@@ -81,12 +91,12 @@
 
 | Item | Type | Description | Status |
 |------|------|-------------|--------|
-| `geom_rect` | Geom | Rectangles for highlighting regions | TODO |
-| `geom_label` | Geom | Text labels with background box | TODO |
-| `scale_x_reverse` | Scale | Reversed x-axis | TODO |
-| `scale_y_reverse` | Scale | Reversed y-axis | TODO |
-| `coord_fixed` | Coord | Fixed aspect ratio (essential for maps) | TODO |
-| Parameter audit | Quality | Review all geom params vs ggplot2 | In Progress |
+| `geom_rect` | Geom | Rectangles for highlighting regions | DONE |
+| `geom_label` | Geom | Text labels with background box | DONE |
+| `scale_x_reverse` | Scale | Reversed x-axis | DONE |
+| `scale_y_reverse` | Scale | Reversed y-axis | DONE |
+| `coord_fixed` | Coord | Fixed aspect ratio (essential for maps) | DONE |
+| Parameter audit | Quality | Review all geom params vs ggplot2 | DONE |
 
 ### Nice-to-Have (Target 1.0, can defer)
 
@@ -139,11 +149,11 @@
 
 ## Completed Features
 
-### Geoms (44+)
+### Geoms (46+)
 - Basic: `geom_point`, `geom_line`, `geom_path`, `geom_bar`, `geom_col`, `geom_area`, `geom_ribbon`
 - Distribution: `geom_histogram`, `geom_density`, `geom_boxplot`, `geom_violin`, `geom_qq`
 - Statistical: `geom_smooth`, `geom_errorbar`, `geom_pointrange`, `geom_linerange`
-- Annotation: `geom_text`, `geom_hline`, `geom_vline`, `geom_abline`, `geom_segment`
+- Annotation: `geom_text`, `geom_label`, `geom_rect`, `geom_hline`, `geom_vline`, `geom_abline`, `geom_segment`
 - Specialized: `geom_tile`, `geom_raster`, `geom_contour`, `geom_contour_filled`
 - Financial: `geom_candlestick`, `geom_ohlc`, `geom_waterfall`
 - 3D: `geom_point_3d`, `geom_surface`, `geom_wireframe`
@@ -154,15 +164,16 @@
 ### Stats (13)
 `stat_identity`, `stat_count`, `stat_bin`, `stat_density`, `stat_smooth`, `stat_summary`, `stat_ecdf`, `stat_function`, `stat_qq`, `stat_stl`, `stat_spoke`, `stat_bin_2d`, `stat_contour`
 
-### Scales (17+)
+### Scales (19+)
 - Continuous: `scale_x_continuous`, `scale_y_continuous`, `scale_x_log10`, `scale_y_log10`
+- Reversed: `scale_x_reverse`, `scale_y_reverse`
 - Date/Time: `scale_x_date`, `scale_x_datetime`
 - Color: `scale_color_manual`, `scale_color_gradient`, `scale_color_brewer`, `scale_fill_*` variants
 - Viridis: `scale_fill_viridis_c`, `scale_fill_viridis_d`
 - Interactive: `scale_x_rangeslider`, `scale_x_rangeselector`
 
-### Coords (4)
-`coord_cartesian`, `coord_flip`, `coord_polar`, `coord_sf`
+### Coords (5)
+`coord_cartesian`, `coord_fixed`, `coord_flip`, `coord_polar`, `coord_sf`
 
 ### Positions (7)
 `position_identity`, `position_dodge`, `position_dodge2`, `position_stack`, `position_fill`, `position_jitter`, `position_nudge`

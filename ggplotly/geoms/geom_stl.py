@@ -50,6 +50,8 @@ class geom_stl(Geom):
     >>> ggplot(df, aes(x='date', y='value')) + geom_stl(period=12, color='coral')
     """
 
+    required_aes = ['x', 'y']
+
     default_params = {
         "color": "steelblue",
         "line_width": 1.5,

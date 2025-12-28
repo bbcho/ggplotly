@@ -47,7 +47,6 @@ class stat_count(Stat):
 
         grouping = list(set([v for k, v in self.mapping.items()]))
         grouping = [g for g in grouping if g in data.columns]
-        list(set([k for k, v in self.mapping.items()]))
 
         # if x XOR y in grouping
         # if ("x" in grouping_keys) ^ ("y" in grouping_keys):

@@ -67,11 +67,13 @@ class TestGeomNorm:
 
     def test_missing_x_raises(self):
         """Test that missing x aesthetic raises error."""
+        from ggplotly.exceptions import ColumnNotFoundError
+
         df = pd.DataFrame({'value': np.random.randn(100)})
 
         # x mapped to non-existent column
         plot = ggplot(df, aes(x='nonexistent')) + geom_norm()
-        with pytest.raises(ValueError, match="requires x aesthetic"):
+        with pytest.raises(ColumnNotFoundError, match="nonexistent.*not found"):
             plot.draw()
 
     def test_linetype(self):

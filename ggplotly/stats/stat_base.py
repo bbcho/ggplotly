@@ -8,6 +8,21 @@ class Stat:
     Stats transform data before it is rendered by a geom. For example,
     stat_count counts the number of observations in each group.
 
+    Subclasses must implement the `compute()` method which transforms data
+    and returns a tuple of (transformed_data, mapping_updates).
+
+    Return Type Contract:
+        The compute() method MUST return a tuple of:
+        - data (DataFrame): The transformed data
+        - mapping (dict): Updated aesthetic mappings (e.g., {'y': 'count'})
+
+        Example implementation:
+            def compute(self, data):
+                # Transform data
+                result = data.groupby('x').size().reset_index(name='count')
+                # Return data and any mapping updates
+                return result, {'y': 'count'}
+
     Parameters:
         data (DataFrame, optional): Data to use for this stat.
         mapping (dict, optional): Aesthetic mappings.
@@ -62,14 +77,28 @@ class Stat:
 
     def compute(self, data):
         """
-        Computes the stat, modifying the data as needed.
+        Compute the statistical transformation on the data.
+
+        This method must be implemented by all stat subclasses.
 
         Parameters:
-            data (DataFrame): The input data.
+            data (DataFrame): The input data to transform.
 
         Returns:
-            DataFrame: Modified data.
+            tuple: A tuple of (transformed_data, mapping_updates) where:
+                - transformed_data (DataFrame): The transformed data
+                - mapping_updates (dict): Dictionary of aesthetic mapping updates
+                  (e.g., {'y': 'count'} to update the y aesthetic)
+
+        Raises:
+            NotImplementedError: If not implemented by subclass.
+
+        Example:
+            >>> class stat_example(Stat):
+            ...     def compute(self, data):
+            ...         result = data.groupby('x').mean().reset_index()
+            ...         return result, {'y': 'mean_value'}
         """
         raise NotImplementedError(
-            "compute_stat method must be implemented in subclasses."
+            "compute() method must be implemented in subclasses."
         )

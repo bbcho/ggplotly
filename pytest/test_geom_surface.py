@@ -120,8 +120,10 @@ class TestGeomSurfaceBasic:
         assert len(y_data) == 30, "Y should have 30 unique values"
 
     def test_missing_z_raises_error(self, surface_data):
-        """Test that missing z aesthetic raises ValueError."""
-        with pytest.raises(ValueError, match="geom_surface requires 'x', 'y', and 'z' aesthetics"):
+        """Test that missing z aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="geom_surface requires aesthetics"):
             p = ggplot(surface_data, aes(x='x', y='y')) + geom_surface()
             p.draw()
 
@@ -457,8 +459,10 @@ class TestGeomWireframeBasic:
         assert fig.data[0].opacity == 0.5, "Opacity should be 0.5"
 
     def test_wireframe_missing_z_raises_error(self, surface_data):
-        """Test that missing z aesthetic raises ValueError."""
-        with pytest.raises(ValueError, match="geom_wireframe requires 'x', 'y', and 'z' aesthetics"):
+        """Test that missing z aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="geom_wireframe requires aesthetics"):
             p = ggplot(surface_data, aes(x='x', y='y')) + geom_wireframe()
             p.draw()
 

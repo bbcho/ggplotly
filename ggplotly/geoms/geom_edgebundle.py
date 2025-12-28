@@ -83,6 +83,8 @@ def _extract_graph_data(graph, weight_attr=None):
 class geom_edgebundle(Geom):
     """Bundled edges for graph visualization using force-directed edge bundling."""
 
+    required_aes = ['x', 'y', 'xend', 'yend']  # Not needed when using graph parameter
+
     def __init__(
         self,
         mapping=None,

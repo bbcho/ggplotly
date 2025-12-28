@@ -8,6 +8,8 @@ from .geom_base import Geom
 class geom_candlestick(Geom):
     """Geom for drawing candlestick charts for financial OHLC data."""
 
+    required_aes = ['x', 'open', 'high', 'low', 'close']
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Create a candlestick chart for financial data.
@@ -128,6 +130,8 @@ class geom_candlestick(Geom):
 
 class geom_ohlc(Geom):
     """Geom for drawing OHLC (Open-High-Low-Close) bar charts."""
+
+    required_aes = ['x', 'open', 'high', 'low', 'close']
 
     def __init__(self, data=None, mapping=None, **params):
         """

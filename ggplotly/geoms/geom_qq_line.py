@@ -71,6 +71,7 @@ class geom_qq_line(Geom):
     ...  + geom_qq_line(distribution=stats.t, dparams={'df': 5}))
     """
 
+    required_aes = ['sample']
     default_params = {"size": 1.5, "color": "red", "linetype": "dashed"}
 
     def __init__(self, data=None, mapping=None, distribution=None, dparams=None,

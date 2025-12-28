@@ -9,12 +9,15 @@ class TestStatFunction:
     """Tests for stat_function."""
 
     def test_basic_usage(self):
-        """Test basic function overlay."""
+        """Test basic function overlay.
+
+        Note: stat_function creates its own geom_line layer (via geom='line'),
+        so we don't need to add a separate geom_line().
+        """
         df = pd.DataFrame({'x': np.random.randn(100)})
 
         plot = (ggplot(df, aes(x='x'))
-                + stat_function(fun=lambda x: x**2)
-                + geom_line())
+                + stat_function(fun=lambda x: x**2))
         fig = plot.draw()
         assert len(fig.data) >= 1
 
@@ -24,8 +27,7 @@ class TestStatFunction:
         df = pd.DataFrame({'x': np.random.randn(100)})
 
         plot = (ggplot(df, aes(x='x'))
-                + stat_function(fun=lambda x: norm.pdf(x, 0, 1))
-                + geom_line())
+                + stat_function(fun=lambda x: norm.pdf(x, 0, 1)))
         fig = plot.draw()
         assert len(fig.data) >= 1
 
@@ -52,11 +54,13 @@ class TestStatFunction:
             stat_function()
 
     def test_no_data_with_xlim(self):
-        """Test stat_function works without data when xlim is provided."""
+        """Test stat_function works without data when xlim is provided.
+
+        stat_function creates its own geom_line layer automatically.
+        """
         from scipy.stats import norm
 
         plot = (ggplot()
-                + stat_function(fun=lambda x: norm.pdf(x), xlim=(-4, 4))
-                + geom_line())
+                + stat_function(fun=lambda x: norm.pdf(x), xlim=(-4, 4)))
         fig = plot.draw()
         assert len(fig.data) >= 1

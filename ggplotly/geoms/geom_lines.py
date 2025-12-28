@@ -49,6 +49,8 @@ class geom_lines(Geom):
     >>> ggplot(df) + geom_lines(multicolor=True, palette='Viridis')
     """
 
+    required_aes = []  # Flexible - uses columns from DataFrame, x is optional
+
     default_params = {"size": 1, "alpha": 0.5, "showlegend": False, "multicolor": False}
 
     def _get_color_palette(self, n_colors):

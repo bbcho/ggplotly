@@ -38,6 +38,8 @@ class geom_histogram(Geom):
         >>> ggplot(df, aes(x='value', fill='category')) + geom_histogram(alpha=0.5)
     """
 
+    required_aes = ['x']  # y is computed by stat_bin
+
     def __init__(self, data=None, mapping=None, bins=30, binwidth=None, boundary=None,
                  center=None, barmode="stack", bin=None, **params):
         """

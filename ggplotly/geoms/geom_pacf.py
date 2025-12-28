@@ -48,6 +48,8 @@ class geom_pacf(Geom):
     >>> ggplot(df, aes(y='value')) + geom_pacf(color='coral', nlags=30)
     """
 
+    required_aes = ['y']
+
     default_params = {
         "nlags": 40,
         "alpha": 0.05,

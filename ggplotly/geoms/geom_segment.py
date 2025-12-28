@@ -16,14 +16,24 @@ class geom_segment(Geom):
         xend (float): End x-coordinate of the line segment.
         yend (float): End y-coordinate of the line segment.
         color (str, optional): Color of the segment lines.
+        colour (str, optional): Alias for color (British spelling).
+        size (float, optional): Line width. Default is 2.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the segments. Default is 1.
         group (str, optional): Grouping variable for the segments.
         arrow (bool, optional): If True, adds an arrowhead at the end of the segment.
             Default is False.
         arrow_size (int, optional): Size of the arrowhead. Default is 15.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
+        show_legend (bool, optional): Whether to show in legend. Default is True.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y', xend='xend', yend='yend')) + geom_segment()
+        >>> ggplot(df, aes(x='x', y='y', xend='xend', yend='yend')) + geom_segment(arrow=True)
     """
 
+    required_aes = ['x', 'y', 'xend', 'yend']
     default_params = {"size": 2, "arrow": False, "arrow_size": 15}
 
     def _draw_impl(self, fig, data, row, col):
@@ -83,7 +93,6 @@ class geom_segment(Geom):
                     fig.add_trace(go.Scatter(**scatter_kwargs), row=row, col=col)
         elif style_props['color_series'] is not None:
             # Case 2: Colored by categorical variable
-            style_props['color_series']
             cat_map = style_props['color_map']
             cat_col = style_props['color']
 

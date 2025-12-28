@@ -5,8 +5,7 @@ from .geom_base import Geom
 class geom_hline(Geom):
     """Geom for drawing horizontal reference lines."""
 
-    __name__ = "geom_hline"
-
+    required_aes = []  # yintercept comes from data/params, not mapping
     default_params = {"size": 2}
 
     def __init__(self, data=None, mapping=None, **params):
@@ -55,17 +54,7 @@ class geom_hline(Geom):
         if not isinstance(y, list):
             y = [y]
 
-        # Get color from params, or use theme default
-        color = self.params.get("color", None)
-        if color is None and hasattr(self, 'theme') and self.theme:
-            # Use first color from theme palette
-            import plotly.express as px
-            palette = self.theme.color_map if hasattr(self.theme, 'color_map') and self.theme.color_map else px.colors.qualitative.Plotly
-            color = palette[0]
-        elif color is None:
-            # Default to theme's default color
-            color = '#1f77b4'
-
+        color = self._get_reference_line_color()
         linetype = self.params.get("linetype", "solid")
         alpha = self.params.get("alpha", 1)
         name = self.params.get("name", "hline")

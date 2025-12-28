@@ -61,7 +61,7 @@ class geom_range(Geom):
         )
     """
 
-    __name__ = "geom_range"
+    required_aes = ['x', 'y']
 
     def __init__(self, data=None, mapping=None, **params):
         """

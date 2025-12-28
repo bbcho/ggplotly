@@ -2,6 +2,7 @@
 
 import plotly.graph_objects as go
 
+from ..aesthetic_mapper import AestheticMapper
 from .geom_base import Geom
 
 
@@ -41,6 +42,8 @@ class geom_text(Geom):
         >>> ggplot(df, aes(x='x', y='y', label='name')) + geom_text(angle=45)
         >>> ggplot(df, aes(x='x', y='y', label='name')) + geom_text(nudge_y=0.5)
     """
+
+    required_aes = ['x', 'y', 'label']
 
     def _hjust_vjust_to_textposition(self, hjust, vjust):
         """
@@ -103,7 +106,6 @@ class geom_text(Geom):
             data = data.dropna(subset=cols_to_check)
 
         # Create aesthetic mapper for this geom
-        from ..aesthetic_mapper import AestheticMapper
         mapper = AestheticMapper(data, self.mapping, self.params, self.theme)
         style_props = mapper.get_style_properties()
 
@@ -132,14 +134,17 @@ class geom_text(Geom):
             vjust = self.params.get("vjust", 0.5)
             textposition = self._hjust_vjust_to_textposition(hjust, vjust)
 
-        # Get angle parameter (note: Plotly uses clockwise, R uses counter-clockwise)
-        self.params.get("angle", 0)
-
         # Get text styling parameters
-        self.params.get("size", 11)
-        self.params.get("family", None)
+        text_size = self.params.get("size", 11)
+        text_family = self.params.get("family", None)
         fontface = self.params.get("fontface", "plain")
-        self._fontface_to_plotly(fontface)
+        font_style = self._fontface_to_plotly(fontface)
+
+        # Build textfont configuration
+        textfont = {"size": text_size}
+        if text_family:
+            textfont["family"] = text_family
+        textfont.update(font_style)
 
         alpha = style_props['alpha']
         group_values = style_props['group_series']
@@ -163,6 +168,7 @@ class geom_text(Geom):
                         mode="text",
                         text=label[group_mask],
                         textposition=textposition,
+                        textfont=textfont,
                         opacity=alpha,
                         showlegend=False,
                         name=str(group),
@@ -173,7 +179,6 @@ class geom_text(Geom):
                 )
         elif style_props['color_series'] is not None:
             # Case 2: Colored by categorical variable
-            style_props['color_series']
             cat_map = style_props['color_map']
             cat_col = style_props['color']
 
@@ -188,6 +193,7 @@ class geom_text(Geom):
                         mode="text",
                         text=label[cat_mask],
                         textposition=textposition,
+                        textfont=textfont,
                         opacity=alpha,
                         showlegend=False,
                         name=str(cat_value),
@@ -206,6 +212,7 @@ class geom_text(Geom):
                     mode="text",
                     text=label,
                     textposition=textposition,
+                    textfont=textfont,
                     opacity=alpha,
                     showlegend=False,
                     name=self.params.get("name", "Text"),

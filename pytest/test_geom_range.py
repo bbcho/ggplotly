@@ -270,8 +270,10 @@ class TestGeomRangeEdgeCases:
 
     def test_missing_aesthetic(self):
         """Test error when missing required aesthetic."""
+        from ggplotly.exceptions import RequiredAestheticError
+
         df = pd.DataFrame({'date': [1, 2, 3], 'value': [1, 2, 3]})
-        with pytest.raises(ValueError):
+        with pytest.raises(RequiredAestheticError):
             p = ggplot(df, aes(x='date')) + geom_range()
             fig = p.draw()
 

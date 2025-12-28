@@ -154,7 +154,9 @@ class TestGeomSankey:
             assert labels[tgt_idx] == expected_target
 
     def test_missing_aesthetics_raises(self):
-        """Test that missing required aesthetics raises ValueError."""
+        """Test that missing required aesthetics raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
         df = pd.DataFrame({
             'source': ['A', 'B'],
             'target': ['X', 'X'],
@@ -164,13 +166,13 @@ class TestGeomSankey:
         # Missing value
         plot = (ggplot(df, aes(source='source', target='target'))
                 + geom_sankey())
-        with pytest.raises(ValueError, match="Missing"):
+        with pytest.raises(RequiredAestheticError, match="value"):
             plot.draw()
 
         # Missing source
         plot2 = (ggplot(df, aes(target='target', value='value'))
                  + geom_sankey())
-        with pytest.raises(ValueError, match="Missing"):
+        with pytest.raises(RequiredAestheticError, match="source"):
             plot2.draw()
 
     def test_missing_column_raises(self):

@@ -30,8 +30,7 @@ class geom_line(Geom):
         geom_path: Connect points in data order (no sorting)
     """
 
-    __name__ = "geom_line"
-
+    required_aes = ['x', 'y']
     default_params = {"size": 2}
 
     def _draw_impl(self, fig, data, row, col):

@@ -217,7 +217,9 @@ class TestGeomWaterfall:
         assert '-30' in text_values
 
     def test_missing_y_aesthetic_raises(self):
-        """Test that missing y aesthetic raises ValueError."""
+        """Test that missing y aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
         df = pd.DataFrame({
             'category': ['A', 'B', 'C'],
             'value': [100, 50, -30]
@@ -226,11 +228,13 @@ class TestGeomWaterfall:
         # Missing y
         plot = (ggplot(df, aes(x='category'))
                 + geom_waterfall())
-        with pytest.raises(ValueError, match="Missing"):
+        with pytest.raises(RequiredAestheticError, match="y"):
             plot.draw()
 
     def test_missing_x_aesthetic_raises(self):
-        """Test that missing x aesthetic raises ValueError."""
+        """Test that missing x aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
         df = pd.DataFrame({
             'category': ['A', 'B', 'C'],
             'value': [100, 50, -30]
@@ -238,18 +242,20 @@ class TestGeomWaterfall:
 
         # Create geom with only y mapping (no x)
         plot = (ggplot(df) + geom_waterfall(mapping=aes(y='value')))
-        with pytest.raises(ValueError, match="Missing"):
+        with pytest.raises(RequiredAestheticError, match="x"):
             plot.draw()
 
     def test_missing_column_raises(self):
-        """Test that missing data column raises ValueError."""
+        """Test that missing data column raises ColumnNotFoundError."""
+        from ggplotly.exceptions import ColumnNotFoundError
+
         df = pd.DataFrame({
             'category': ['A', 'B', 'C'],
         })
 
         plot = (ggplot(df, aes(x='category', y='nonexistent'))
                 + geom_waterfall())
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ColumnNotFoundError, match="not found"):
             plot.draw()
 
     def test_default_measures(self):

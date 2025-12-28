@@ -22,6 +22,7 @@ class geom_errorbar(Geom):
         group (str, optional): Grouping variable for the error bars.
     """
 
+    required_aes = ['x', 'y']  # ymin/ymax or yerr are also needed but handled in _draw_impl
     default_params = {"size": 2, "width": 4}
 
     def _draw_impl(self, fig, data, row, col):

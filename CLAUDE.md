@@ -420,6 +420,67 @@ geom_sankey()      # Sankey diagrams
 3. Implement `apply()` method
 4. Export in `ggplotly/__init__.py`
 
+## Geom Implementation Patterns
+
+### Default Parameters
+
+Geom parameters follow a three-level inheritance pattern:
+
+```python
+class geom_example(Geom):
+    # Subclass defaults - override base class defaults
+    default_params = {"size": 2, "alpha": 0.8}
+```
+
+Parameter resolution order (later takes precedence):
+1. **Base class defaults** (always applied): `{"na_rm": False, "show_legend": True}`
+2. **Subclass `default_params`**: Class-specific defaults like `{"size": 2}`
+3. **User-provided params**: Explicit values passed to constructor
+
+**Important**: Do NOT include `na_rm` or `show_legend` in subclass `default_params` - they are automatically inherited from the base class.
+
+#### Parameter Aliases
+
+The base class handles these ggplot2 compatibility aliases:
+- `linewidth` → `size` (ggplot2 3.4+ compatibility)
+- `colour` → `color` (British spelling)
+- `showlegend` → `show_legend` (Plotly convention)
+
+Explicit user params take precedence: if both `linewidth=10` and `size=5` are passed, `size=5` wins.
+
+### The `before_add()` Hook
+
+The `before_add()` method is called when a geom is added to a plot via the `+` operator. Use it to:
+- Create sub-layers (e.g., `geom_ribbon` creates multiple `geom_line` layers)
+- Transform the geom before it's added to the plot
+- Return additional layers to be added
+
+```python
+class geom_ribbon(Geom):
+    def before_add(self):
+        # Create additional layers for ribbon edges
+        color = self.params.get("color", None)
+
+        # Create line layers for ymin and ymax edges
+        min_line = geom_line(mapping=aes(x=self.mapping['x'], y=self.mapping['ymin']),
+                           color=color)
+        max_line = geom_line(mapping=aes(x=self.mapping['x'], y=self.mapping['ymax']),
+                           color=color)
+
+        # Return list of additional layers
+        return [min_line, max_line]
+```
+
+**When to use `before_add()`:**
+- Composite geoms that consist of multiple sub-geoms
+- Geoms that need to generate additional visual elements
+- When the geom itself shouldn't render but spawns other geoms
+
+**Implementation notes:**
+- Return `None` (or omit return) if no additional layers needed
+- Returned layers are added to the plot after the original geom
+- The method is called by `ggplot.__add__()` during composition
+
 ## Tips & Gotchas
 
 1. **String column names**: Always use strings in `aes()`: `aes(x='col')` not `aes(x=col)`
@@ -517,3 +578,27 @@ print(plot.mapping)  # Shows aes mappings
 from ggplotly.data_utils import normalize_data
 normalized_df, mapping = normalize_data(df, aes(x='x', y='y'))
 ```
+
+## Code Auditing Best Practices
+
+**Always test before flagging issues.** When auditing code for bugs or missing features:
+
+1. **Don't grep-and-flag** - Pattern matching on code structure without understanding behavior leads to false positives
+
+2. **Run the code** - A 30-second `python3 -c "..."` test catches most false positives:
+   ```python
+   # Instead of assuming geom_bar fill is broken because it's commented out:
+   python3 -c "
+   from ggplotly import ggplot, aes, geom_bar
+   import pandas as pd
+   df = pd.DataFrame({'x': ['A', 'B', 'C']})
+   fig = (ggplot(df, aes(x='x')) + geom_bar(fill='red')).draw()
+   print(fig.data[0].marker.color)  # Actually works!
+   "
+   ```
+
+3. **Trace cross-file interactions** - Code in one file may have fallback logic in another (e.g., `geom_bar` relies on `geom_base._apply_color_targets` fallback)
+
+4. **Ask "why" before flagging** - If something looks wrong, investigate whether it's intentional design (e.g., `stat_edgebundle` doesn't inherit from `Stat` because it has a different API contract)
+
+5. **Check existing tests** - If tests pass for a "broken" feature, the feature probably works

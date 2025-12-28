@@ -21,11 +21,12 @@ class geom_tile(Geom):
         group (str, optional): Grouping variable for the tiles.
     """
 
+    required_aes = ['x', 'y']
+
     def _draw_impl(self, fig, data, row, col):
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         z = data[self.mapping["fill"]] if "fill" in self.mapping else None
-        data[self.mapping["group"]] if "group" in self.mapping else None
         alpha = self.params.get("alpha", 1)
 
         # Handle fill mapping if fill is categorical or continuous

@@ -35,6 +35,8 @@ class geom_bar(Geom):
         >>> ggplot(df, aes(x='category')) + geom_bar(width=0.5)  # narrower bars
     """
 
+    required_aes = ['x']  # y is computed by stat_count
+
     def _apply_stats(self, data):
         """Add default stat_count if no stats and stat='count'."""
         if self.stats == []:

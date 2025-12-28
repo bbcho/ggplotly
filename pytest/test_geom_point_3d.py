@@ -102,8 +102,10 @@ class TestGeomPoint3DBasic:
         assert fig.data[0].marker.opacity == 0.5, "Marker opacity should be 0.5"
 
     def test_missing_z_raises_error(self, sample_3d_data):
-        """Test that missing z aesthetic raises ValueError."""
-        with pytest.raises(ValueError, match="geom_point_3d requires 'x', 'y', and 'z' aesthetics"):
+        """Test that missing z aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="geom_point_3d requires aesthetics"):
             p = ggplot(sample_3d_data, aes(x='x', y='y')) + geom_point_3d()
             p.draw()
 

@@ -20,11 +20,22 @@ class geom_ribbon(Geom):
         ymin (float): Minimum y value for the ribbon.
         ymax (float): Maximum y value for the ribbon.
         fill (str, optional): Fill color for the ribbon.
+        color (str, optional): Color of the ribbon outline.
         alpha (float, optional): Transparency level for the fill color. Default is 0.5.
+        size (float, optional): Line width for the ribbon outline. Default is 1.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
+        linetype (str, optional): Line style for the outline ('solid', 'dash', etc.).
         group (str, optional): Grouping variable for the ribbon.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
+        show_legend (bool, optional): Whether to show in legend. Default is True.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', ymin='lower', ymax='upper')) + geom_ribbon()
+        >>> ggplot(df, aes(x='x', ymin='lower', ymax='upper')) + geom_ribbon(fill='blue', alpha=0.3)
     """
 
-    __name__ = "geom_ribbon"
+    required_aes = ['x', 'ymin', 'ymax']
+    default_params = {"alpha": 0.5, "size": 1}
 
     def before_add(self):
         # Use color from params if specified, otherwise let geom_line use defaults
