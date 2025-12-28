@@ -83,7 +83,7 @@ Homepage = "https://github.com/bbcho/ggplotly"
 Documentation = "https://bbcho.github.io/ggplotly"
 Repository = "https://github.com/bbcho/ggplotly"
 Issues = "https://github.com/bbcho/ggplotly/issues"
-Changelog = "https://github.com/bbcho/ggplotly/blob/main/CHANGELOG.md"
+Roadmap = "https://github.com/bbcho/ggplotly/blob/main/ROADMAP.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
