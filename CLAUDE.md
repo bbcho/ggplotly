@@ -1,5 +1,20 @@
 # CLAUDE.md - Project Context for AI Assistants
 
+## Development Philosophy
+
+**IMPORTANT**: This library aims to faithfully replicate R's ggplot2 API in Python.
+
+When contributing or modifying code:
+1. **Follow ggplot2 conventions** - Match R's ggplot2 function names, parameter names, and behavior as closely as possible
+2. **Consult ggplot2 documentation** - When implementing existing ggplot2 features, reference https://ggplot2.tidyverse.org/reference/
+3. **Extrapolate for new features** - For functionality not in ggplot2 (e.g., `geom_candlestick`, `geom_stl`, `geom_sankey`), follow ggplot2 naming conventions and design patterns:
+   - Use `geom_*` prefix for geometric objects
+   - Use `stat_*` prefix for statistical transformations
+   - Use `scale_*_*` pattern for scales (e.g., `scale_x_log10`, `scale_color_manual`)
+   - Accept `aes()` mappings consistently
+   - Support `data=` parameter override in geoms
+4. **Pythonic adaptations** - Only deviate from ggplot2 when Python requires it (e.g., strings for column names in `aes()`)
+
 ## Project Overview
 
 **GGPLOTLY** is a Python data visualization library that combines R's ggplot2 Grammar of Graphics with Plotly's interactive capabilities.
@@ -211,6 +226,76 @@ facet_grid(rows='var1', cols='var2')
 facet_wrap('category', scales='free')  # 'free_x', 'free_y'
 ```
 
+## Scales
+
+```python
+# Axis transforms
+scale_x_log10()                    # Log scale
+scale_x_continuous(limits=(0,100)) # Set range
+scale_x_date(date_labels='%Y-%m')  # Date formatting
+
+# Manual colors
+scale_color_manual(['red', 'blue', 'green'])
+scale_fill_manual({'A': 'red', 'B': 'blue'})  # Dict mapping
+
+# Color gradients
+scale_color_gradient(low='white', high='red')
+scale_fill_viridis_c()             # Viridis colorscale
+
+# ColorBrewer palettes
+scale_color_brewer(palette='Set1')
+scale_fill_brewer(palette='Blues')
+
+# Interactive
+scale_x_rangeslider()              # Add range slider
+scale_x_rangeselector()            # Add range buttons
+```
+
+## Stats Reference
+
+| Stat | Purpose | Used By |
+|------|---------|---------|
+| `stat_identity` | No transformation | `geom_col`, `geom_point` |
+| `stat_count` | Count observations | `geom_bar` |
+| `stat_bin` | Bin data | `geom_histogram` |
+| `stat_density` | Kernel density | `geom_density` |
+| `stat_smooth` | Smoothed line + CI | `geom_smooth` |
+| `stat_boxplot` | Boxplot stats | `geom_boxplot` |
+| `stat_ecdf` | Empirical CDF | - |
+| `stat_summary` | Summary statistics | - |
+| `stat_function` | Apply function | - |
+| `stat_qq` | Q-Q plot points | `geom_qq` |
+
+## Specialized Features
+
+### Financial Charts
+```python
+# Candlestick (requires open, high, low, close columns)
+geom_candlestick(aes(x='date', open='open', high='high', low='low', close='close'))
+geom_ohlc()      # OHLC bars
+geom_waterfall() # Waterfall charts
+```
+
+### 3D Plots
+```python
+geom_point_3d(aes(x='x', y='y', z='z'))
+geom_surface()   # 3D surface
+geom_wireframe() # Wireframe surface
+```
+
+### Geographic (requires geopandas)
+```python
+geom_map(aes(fill='value'))  # Choropleth
+geom_sf()                     # Simple features
+coord_sf(projection='...')    # Map projections
+```
+
+### Network (requires igraph)
+```python
+geom_edgebundle()  # Edge bundling
+geom_sankey()      # Sankey diagrams
+```
+
 ## Adding New Features
 
 ### New Geom
@@ -277,3 +362,55 @@ facet_wrap('category', scales='free')  # 'free_x', 'free_y'
     + geom_smooth()
     + geom_hline(yintercept=0))
    ```
+
+9. **Access Plotly figure**: Get underlying figure for custom modifications:
+   ```python
+   fig = plot.draw()  # Returns plotly.graph_objects.Figure
+   fig.update_layout(...)  # Standard Plotly customization
+   ```
+
+10. **Per-geom data**: Override plot data for specific geoms:
+    ```python
+    (ggplot(df1, aes(x='x', y='y'))
+     + geom_point()
+     + geom_line(data=df2))  # Different data for this geom
+    ```
+
+## Key Example Notebooks
+
+Located in `examples/`:
+- `ggplotly_master_examples.ipynb` - Comprehensive examples
+- `Examples.ipynb` - Core functionality
+- `view_all.ipynb` - Gallery of all features
+- `prices.ipynb` - Financial data
+- `maps.ipynb` - Geographic mapping
+- `EdgeBundling.ipynb` - Network visualization
+
+## Differences from R's ggplot2
+
+| ggplot2 (R) | ggplotly (Python) |
+|-------------|-------------------|
+| `aes(x = col)` | `aes(x='col')` (strings required) |
+| `%+%` for data replacement | Not supported |
+| `stat_bin(geom="line")` | Use `geom_line(stat=stat_bin)` |
+| `theme(text = element_text(...))` | `theme(text=element_text(...))` |
+| Automatic printing | Use `.show()` or Jupyter auto-display |
+
+## Debugging
+
+```python
+# Check what data a geom receives
+plot = ggplot(df, aes(x='x', y='y')) + geom_point()
+fig = plot.draw()  # Renders and returns figure
+
+# Inspect Plotly traces
+for trace in fig.data:
+    print(trace)
+
+# Check aesthetic mappings
+print(plot.mapping)  # Shows aes mappings
+
+# Verify data normalization
+from ggplotly.data_utils import normalize_data
+normalized_df, mapping = normalize_data(df, aes(x='x', y='y'))
+```
