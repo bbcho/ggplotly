@@ -17,6 +17,7 @@ class geom_line(Geom):
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the lines. Default is 1.
         size (float, optional): Line width. Default is 2.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
         group (str, optional): Grouping variable for the lines.
 
     Aesthetics:

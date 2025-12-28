@@ -117,6 +117,109 @@ Tests are in `pytest/` using pytest framework:
 - `test_facets.py` - Faceting
 - `test_scales.py` - Scale functionality
 
+## Testing Requirements
+
+**When adding new features or modifying existing code, tests MUST include all four categories:**
+
+### 1. Basic Functionality Tests
+Verify the feature works as expected in isolation:
+```python
+def test_stroke_with_value(self):
+    """Test stroke parameter sets marker border width."""
+    df = pd.DataFrame({"x": [1, 2], "y": [1, 2]})
+    plot = ggplot(df, aes(x="x", y="y")) + geom_point(stroke=2)
+    fig = plot.draw()
+    assert fig.data[0].marker.line.width == 2
+```
+
+### 2. Edge Case Tests
+Test boundary conditions, empty data, type variations:
+```python
+def test_stroke_with_large_value(self):
+    """Test stroke with unusually large value."""
+    # ...
+
+def test_stroke_empty_dataframe(self):
+    """Test stroke with empty DataFrame doesn't crash."""
+    df = pd.DataFrame({"x": [], "y": []})
+    plot = ggplot(df, aes(x="x", y="y")) + geom_point(stroke=2)
+    fig = plot.draw()  # Should not raise
+
+def test_stroke_with_float_value(self):
+    """Test stroke accepts float values."""
+    # ...
+```
+
+### 3. Integration Tests (Faceting & Color Mappings)
+Test with faceting, color aesthetics, and multiple geoms:
+```python
+def test_stroke_with_facet_wrap(self):
+    """Test stroke parameter works with faceting."""
+    df = pd.DataFrame({
+        "x": [1, 2, 3, 4], "y": [1, 2, 3, 4],
+        "cat": ["A", "A", "B", "B"]
+    })
+    plot = ggplot(df, aes(x="x", y="y")) + geom_point(stroke=2) + facet_wrap("cat")
+    fig = plot.draw()
+    # Verify stroke applied across all facets
+    for trace in fig.data:
+        if hasattr(trace, "marker") and trace.marker:
+            assert trace.marker.line.width == 2
+
+def test_stroke_with_color_aesthetic(self):
+    """Test stroke works when color aesthetic is mapped."""
+    df = pd.DataFrame({
+        "x": [1, 2, 3], "y": [1, 2, 3],
+        "cat": ["A", "B", "C"]
+    })
+    plot = ggplot(df, aes(x="x", y="y", color="cat")) + geom_point(stroke=1.5)
+    fig = plot.draw()
+    # Each category trace should have stroke
+    for trace in fig.data:
+        assert trace.marker.line.width == 1.5
+```
+
+### 4. Visual Regression Tests
+Capture and verify figure structure/properties:
+```python
+class TestVisualRegression:
+    """Visual regression tests that verify figure structure."""
+
+    def get_figure_signature(self, fig):
+        """Extract key properties from figure for comparison."""
+        signature = {"num_traces": len(fig.data), "traces": []}
+        for trace in fig.data:
+            trace_sig = {"type": trace.type, "mode": getattr(trace, "mode", None)}
+            if hasattr(trace, "marker") and trace.marker:
+                trace_sig["marker"] = {
+                    "size": getattr(trace.marker, "size", None),
+                    "line_width": getattr(trace.marker.line, "width", None) if trace.marker.line else None,
+                }
+            signature["traces"].append(trace_sig)
+        return signature
+
+    def test_stroke_visual_signature(self):
+        """Test that stroke produces expected visual signature."""
+        df = pd.DataFrame({"x": [1, 2, 3], "y": [1, 2, 3]})
+        plot = ggplot(df, aes(x="x", y="y")) + geom_point(stroke=2.5)
+        fig = plot.draw()
+        sig = self.get_figure_signature(fig)
+        assert sig["num_traces"] == 1
+        assert sig["traces"][0]["type"] == "scatter"
+        assert sig["traces"][0]["marker"]["line_width"] == 2.5
+```
+
+### Test Naming Convention
+- `test_<feature>_default` - Test default behavior
+- `test_<feature>_with_value` - Test with explicit value
+- `test_<feature>_with_<aesthetic>` - Test with specific aesthetic
+- `test_<feature>_empty_dataframe` - Test empty data handling
+- `test_<feature>_with_facet_wrap` - Test with faceting
+- `test_<feature>_visual_signature` - Visual regression test
+
+### Reference Test File
+See `pytest/test_new_parameters.py` for comprehensive examples of all four test categories.
+
 ## Available Aesthetics
 
 ```python

@@ -19,9 +19,12 @@ class geom_segment(Geom):
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the segments. Default is 1.
         group (str, optional): Grouping variable for the segments.
+        arrow (bool, optional): If True, adds an arrowhead at the end of the segment.
+            Default is False.
+        arrow_size (int, optional): Size of the arrowhead. Default is 15.
     """
 
-    default_params = {"size": 2}
+    default_params = {"size": 2, "arrow": False, "arrow_size": 15}
 
     def _draw_impl(self, fig, data, row, col):
         style_props = self._get_style_props(data)
@@ -34,6 +37,20 @@ class geom_segment(Geom):
         linetype = self.params.get("linetype", "solid")
         alpha = style_props['alpha']
         group_values = style_props['group_series']
+
+        # Arrow configuration
+        arrow = self.params.get("arrow", False)
+        arrow_size = self.params.get("arrow_size", 15)
+        if arrow:
+            mode = "lines+markers"
+            marker_config = dict(
+                symbol=["circle", "arrow"],
+                size=[0, arrow_size],
+                angleref="previous",
+            )
+        else:
+            mode = "lines"
+            marker_config = None
 
         color_targets = dict(color="line_color")
 
@@ -50,21 +67,20 @@ class geom_segment(Geom):
 
                 # Create separate segments for each data point in the group
                 for i, idx in enumerate(data[group_mask].index):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[x[idx], xend[idx]],
-                            y=[y[idx], yend[idx]],
-                            mode="lines",
-                            line_dash=linetype,
-                            opacity=alpha,
-                            name=str(group),
-                            legendgroup=str(group),
-                            showlegend=(i == 0),  # Only show legend for first segment
-                            **trace_props,
-                        ),
-                        row=row,
-                        col=col,
+                    scatter_kwargs = dict(
+                        x=[x[idx], xend[idx]],
+                        y=[y[idx], yend[idx]],
+                        mode=mode,
+                        line_dash=linetype,
+                        opacity=alpha,
+                        name=str(group),
+                        legendgroup=str(group),
+                        showlegend=(i == 0),  # Only show legend for first segment
+                        **trace_props,
                     )
+                    if marker_config:
+                        scatter_kwargs["marker"] = marker_config
+                    fig.add_trace(go.Scatter(**scatter_kwargs), row=row, col=col)
         elif style_props['color_series'] is not None:
             # Case 2: Colored by categorical variable
             style_props['color_series']
@@ -77,38 +93,36 @@ class geom_segment(Geom):
 
                 # Create separate segments for each data point in the category
                 for i, idx in enumerate(data[cat_mask].index):
-                    fig.add_trace(
-                        go.Scatter(
-                            x=[x[idx], xend[idx]],
-                            y=[y[idx], yend[idx]],
-                            mode="lines",
-                            line_dash=linetype,
-                            opacity=alpha,
-                            name=str(cat_value),
-                            legendgroup=str(cat_value),
-                            showlegend=(i == 0),  # Only show legend for first segment
-                            **trace_props,
-                        ),
-                        row=row,
-                        col=col,
+                    scatter_kwargs = dict(
+                        x=[x[idx], xend[idx]],
+                        y=[y[idx], yend[idx]],
+                        mode=mode,
+                        line_dash=linetype,
+                        opacity=alpha,
+                        name=str(cat_value),
+                        legendgroup=str(cat_value),
+                        showlegend=(i == 0),  # Only show legend for first segment
+                        **trace_props,
                     )
+                    if marker_config:
+                        scatter_kwargs["marker"] = marker_config
+                    fig.add_trace(go.Scatter(**scatter_kwargs), row=row, col=col)
         else:
             # Case 3: No grouping or categorical coloring - single trace per segment
             trace_props = self._apply_color_targets(color_targets, style_props)
 
             for i, idx in enumerate(data.index):
-                fig.add_trace(
-                    go.Scatter(
-                        x=[x[idx], xend[idx]],
-                        y=[y[idx], yend[idx]],
-                        mode="lines",
-                        line_dash=linetype,
-                        opacity=alpha,
-                        name=self.params.get("name", "Segment"),
-                        legendgroup="segment",
-                        showlegend=(i == 0),  # Only show legend for first segment
-                        **trace_props,
-                    ),
-                    row=row,
-                    col=col,
+                scatter_kwargs = dict(
+                    x=[x[idx], xend[idx]],
+                    y=[y[idx], yend[idx]],
+                    mode=mode,
+                    line_dash=linetype,
+                    opacity=alpha,
+                    name=self.params.get("name", "Segment"),
+                    legendgroup="segment",
+                    showlegend=(i == 0),  # Only show legend for first segment
+                    **trace_props,
                 )
+                if marker_config:
+                    scatter_kwargs["marker"] = marker_config
+                fig.add_trace(go.Scatter(**scatter_kwargs), row=row, col=col)

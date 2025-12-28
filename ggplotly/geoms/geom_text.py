@@ -26,6 +26,8 @@ class geom_text(Geom):
         family (str, optional): Font family. Default is None (use Plotly default).
         fontface (str, optional): Font face ('plain', 'bold', 'italic', 'bold.italic').
             Default is 'plain'.
+        parse (bool, optional): If True, parse text labels as LaTeX math expressions.
+            Labels will be rendered using MathJax. Default is False.
         na_rm (bool, optional): If True, silently remove missing values. Default is False.
         textposition (str, optional): Direct Plotly textposition override
             ('top center', 'middle right', etc.). If provided, overrides hjust/vjust.
@@ -108,6 +110,11 @@ class geom_text(Geom):
         x = data[self.mapping["x"]].copy()
         y = data[self.mapping["y"]].copy()
         label = data[self.mapping["label"]]  # Use 'label' mapping instead of 'text'
+
+        # Handle parse parameter - wrap labels in $...$ for MathJax rendering
+        parse = self.params.get("parse", False)
+        if parse:
+            label = label.apply(lambda t: f"${t}$" if not str(t).startswith("$") else t)
 
         # Apply nudge offsets
         nudge_x = self.params.get("nudge_x", 0)

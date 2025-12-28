@@ -46,6 +46,12 @@ class Geom:
 
         # Merge default params with user-provided params (user params take precedence)
         self.params = {**self.default_params, **params}
+
+        # Handle parameter aliases for ggplot2 compatibility
+        # linewidth is an alias for size (line width in ggplot2 3.4+)
+        if "linewidth" in self.params and "size" not in params:
+            self.params["size"] = self.params["linewidth"]
+
         self.stats = []
         self.layers = []
         # Track whether this geom has explicit data or inherited from plot

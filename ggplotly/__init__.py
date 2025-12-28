@@ -56,7 +56,15 @@ from .guides import annotate, guide_colorbar, guide_legend, guides, labs
 from .layer import Layer, layer
 from .limits import lims, xlim, ylim
 from .map_data import map_data
-from .positions import position_dodge, position_jitter, position_stack
+from .positions import (
+    position_dodge,
+    position_dodge2,
+    position_fill,
+    position_identity,
+    position_jitter,
+    position_nudge,
+    position_stack,
+)
 from .scales import (
     scale_color_brewer,
     scale_color_gradient,
@@ -147,7 +155,11 @@ __all__ = [
     "guide_legend",
     "guide_colorbar",
     "position_dodge",
+    "position_dodge2",
+    "position_fill",
+    "position_identity",
     "position_jitter",
+    "position_nudge",
     "position_stack",
     "geom_point",
     "geom_line",
