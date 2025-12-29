@@ -616,3 +616,21 @@ normalized_df, mapping = normalize_data(df, aes(x='x', y='y'))
    - Missing values, NaN handling
 
    Example: The test suite only used DataFrames, so dict input to `ggplot()` was broken and went undetected.
+
+7. **Visually verify visualization code** - For charts and plots, passing tests and running without errors is NOT sufficient. The visual output IS the test:
+   - Generate the actual chart and **open it in a browser** to view it
+   - Check that visual properties match expectations (stacking, colors, positions, aspect ratios)
+   - Don't assume correct data flow means correct rendering
+   - **NEVER claim "all checks passed" without actually viewing the output**
+
+   Examples of bugs only visible through actual visual inspection:
+   - Histogram code passed all tests and set `barmode='stack'`, but bars weren't actually stacking because each group had different bin edges
+   - `coord_fixed(ratio=2)` set the correct Plotly properties (`scaleratio=2`), but the `constrain='domain'` setting was overriding the aspect ratio - squares appeared as squares instead of tall rectangles
+   - Structural tests passed (correct number of traces, correct types), but visual output was completely wrong
+
+   **Required visual verification process:**
+   ```python
+   fig = plot.draw()
+   fig.write_html('/tmp/test_output.html')
+   # THEN: open /tmp/test_output.html  # Actually view the file!
+   ```

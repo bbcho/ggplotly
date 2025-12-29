@@ -100,11 +100,43 @@ class geom_histogram(Geom):
 
         # Compute bins - either grouped or ungrouped
         if group_col is not None:
-            # Grouped histogram: compute separate bins for each group
+            # Grouped histogram: compute bins using SAME edges for all groups
+            # First, compute bin edges from ALL data so groups align for stacking
+            import numpy as np
+            all_x = data[x_col].dropna().values
+            x_min, x_max = np.nanmin(all_x), np.nanmax(all_x)
+            x_range = x_max - x_min
+
+            # Determine bin width
+            if self.binwidth is not None:
+                width = self.binwidth
+            else:
+                width = x_range / self.bins
+
+            # Compute shared bin edges
+            if self.boundary is not None:
+                shift = (x_min - self.boundary) % width
+                bin_min = x_min - shift
+            elif self.center is not None:
+                shift = (x_min - self.center + width / 2) % width
+                bin_min = x_min - shift
+            else:
+                bin_min = x_min
+
+            n_bins = int(np.ceil((x_max - bin_min) / width)) + 1
+            shared_breaks = bin_min + np.arange(n_bins + 1) * width
+
+            # Now compute bins for each group using the shared breaks
             binned_frames = []
             for group_value in data[group_col].unique():
                 group_data = data[data[group_col] == group_value].copy()
-                binned_data = bin_stat.compute(group_data)
+                # Create a new stat_bin with the shared breaks
+                group_bin_stat = stat_bin(
+                    mapping={'x': x_col},
+                    breaks=shared_breaks,
+                    na_rm=na_rm
+                )
+                binned_data = group_bin_stat.compute(group_data)
                 binned_data[group_col] = group_value
                 binned_frames.append(binned_data)
 

@@ -153,13 +153,14 @@ class TestCoordFixedBasic:
         fig = plot.draw()
         assert fig.layout.yaxis.range is not None
 
-    def test_coord_fixed_constrained(self):
-        """Test that coord_fixed sets constrain to domain."""
+    def test_coord_fixed_aspect_ratio(self):
+        """Test that coord_fixed properly sets the aspect ratio via scaleanchor/scaleratio."""
         df = pd.DataFrame({"x": [0, 1, 2], "y": [0, 1, 2]})
         plot = ggplot(df, aes(x="x", y="y")) + geom_point() + coord_fixed()
         fig = plot.draw()
-        assert fig.layout.xaxis.constrain == "domain"
-        assert fig.layout.yaxis.constrain == "domain"
+        # coord_fixed uses scaleanchor/scaleratio for aspect ratio, not constrain
+        assert fig.layout.yaxis.scaleanchor == "x"
+        assert fig.layout.yaxis.scaleratio == 1
 
 
 # =============================================================================

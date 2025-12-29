@@ -122,10 +122,20 @@ class ggplot:
         self.add_component(other)
         return self.copy()
 
+    def _needs_mathjax(self):
+        """Check if any geom uses parse=True for LaTeX rendering."""
+        for geom in self.layers:
+            if geom.params.get('parse', False):
+                return True
+        return False
+
     def _repr_html_(self):
         """Return HTML representation for Jupyter/IPython display."""
         if self.auto_draw:
             fig = self.draw()
+            # Only include MathJax CDN if parse=True is used (for LaTeX rendering)
+            if self._needs_mathjax():
+                return fig.to_html(full_html=False, include_plotlyjs='cdn', include_mathjax='cdn')
             return fig._repr_html_()
         return ""
 
@@ -133,8 +143,11 @@ class ggplot:
         """Return MIME bundle for Jupyter display (preferred by VS Code, JupyterLab)."""
         if self.auto_draw:
             fig = self.draw()
+            # Only include MathJax CDN if parse=True is used (for LaTeX rendering)
+            if self._needs_mathjax():
+                html = fig.to_html(full_html=False, include_plotlyjs='cdn', include_mathjax='cdn')
+                return {'text/html': html}
             bundle = fig._repr_mimebundle_(**kwargs)
-            # Also include text/html for nbconvert/mkdocs-jupyter compatibility
             if 'text/html' not in bundle:
                 bundle['text/html'] = fig._repr_html_()
             return bundle
@@ -355,12 +368,17 @@ class ggplot:
 
         Parameters:
             filepath (str): The file path where the plot should be saved.
+
+        Note:
+            HTML files use CDN references for Plotly.js and MathJax, resulting
+            in small file sizes (~8KB) but requiring internet for viewing.
+            MathJax CDN enables LaTeX rendering (e.g., geom_text with parse=True).
         """
         if not hasattr(self, "fig"):
             raise AttributeError("No figure to save. Call draw() before saving.")
 
         if filepath.endswith(".html"):
-            self.fig.write_html(filepath)
+            self.fig.write_html(filepath, include_plotlyjs='cdn', include_mathjax='cdn')
         elif filepath.endswith(".png"):
             self.fig.write_image(filepath)
         else:

@@ -91,10 +91,6 @@ class coord_fixed(Coord):
             "scaleratio": self.ratio,
         }
 
-        # Ensure the axes have constrained scaling
-        xaxis_update["constrain"] = "domain"
-        yaxis_update["constrain"] = "domain"
-
         # Apply limits if specified
         if self.xlim is not None:
             expanded_xlim = self._apply_expansion(self.xlim)

@@ -82,8 +82,12 @@ class ggsave(Utils):
     def save_html(self, plot):
         """
         Save the plot as an HTML file.
+
+        Uses CDN references for Plotly.js and MathJax, resulting in small file
+        sizes (~8KB) but requiring internet for viewing.
+        MathJax CDN enables LaTeX rendering (e.g., geom_text with parse=True).
         """
-        plot.fig.write_html(self.filename)
+        plot.fig.write_html(self.filename, include_plotlyjs='cdn', include_mathjax='cdn')
         print(f"Plot saved as HTML: {self.filename}")
 
     def save_png(self, plot, width, height):
