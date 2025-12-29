@@ -212,6 +212,10 @@ class geom_edgebundle(Geom):
             edges_df, nodes_df = _extract_graph_data(graph, weight_attr=weight)
             self.data = edges_df
             self.nodes = nodes_df
+            # Set up mapping for graph-extracted data
+            self.mapping = {'x': 'x', 'y': 'y', 'xend': 'xend', 'yend': 'yend'}
+            if 'weight' in edges_df.columns:
+                self.mapping['weight'] = 'weight'
 
         # Bundling parameters
         self.K = K
