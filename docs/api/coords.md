@@ -8,6 +8,10 @@ Coordinate systems control how data coordinates are mapped to the plane of the g
     options:
       show_root_heading: true
 
+::: ggplotly.coords.coord_fixed.coord_fixed
+    options:
+      show_root_heading: true
+
 ::: ggplotly.coords.coord_flip.coord_flip
     options:
       show_root_heading: true
