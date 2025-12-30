@@ -102,20 +102,29 @@
 
 | Item | Type | Description | Status |
 |------|------|-------------|--------|
+| `geom_pointrange` | Geom | Point with error bars | TODO |
+| `geom_linerange` | Geom | Vertical line ranges | TODO |
+| `geom_raster` | Geom | High-performance rectangular tiles | TODO |
 | `geom_polygon` | Geom | Arbitrary polygons | TODO |
 | `geom_dotplot` | Geom | Dot plots | TODO |
 | `geom_freqpoly` | Geom | Frequency polygons | TODO |
 | `geom_spoke` | Geom | Line segments by angle | TODO |
 | `geom_curve` | Geom | Curved line segments | TODO |
+| `stat_spoke` | Stat | Spoke statistics | TODO |
+| `stat_bin_2d` | Stat | 2D binning | TODO |
+| `stat_boxplot` | Stat | Boxplot statistics | TODO |
+| `stat_unique` | Stat | Remove duplicates | TODO |
 | `scale_alpha` | Scale | Alpha/transparency scaling | TODO |
 | `scale_linetype` | Scale | Linetype scaling | TODO |
 | `scale_x_sqrt` | Scale | Square root x-axis | TODO |
 | `scale_y_sqrt` | Scale | Square root y-axis | TODO |
 | `scale_color_viridis_c` | Scale | Viridis for color aesthetic | TODO |
+| `scale_fill_viridis_d` | Scale | Viridis discrete for fill | TODO |
 | `scale_color_distiller` | Scale | ColorBrewer continuous for color | TODO |
+| `theme_bw` | Theme | Black and white theme | TODO |
+| `theme_void` | Theme | Empty theme | TODO |
+| `xlab` / `ylab` | Label | Axis label shortcuts | TODO |
 | `coord_trans` | Coord | Transformed coordinates | TODO |
-| `stat_boxplot` | Stat | Boxplot statistics | TODO |
-| `stat_unique` | Stat | Remove duplicates | TODO |
 
 ---
 
@@ -149,27 +158,29 @@
 
 ## Completed Features
 
-### Geoms (46+)
-- Basic: `geom_point`, `geom_line`, `geom_path`, `geom_bar`, `geom_col`, `geom_area`, `geom_ribbon`
-- Distribution: `geom_histogram`, `geom_density`, `geom_boxplot`, `geom_violin`, `geom_qq`
-- Statistical: `geom_smooth`, `geom_errorbar`, `geom_pointrange`, `geom_linerange`
+### Geoms (46)
+- Basic: `geom_point`, `geom_line`, `geom_lines`, `geom_path`, `geom_bar`, `geom_col`, `geom_area`, `geom_ribbon`
+- Distribution: `geom_histogram`, `geom_density`, `geom_boxplot`, `geom_violin`, `geom_qq`, `geom_qq_line`, `geom_norm`
+- Statistical: `geom_smooth`, `geom_errorbar`
 - Annotation: `geom_text`, `geom_label`, `geom_rect`, `geom_hline`, `geom_vline`, `geom_abline`, `geom_segment`
-- Specialized: `geom_tile`, `geom_raster`, `geom_contour`, `geom_contour_filled`
-- Financial: `geom_candlestick`, `geom_ohlc`, `geom_waterfall`
+- Specialized: `geom_tile`, `geom_contour`, `geom_contour_filled`
+- Financial: `geom_candlestick`, `geom_ohlc`, `geom_waterfall`, `geom_fanchart`
+- Time Series: `geom_stl`, `geom_acf`, `geom_pacf`, `geom_range`
 - 3D: `geom_point_3d`, `geom_surface`, `geom_wireframe`
 - Geographic: `geom_map`, `geom_sf`, `geom_searoute`
 - Network: `geom_edgebundle`, `geom_sankey`
-- Other: `geom_step`, `geom_jitter`, `geom_rug`, `geom_range`
+- Other: `geom_step`, `geom_jitter`, `geom_rug`
 
 ### Stats (13)
-`stat_identity`, `stat_count`, `stat_bin`, `stat_density`, `stat_smooth`, `stat_summary`, `stat_ecdf`, `stat_function`, `stat_qq`, `stat_stl`, `stat_spoke`, `stat_bin_2d`, `stat_contour`
+`stat_identity`, `stat_count`, `stat_bin`, `stat_density`, `stat_smooth`, `stat_summary`, `stat_ecdf`, `stat_function`, `stat_qq`, `stat_qq_line`, `stat_stl`, `stat_fanchart`, `stat_contour`
 
-### Scales (19+)
+### Scales (19)
 - Continuous: `scale_x_continuous`, `scale_y_continuous`, `scale_x_log10`, `scale_y_log10`
 - Reversed: `scale_x_reverse`, `scale_y_reverse`
 - Date/Time: `scale_x_date`, `scale_x_datetime`
-- Color: `scale_color_manual`, `scale_color_gradient`, `scale_color_brewer`, `scale_fill_*` variants
-- Viridis: `scale_fill_viridis_c`, `scale_fill_viridis_d`
+- Color: `scale_color_manual`, `scale_color_gradient`, `scale_color_brewer`
+- Fill: `scale_fill_manual`, `scale_fill_gradient`, `scale_fill_brewer`, `scale_fill_viridis_c`
+- Other: `scale_shape_manual`, `scale_size`
 - Interactive: `scale_x_rangeslider`, `scale_x_rangeselector`
 
 ### Coords (5)
@@ -179,14 +190,15 @@
 `position_identity`, `position_dodge`, `position_dodge2`, `position_stack`, `position_fill`, `position_jitter`, `position_nudge`
 
 ### Themes (9)
-`theme_default`, `theme_minimal`, `theme_classic`, `theme_dark`, `theme_ggplot2`, `theme_bw`, `theme_void`, `theme_bbc`, `theme_nytimes`
+`theme_default`, `theme_minimal`, `theme_classic`, `theme_dark`, `theme_ggplot2`, `theme_bbc`, `theme_nytimes`, `theme_custom`, `theme`
 
 ### Other
-- Faceting: `facet_wrap`, `facet_grid` with labellers
+- Faceting: `facet_wrap`, `facet_grid` with labellers (`label_both`, `label_value`)
 - Guides: `guides`, `guide_legend`, `guide_colorbar`
-- Labels: `labs`, `ggtitle`, `xlab`, `ylab`
-- Utilities: `ggsave`, `ggsize`, `annotate`
-- 16 built-in datasets
+- Labels: `labs`, `ggtitle`, `annotate`
+- Limits: `xlim`, `ylim`, `lims`
+- Utilities: `ggsave`, `ggsize`
+- Data: `data` (16 built-in datasets), `map_data`, `aes`, `after_stat`, `layer`
 
 ---
 

@@ -42,15 +42,15 @@ ggplotly/
 │   ├── ggplot.py       # Core ggplot class
 │   ├── aes.py          # Aesthetic mappings
 │   ├── layer.py        # Layer abstraction
-│   ├── geoms/          # 44+ geometric objects
+│   ├── geoms/          # 46 geometric objects
 │   ├── stats/          # 13 statistical transformations
-│   ├── scales/         # 17+ scales
-│   ├── coords/         # Coordinate systems
+│   ├── scales/         # 19 scales
+│   ├── coords/         # 5 coordinate systems
 │   ├── themes.py       # 9 built-in themes
 │   ├── facets.py       # facet_wrap, facet_grid
-│   └── data/           # Built-in datasets (CSV)
+│   └── data/           # 16 built-in datasets (CSV)
 ├── pytest/             # Test suite (39 files)
-├── examples/           # Jupyter notebooks (43)
+├── examples/           # Jupyter notebooks
 └── docs/               # MkDocs documentation
 ```
 
@@ -107,11 +107,11 @@ Optional:
 
 | Component | Count | Location |
 |-----------|-------|----------|
-| Geoms | 44+ | `ggplotly/geoms/` |
+| Geoms | 46 | `ggplotly/geoms/` |
 | Stats | 13 | `ggplotly/stats/` |
-| Scales | 17+ | `ggplotly/scales/` |
+| Scales | 19 | `ggplotly/scales/` |
 | Themes | 9 | `ggplotly/themes.py` |
-| Coords | 4 | `ggplotly/coords/` |
+| Coords | 5 | `ggplotly/coords/` |
 | Datasets | 16 | `ggplotly/data/` |
 
 ## Testing Patterns
@@ -254,6 +254,7 @@ aes(y=after_stat('count / count.sum()'))  # Proportions
 |------|----------|
 | `geom_point()` | Scatter plots |
 | `geom_line()` | Line charts |
+| `geom_path()` | Connect points in data order |
 | `geom_bar()` | Bar charts (stat='count' default) |
 | `geom_col()` | Bar charts (stat='identity') |
 | `geom_histogram()` | Histograms |
@@ -262,20 +263,38 @@ aes(y=after_stat('count / count.sum()'))  # Proportions
 | `geom_density()` | Density curves |
 | `geom_smooth()` | Trend lines with CI |
 | `geom_area()` | Area charts |
+| `geom_ribbon()` | Confidence bands (ymin/ymax) |
 | `geom_tile()` | Heatmaps |
+| `geom_rect()` | Rectangles (highlight regions) |
 | `geom_text()` | Text labels |
+| `geom_label()` | Text with background |
 | `geom_errorbar()` | Error bars |
+| `geom_segment()` | Line segments (with optional arrows) |
 | `geom_vline()`, `geom_hline()` | Reference lines |
+| `geom_abline()` | Slope/intercept lines |
+| `geom_jitter()` | Jittered points |
+| `geom_rug()` | Marginal tick marks |
+| `geom_qq()`, `geom_qq_line()` | Q-Q plots |
+| `geom_contour()` | Contour lines |
 | `geom_candlestick()` | Financial OHLC |
+| `geom_waterfall()` | Waterfall charts |
 | `geom_map()` | Choropleth maps |
 
 ## Built-in Datasets
 
 ```python
-from ggplotly import diamonds, mpg, iris, mtcars, economics, msleep, faithfuld
+from ggplotly import data
+
+# List all datasets
+data()
+
+# Load a specific dataset
+mpg = data('mpg')
+diamonds = data('diamonds')
+iris = data('iris')
 ```
 
-Available: diamonds, mpg, iris, mtcars, economics, msleep, faithfuld, seals, txhousing, midwest, and more in `ggplotly/data/`
+Available: diamonds, mpg, iris, mtcars, economics, economics_long, msleep, faithfuld, seals, txhousing, midwest, presidential, commodity_prices, luv_colours, us_flights (network data)
 
 ## Themes
 
@@ -285,9 +304,9 @@ theme_minimal()    # Clean, minimal
 theme_classic()    # Classic ggplot2 style
 theme_dark()       # Dark background
 theme_ggplot2()    # R ggplot2 style
-theme_bw()         # Black and white
 theme_nytimes()    # NYT style
 theme_bbc()        # BBC News style
+theme_custom()     # Custom theme builder
 ```
 
 ## Position Adjustments
@@ -304,6 +323,7 @@ position_nudge()   # Shift by fixed amount
 
 ```python
 coord_cartesian(xlim=(0, 10))  # Zoom without clipping data
+coord_fixed(ratio=1)           # Fixed aspect ratio (1:1 scaling)
 coord_flip()                    # Swap x and y axes
 coord_polar()                   # Polar coordinates (pie charts)
 coord_sf()                      # Geographic projections
@@ -340,6 +360,9 @@ facet_wrap('category', scales='free')  # 'free_x', 'free_y'
 ```python
 # Axis transforms
 scale_x_log10()                    # Log scale
+scale_y_log10()                    # Log scale (y-axis)
+scale_x_reverse()                  # Reversed x-axis
+scale_y_reverse()                  # Reversed y-axis
 scale_x_continuous(limits=(0,100)) # Set range
 scale_x_date(date_labels='%Y-%m')  # Date formatting
 
@@ -369,11 +392,14 @@ scale_x_rangeselector()            # Add range buttons
 | `stat_bin` | Bin data | `geom_histogram` |
 | `stat_density` | Kernel density | `geom_density` |
 | `stat_smooth` | Smoothed line + CI | `geom_smooth` |
-| `stat_boxplot` | Boxplot stats | `geom_boxplot` |
 | `stat_ecdf` | Empirical CDF | - |
 | `stat_summary` | Summary statistics | - |
 | `stat_function` | Apply function | - |
 | `stat_qq` | Q-Q plot points | `geom_qq` |
+| `stat_qq_line` | Q-Q reference line | `geom_qq_line` |
+| `stat_contour` | Contour computation | `geom_contour` |
+| `stat_stl` | STL decomposition | `geom_stl` |
+| `stat_fanchart` | Fan chart percentiles | `geom_fanchart` |
 
 ## Specialized Features
 
@@ -404,6 +430,42 @@ coord_sf(projection='...')    # Map projections
 geom_edgebundle()  # Edge bundling
 geom_sankey()      # Sankey diagrams
 ```
+
+### Time Series Analysis
+```python
+geom_stl()         # STL decomposition (trend, seasonal, residual)
+geom_acf()         # Autocorrelation function
+geom_pacf()        # Partial autocorrelation function
+geom_fanchart()    # Fan charts for uncertainty
+geom_range()       # Historical range plots (5-year range)
+```
+
+### Recent Feature Additions
+
+#### New Geoms
+- `geom_rect` - Draw rectangles (highlight regions, backgrounds)
+- `geom_label` - Text labels with background boxes
+
+#### New Scales
+```python
+scale_x_reverse()  # Reversed x-axis
+scale_y_reverse()  # Reversed y-axis
+```
+
+#### New Parameters
+| Geom | Parameter | Description |
+|------|-----------|-------------|
+| `geom_point` | `stroke` | Marker border width |
+| `geom_segment` | `arrow`, `arrow_size` | Add arrows to segments |
+| `geom_errorbar` | `width` | Error bar cap width |
+| `geom_text` | `parse` | Enable LaTeX/MathJax rendering |
+| `geom_col` | `width` | Bar width control |
+| `geom_smooth` | `fullrange` | Extend line to full x-axis |
+| `geom_area` | `position` | Stacking support |
+
+#### Parameter Aliases (ggplot2 compatibility)
+- `linewidth` → `size` (ggplot2 3.4+)
+- `colour` → `color` (British spelling)
 
 ## Adding New Features
 
