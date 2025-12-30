@@ -106,8 +106,12 @@ class TraceBuilder(ABC):
         # Initialize legend tracking on the figure if not present.
         # This set tracks which legend groups have been shown to prevent
         # duplicate legend entries in faceted plots.
-        if not hasattr(fig, '_shown_legendgroups'):
-            fig._shown_legendgroups = set()
+        # Note: We use a namespaced attribute to avoid conflicts with Plotly internals.
+        # This is stored on the figure because legend state must persist across
+        # multiple geom draws in the same plot.
+        self._legendgroups_attr = '_ggplotly_shown_legendgroups'
+        if not hasattr(fig, self._legendgroups_attr):
+            setattr(fig, self._legendgroups_attr, set())
 
         # Respect the showlegend parameter from geom params
         self.base_showlegend = params.get("showlegend", True)
@@ -129,11 +133,13 @@ class TraceBuilder(ABC):
         # If showlegend=False was set on the geom, never show legend
         if not self.base_showlegend:
             return False
+        # Get the shown groups set from the figure
+        shown_groups = getattr(self.fig, self._legendgroups_attr)
         # If we've already shown this group, don't show again
-        if legendgroup in self.fig._shown_legendgroups:
+        if legendgroup in shown_groups:
             return False
         # Mark this group as shown and return True
-        self.fig._shown_legendgroups.add(legendgroup)
+        shown_groups.add(legendgroup)
         return True
 
     @abstractmethod
@@ -409,13 +415,30 @@ class ContinuousColorTraceBuilder(TraceBuilder):
     with a colorscale instead of separate traces per category. Plotly
     handles the color interpolation via marker.color and marker.colorscale.
 
+    For line-based traces (mode='lines'), we use a segment-based approach
+    since Plotly's line.color only accepts single values, not arrays.
+
     Example:
         ggplot(df, aes(x='x', y='y', color='temperature')) + geom_point()
         # Single trace with colorscale from low to high temperature
     """
 
+    # Default Viridis colorscale endpoints
+    DEFAULT_COLORSCALE = [[0, '#440154'], [1, '#fde725']]
+
     def build(self, apply_color_targets_fn):
-        """Build a single trace with colorscale for continuous color."""
+        """Build trace(s) with colorscale for continuous color."""
+        # Check if this is a line-based trace
+        # For lines, we need segment-based rendering since line.color
+        # only accepts a single value, not an array
+        if self.payload.get('mode') == 'lines':
+            return self._build_line_gradient()
+
+        # Original marker-based approach for scatter, bar, etc.
+        return self._build_marker_gradient()
+
+    def _build_marker_gradient(self):
+        """Build a single trace with marker colorscale (original approach)."""
         style_props = self.style_props
 
         # Get the numeric color values
@@ -456,6 +479,110 @@ class ContinuousColorTraceBuilder(TraceBuilder):
             row=self.row,
             col=self.col,
         )
+
+    def _build_line_gradient(self):
+        """
+        Build gradient line using individual colored segments.
+
+        Since Plotly's line.color only accepts a single value (not an array),
+        we draw each segment as a separate Scattergl trace with its own color.
+        Uses WebGL for efficient rendering of many traces.
+        """
+        import plotly.graph_objects as go
+
+        style_props = self.style_props
+
+        # Get the numeric color values
+        if style_props.get('color_is_continuous'):
+            color_values = style_props['color_series']
+        else:
+            color_values = style_props['fill_series']
+
+        # Get line width from style_props or params
+        line_width = style_props.get('size', 2)
+        if line_width is None:
+            line_width = self.params.get('size', 2)
+
+        # Extract arrays
+        x_vals = self.x.values if hasattr(self.x, 'values') else list(self.x)
+        y_vals = self.y.values if hasattr(self.y, 'values') else list(self.y)
+        c_vals = color_values.values if hasattr(color_values, 'values') else list(color_values)
+
+        vmin, vmax = min(c_vals), max(c_vals)
+        colorscale = self.DEFAULT_COLORSCALE
+
+        # Draw each segment with interpolated color
+        for i in range(len(x_vals) - 1):
+            # Normalize color value at midpoint of segment
+            t_norm = ((c_vals[i] + c_vals[i + 1]) / 2 - vmin) / (vmax - vmin) if vmax != vmin else 0
+            color = self._interpolate_color(colorscale, t_norm)
+
+            self.fig.add_trace(
+                go.Scattergl(  # WebGL for performance with many traces
+                    x=[x_vals[i], x_vals[i + 1]],
+                    y=[y_vals[i], y_vals[i + 1]],
+                    mode='lines',
+                    line=dict(color=color, width=line_width),
+                    opacity=self.alpha,
+                    showlegend=False,
+                    hoverinfo='skip',
+                    # Tag for scale_color_gradient to update colors
+                    meta={'_ggplotly_line_gradient': True, '_color_norm': t_norm}
+                ),
+                row=self.row,
+                col=self.col,
+            )
+
+        # Add invisible trace for colorbar
+        self.fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode='markers',
+                marker=dict(
+                    color=[vmin, vmax],
+                    colorscale=colorscale,
+                    showscale=True,
+                    colorbar=dict(title=self.mapping.get('color', ''))
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ),
+            row=self.row,
+            col=self.col,
+        )
+
+    @staticmethod
+    def _interpolate_color(colorscale, t):
+        """
+        Interpolate between colorscale endpoints.
+
+        Parameters:
+            colorscale: List of [position, color] pairs (e.g., [[0, '#440154'], [1, '#fde725']])
+            t: Normalized value between 0 and 1
+
+        Returns:
+            str: Interpolated RGB color string
+        """
+        t = max(0, min(1, t))  # Clamp to [0, 1]
+
+        low_color = colorscale[0][1]
+        high_color = colorscale[1][1]
+
+        # Parse hex colors to RGB
+        def hex_to_rgb(hex_color):
+            hex_color = hex_color.lstrip('#')
+            return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
+        low_rgb = hex_to_rgb(low_color)
+        high_rgb = hex_to_rgb(high_color)
+
+        # Linear interpolation
+        r = int(low_rgb[0] + t * (high_rgb[0] - low_rgb[0]))
+        g = int(low_rgb[1] + t * (high_rgb[1] - low_rgb[1]))
+        b = int(low_rgb[2] + t * (high_rgb[2] - low_rgb[2]))
+
+        return f'rgb({r}, {g}, {b})'
 
 
 class SingleTraceBuilder(TraceBuilder):

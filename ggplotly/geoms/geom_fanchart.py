@@ -50,6 +50,8 @@ class geom_fanchart(Geom):
     >>> ggplot(df) + geom_fanchart(color='coral', alpha=0.3)
     """
 
+    required_aes = []  # Flexible - uses columns from DataFrame, x is optional
+
     default_params = {
         "percentiles": [10, 25, 50, 75, 90],
         "color": "steelblue",

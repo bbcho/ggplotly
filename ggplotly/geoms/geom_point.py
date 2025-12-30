@@ -22,10 +22,19 @@ class geom_point(Geom):
         shape (str, optional): Shape of the points. If a column name, maps categories to shapes.
             Literal values can be any Plotly marker symbol (e.g., 'circle', 'square', 'diamond',
             'cross', 'x', 'triangle-up', 'triangle-down', 'star', 'hexagon', etc.)
+        stroke (float, optional): Width of the point border/outline. Default is 0.
+            In ggplot2, this applies to shapes 21-25 (filled shapes with borders).
         group (str, optional): Grouping variable for the points.
+
+    Required Aesthetics:
+        x, y
+
+    Optional Aesthetics:
+        color, fill, size, shape, alpha, group
     """
 
-    default_params = {"size": 8}
+    required_aes = ['x', 'y']
+    default_params = {"size": 8, "stroke": 0}
 
     def _draw_impl(self, fig, data, row, col):
 
@@ -40,9 +49,15 @@ class geom_point(Geom):
             self._draw_geo(fig, data)
         else:
             plot = go.Scatter
+
+            # Handle stroke (border width) for markers
+            stroke = self.params.get("stroke", 0)
+            marker_line = {"width": stroke} if stroke else {}
+
             payload = dict(
                 mode="markers",
                 name=self.params.get("name", "Point"),
+                marker_line=marker_line,
             )
 
             color_targets = dict(
@@ -114,11 +129,14 @@ class geom_point(Geom):
             marker_size = size_val if isinstance(size_val, (int, float)) else 8
 
         # Create marker dict
+        stroke = self.params.get('stroke', 0)
         marker_dict = dict(
             size=marker_size,
             opacity=alpha,
             symbol=self.params.get('shape', 'circle'),
         )
+        if stroke:
+            marker_dict['line'] = {'width': stroke}
 
         if colorscale:
             marker_dict['color'] = marker_color

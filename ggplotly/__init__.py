@@ -1,7 +1,7 @@
 # __init__.py
 
 from .aes import aes, after_stat
-from .coords import Coord, coord_cartesian, coord_flip, coord_polar, coord_sf
+from .coords import Coord, coord_cartesian, coord_fixed, coord_flip, coord_polar, coord_sf
 from .datasets import data
 from .facets import Facet, facet_grid, facet_wrap, label_both, label_value
 from .geoms import (
@@ -21,6 +21,7 @@ from .geoms import (
     geom_histogram,
     geom_hline,
     geom_jitter,
+    geom_label,
     geom_line,
     geom_lines,
     geom_map,
@@ -33,6 +34,7 @@ from .geoms import (
     geom_qq,
     geom_qq_line,
     geom_range,
+    geom_rect,
     geom_ribbon,
     geom_rug,
     geom_sankey,
@@ -56,7 +58,15 @@ from .guides import annotate, guide_colorbar, guide_legend, guides, labs
 from .layer import Layer, layer
 from .limits import lims, xlim, ylim
 from .map_data import map_data
-from .positions import position_dodge, position_jitter, position_stack
+from .positions import (
+    position_dodge,
+    position_dodge2,
+    position_fill,
+    position_identity,
+    position_jitter,
+    position_nudge,
+    position_stack,
+)
 from .scales import (
     scale_color_brewer,
     scale_color_gradient,
@@ -73,8 +83,10 @@ from .scales import (
     scale_x_log10,
     scale_x_rangeselector,
     scale_x_rangeslider,
+    scale_x_reverse,
     scale_y_continuous,
     scale_y_log10,
+    scale_y_reverse,
 )
 from .stats import (
     stat_bin,
@@ -134,9 +146,10 @@ __all__ = [
     "label_value",
     "label_both",
     "Coord",
+    "coord_cartesian",
+    "coord_fixed",
     "coord_flip",
     "coord_polar",
-    "coord_cartesian",
     "coord_sf",
     "xlim",
     "ylim",
@@ -147,7 +160,11 @@ __all__ = [
     "guide_legend",
     "guide_colorbar",
     "position_dodge",
+    "position_dodge2",
+    "position_fill",
+    "position_identity",
     "position_jitter",
+    "position_nudge",
     "position_stack",
     "geom_point",
     "geom_line",
@@ -166,6 +183,8 @@ __all__ = [
     "geom_ribbon",
     "geom_tile",
     "geom_text",
+    "geom_label",
+    "geom_rect",
     "geom_errorbar",
     "geom_segment",
     "geom_step",
@@ -205,6 +224,8 @@ __all__ = [
     "scale_size",
     "scale_x_log10",
     "scale_y_log10",
+    "scale_x_reverse",
+    "scale_y_reverse",
     "scale_x_date",
     "scale_x_datetime",
     "scale_x_rangeslider",

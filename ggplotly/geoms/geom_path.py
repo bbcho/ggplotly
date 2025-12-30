@@ -18,12 +18,13 @@ class geom_path(Geom):
 
     Parameters:
         color (str, optional): Color of the path. Can be a column name for grouping.
+        colour (str, optional): Alias for color (British spelling).
         size (float, optional): Line width. Default is 2.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
         linetype (str, optional): Line style ('solid', 'dash', 'dot', 'dashdot'). Default is 'solid'.
         alpha (float, optional): Transparency level. Default is 1.
-        lineend (str, optional): Line end style. Default is 'round'.
-        linejoin (str, optional): Line join style. Default is 'round'.
-        arrow (bool, optional): Whether to add arrow at end. Default is False.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
+        show_legend (bool, optional): Whether to show in legend. Default is True.
 
     Aesthetics:
         - x: x-axis values
@@ -45,8 +46,7 @@ class geom_path(Geom):
         ggplot(tracks, aes(x='x', y='y', color='track_id')) + geom_path()
     """
 
-    __name__ = "geom_path"
-
+    required_aes = ['x', 'y']
     default_params = {"size": 2}
 
     def _draw_impl(self, fig, data, row, col):

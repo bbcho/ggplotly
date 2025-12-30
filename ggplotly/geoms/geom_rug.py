@@ -9,6 +9,7 @@ from .geom_base import Geom
 class geom_rug(Geom):
     """Geom for drawing rug plots (marginal tick marks on axes)."""
 
+    required_aes = []  # x and/or y - flexible, at least one recommended
     default_params = {"size": 1, "alpha": 0.5}
 
     def __init__(self, data=None, mapping=None, **params):

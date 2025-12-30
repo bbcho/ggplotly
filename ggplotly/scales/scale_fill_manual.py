@@ -83,40 +83,11 @@ class scale_fill_manual(Scale):
         Parameters:
             fig (Figure): Plotly figure object.
         """
-        # Create a mapping of categories to colors
-        if isinstance(self.values, dict):
-            color_map = self.values
-        else:
-            # Assume values is a list; extract categories from the data
-            categories = []
-            for trace in fig.data:
-                if hasattr(trace, 'name') and trace.name not in categories:
-                    categories.append(trace.name)
-            color_map = dict(zip(categories, self.values))
-
-        # Update trace colors based on the mapping
-        for trace in fig.data:
-            if hasattr(trace, 'name') and trace.name in color_map:
-                color = color_map[trace.name]
-                if hasattr(trace, 'marker') and trace.marker is not None:
-                    trace.marker.color = color
-                if hasattr(trace, 'fillcolor'):
-                    trace.fillcolor = color
-
-        # Update the legend title if provided
-        if self.name is not None:
-            fig.update_layout(legend_title_text=self.name)
-
-        # Update legend items if breaks and labels are provided
-        if self.breaks is not None and self.labels is not None:
-            for trace in fig.data:
-                if hasattr(trace, 'name') and trace.name in self.breaks:
-                    idx = self.breaks.index(trace.name)
-                    trace.name = self.labels[idx]
-
-        # Hide legend if guide is 'none'
-        if self.guide == 'none':
-            fig.update_layout(showlegend=False)
+        self._apply_manual_color_mapping(
+            fig, self.values, name=self.name,
+            breaks=self.breaks, labels=self.labels,
+            update_fill=True, guide=self.guide
+        )
 
     def get_legend_info(self):
         """

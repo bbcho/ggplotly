@@ -61,14 +61,17 @@ class scale_color_gradient(Scale):
 
     def apply(self, fig):
         """
-        Apply the color gradient to markers in the figure.
+        Apply the color gradient to markers and line segments in the figure.
 
         Parameters:
             fig (Figure): Plotly figure object.
         """
+        new_colorscale = [[0, self.low], [1, self.high]]
+
         for trace in fig.data:
+            # Handle marker-based traces (scatter points, etc.)
             if hasattr(trace, 'marker') and trace.marker is not None:
-                trace.marker.colorscale = [[0, self.low], [1, self.high]]
+                trace.marker.colorscale = new_colorscale
 
                 # Apply limits if specified
                 if self.limits is not None:
@@ -89,3 +92,58 @@ class scale_color_gradient(Scale):
                     trace.marker.showscale = True
                 else:
                     trace.marker.showscale = False
+
+            # Handle line gradient segments (created by ContinuousColorTraceBuilder)
+            if hasattr(trace, 'meta') and trace.meta:
+                meta = trace.meta
+                if isinstance(meta, dict) and meta.get('_ggplotly_line_gradient'):
+                    t_norm = meta.get('_color_norm', 0)
+                    new_color = self._interpolate_color(new_colorscale, t_norm)
+                    trace.line.color = new_color
+
+    @staticmethod
+    def _interpolate_color(colorscale, t):
+        """
+        Interpolate between colorscale endpoints.
+
+        Parameters:
+            colorscale: List of [position, color] pairs
+            t: Normalized value between 0 and 1
+
+        Returns:
+            str: Interpolated RGB color string
+        """
+        t = max(0, min(1, t))  # Clamp to [0, 1]
+
+        low_color = colorscale[0][1]
+        high_color = colorscale[1][1]
+
+        # Parse color to RGB (handles hex and named colors)
+        def color_to_rgb(color):
+            if color.startswith('#'):
+                color = color.lstrip('#')
+                return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4))
+            elif color.startswith('rgb'):
+                # Parse rgb(r, g, b) format
+                import re
+                match = re.match(r'rgb\((\d+),\s*(\d+),\s*(\d+)\)', color)
+                if match:
+                    return tuple(int(x) for x in match.groups())
+            # Fallback for named colors - approximate mapping
+            named_colors = {
+                'blue': (0, 0, 255), 'red': (255, 0, 0), 'green': (0, 128, 0),
+                'white': (255, 255, 255), 'black': (0, 0, 0),
+                'yellow': (255, 255, 0), 'orange': (255, 165, 0),
+                'purple': (128, 0, 128), 'cyan': (0, 255, 255),
+            }
+            return named_colors.get(color.lower(), (128, 128, 128))
+
+        low_rgb = color_to_rgb(low_color)
+        high_rgb = color_to_rgb(high_color)
+
+        # Linear interpolation
+        r = int(low_rgb[0] + t * (high_rgb[0] - low_rgb[0]))
+        g = int(low_rgb[1] + t * (high_rgb[1] - low_rgb[1]))
+        b = int(low_rgb[2] + t * (high_rgb[2] - low_rgb[2]))
+
+        return f'rgb({r}, {g}, {b})'

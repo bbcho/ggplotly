@@ -23,17 +23,24 @@ class geom_smooth(Geom):
                                 Larger values (closer to 1) produce smoother lines. Default is 2/3 (~0.667) to match R.
         se (bool, optional): Whether to display confidence interval ribbon. Default is True to match R.
         level (float, optional): Confidence level for the interval (e.g., 0.95 for 95% CI). Default is 0.95 to match R.
+        fullrange (bool, optional): If True, extend the smooth line to fill the full x-axis range.
+                                    Default is False (smooth only within data range).
+        n (int, optional): Number of points to evaluate predictions at. Default is 80.
         color (str, optional): Color of the smooth lines. If a categorical variable is mapped to color, different colors will be assigned.
         linetype (str, optional): Line type ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the smooth lines. Default is 1.
         group (str, optional): Grouping variable for the smooth lines.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
+        show_legend (bool, optional): Whether to show in legend. Default is True.
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth()
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth(method='lm', se=False)
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point() + geom_smooth(fullrange=True)
     """
 
-    default_params = {"size": 3}
+    required_aes = ['x', 'y']
+    default_params = {"size": 3, "fullrange": False, "n": 80}
 
     def _draw_impl(self, fig, data, row, col):
         """
@@ -62,9 +69,23 @@ class geom_smooth(Geom):
         se = self.params.get("se", True)  # Default to True to match R
         level = self.params.get("level", 0.95)  # Default to 95% CI to match R
         span = self.params.get("span", 2/3)  # Default to 2/3 to match R's loess
+        fullrange = self.params.get("fullrange", False)  # Extend to full x range
+        n_points = self.params.get("n", 80)  # Number of prediction points
 
         # Initialize stat_smooth for statistical smoothing
         smoother = stat_smooth(method=method, span=span, se=se, level=level)
+
+        # Handle fullrange: extend x values beyond data range
+        x_col = self.mapping.get("x", "x")
+        if fullrange and x_col in data.columns:
+            import numpy as np
+            x_min, x_max = data[x_col].min(), data[x_col].max()
+            x_range = x_max - x_min
+            # Extend by 5% on each side
+            extended_min = x_min - 0.05 * x_range
+            extended_max = x_max + 0.05 * x_range
+            # Store for later use
+            self._fullrange_x = np.linspace(extended_min, extended_max, n_points)
 
         # Get the actual column names from the mapping
         x_col = self.mapping.get("x", "x")

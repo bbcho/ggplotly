@@ -18,10 +18,12 @@ class geom_errorbar(Geom):
         color (str, optional): Color of the error bars.
         alpha (float, optional): Transparency level for the error bars. Default is 1.
         linetype (str, optional): Line style of the error bars ('solid', 'dash', etc.).
+        width (float, optional): Width of the error bar caps in pixels. Default is 4.
         group (str, optional): Grouping variable for the error bars.
     """
 
-    default_params = {"size": 2}
+    required_aes = ['x', 'y']  # ymin/ymax or yerr are also needed but handled in _draw_impl
+    default_params = {"size": 2, "width": 4}
 
     def _draw_impl(self, fig, data, row, col):
         style_props = self._get_style_props(data)
@@ -39,6 +41,7 @@ class geom_errorbar(Geom):
             ymax = data[self.mapping["ymax"]]
 
         linetype = self.params.get("linetype", "solid")
+        width = self.params.get("width", 4)
         alpha = style_props['alpha']
         group_values = style_props['group_series']
 
@@ -63,6 +66,7 @@ class geom_errorbar(Geom):
                             type="data",
                             array=ymax[group_mask] - y[group_mask],
                             arrayminus=y[group_mask] - ymin[group_mask],
+                            width=width,
                         ),
                         mode="markers",
                         line_dash=linetype,
@@ -91,6 +95,7 @@ class geom_errorbar(Geom):
                             type="data",
                             array=ymax[cat_mask] - y[cat_mask],
                             arrayminus=y[cat_mask] - ymin[cat_mask],
+                            width=width,
                         ),
                         mode="markers",
                         line_dash=linetype,
@@ -113,6 +118,7 @@ class geom_errorbar(Geom):
                         type="data",
                         array=ymax - y,
                         arrayminus=y - ymin,
+                        width=width,
                     ),
                     mode="markers",
                     line_dash=linetype,

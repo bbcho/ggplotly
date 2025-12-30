@@ -71,6 +71,7 @@ class geom_point_3d(Geom):
         >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_point_3d(size=10, alpha=0.7)
     """
 
+    required_aes = ['x', 'y', 'z']
     default_params = {"size": 6}
 
     def _convert_symbol_to_3d(self, symbol):

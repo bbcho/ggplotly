@@ -25,6 +25,8 @@ def _get_searoute():
 class geom_searoute(Geom):
     """Sea routes for maritime visualization using the searoute package."""
 
+    required_aes = ['x', 'y', 'xend', 'yend']
+
     def __init__(
         self,
         mapping=None,

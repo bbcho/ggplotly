@@ -9,6 +9,8 @@ from .geom_base import Geom
 class geom_surface(Geom):
     """Geom for drawing 3D surface plots."""
 
+    required_aes = ['x', 'y', 'z']
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Create a 3D surface plot.
@@ -229,6 +231,8 @@ class geom_wireframe(Geom):
         >>> # Wireframe with custom color
         >>> ggplot(df, aes(x='x', y='y', z='z')) + geom_wireframe(color='red', linewidth=2)
     """
+
+    required_aes = ['x', 'y', 'z']
 
     def _prepare_grid_data(self, data):
         """Convert long-format data to grid format.

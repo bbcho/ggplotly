@@ -53,6 +53,8 @@ def _extract_geojson(data):
 class geom_map(Geom):
     """Geom for drawing geographic maps (base maps, choropleths, and GeoJSON/sf)."""
 
+    required_aes = []  # Flexible - varies by mode (base map needs none, choropleth needs map_id)
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Create a geographic map layer.

@@ -20,6 +20,8 @@ class geom_violin(Geom):
         group (str, optional): Grouping variable for the violin plots.
     """
 
+    required_aes = ['x', 'y']
+
     def _draw_impl(self, fig, data, row, col):
         if "linewidth" not in self.params:
             self.params["linewidth"] = 1

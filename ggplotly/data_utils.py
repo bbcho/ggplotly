@@ -72,6 +72,10 @@ def normalize_data(data, mapping: dict[str, Any]) -> tuple[pd.DataFrame | None, 
     mapping = mapping.copy() if mapping else {}
     index_name = None
 
+    # Convert dict to DataFrame
+    if isinstance(data, dict):
+        data = pd.DataFrame(data)
+
     # Check for MultiIndex (not supported)
     if isinstance(data.index, pd.MultiIndex):
         raise ValueError(

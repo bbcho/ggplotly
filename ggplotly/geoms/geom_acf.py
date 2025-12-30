@@ -44,6 +44,8 @@ class geom_acf(Geom):
     >>> ggplot(df, aes(y='value')) + geom_acf(color='coral', nlags=30)
     """
 
+    required_aes = ['y']
+
     default_params = {
         "nlags": 40,
         "alpha": 0.05,

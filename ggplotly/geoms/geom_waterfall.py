@@ -92,6 +92,8 @@ class geom_waterfall(Geom):
     mark starting values ('absolute') and subtotals ('total').
     """
 
+    required_aes = ['x', 'y']
+
     def __init__(self, data=None, mapping=None, **params):
         super().__init__(data, mapping, **params)
         # Set default colors

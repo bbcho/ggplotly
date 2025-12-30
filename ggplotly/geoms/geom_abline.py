@@ -8,8 +8,7 @@ from .geom_base import Geom
 class geom_abline(Geom):
     """Geom for drawing lines with specified slope and intercept."""
 
-    __name__ = "geom_abline"
-
+    required_aes = []  # slope/intercept come from params, not mapping
     default_params = {"size": 1}
 
     def __init__(self, data=None, mapping=None, **params):
@@ -52,15 +51,7 @@ class geom_abline(Geom):
 
     def _draw_impl(self, fig, data, row, col):
 
-        # Get color from params, or use theme default
-        color = self.params.get("color", None)
-        if color is None and hasattr(self, 'theme') and self.theme:
-            import plotly.express as px
-            palette = self.theme.color_map if hasattr(self.theme, 'color_map') and self.theme.color_map else px.colors.qualitative.Plotly
-            color = palette[0]
-        elif color is None:
-            color = 'black'
-
+        color = self._get_reference_line_color(default='black')
         linetype = self.params.get("linetype", "solid")
         alpha = self.params.get("alpha", 1)
         line_width = self.params.get("size", 1)

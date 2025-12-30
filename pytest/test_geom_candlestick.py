@@ -102,14 +102,18 @@ class TestGeomCandlestickBasic:
         assert len(fig.data[0].x) == len(ohlc_data)
 
     def test_missing_aesthetic_raises_error(self, ohlc_data):
-        """Test that missing required aesthetic raises ValueError."""
-        with pytest.raises(ValueError, match="geom_candlestick requires aesthetics"):
+        """Test that missing required aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="geom_candlestick requires aesthetics"):
             p = ggplot(ohlc_data, aes(x='date', open='open', high='high')) + geom_candlestick()
             p.draw()
 
     def test_missing_multiple_aesthetics_lists_all(self, ohlc_data):
         """Test error message lists all missing aesthetics."""
-        with pytest.raises(ValueError, match="Missing:.*low.*close"):
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="low.*close"):
             p = ggplot(ohlc_data, aes(x='date', open='open', high='high')) + geom_candlestick()
             p.draw()
 
@@ -271,8 +275,10 @@ class TestGeomOhlcBasic:
         assert len(trace.close) == 5
 
     def test_ohlc_missing_aesthetic_raises_error(self, ohlc_data):
-        """Test that missing required aesthetic raises ValueError."""
-        with pytest.raises(ValueError, match="geom_ohlc requires aesthetics"):
+        """Test that missing required aesthetic raises RequiredAestheticError."""
+        from ggplotly.exceptions import RequiredAestheticError
+
+        with pytest.raises(RequiredAestheticError, match="geom_ohlc requires aesthetics"):
             p = ggplot(ohlc_data, aes(x='date', open='open')) + geom_ohlc()
             p.draw()
 

@@ -22,6 +22,16 @@ Scales control how data values are mapped to visual properties like position, co
     options:
       show_root_heading: true
 
+## Reversed Scales
+
+::: ggplotly.scales.scale_x_reverse.scale_x_reverse
+    options:
+      show_root_heading: true
+
+::: ggplotly.scales.scale_y_reverse.scale_y_reverse
+    options:
+      show_root_heading: true
+
 ## Date and Time Scales
 
 ::: ggplotly.scales.scale_x_date.scale_x_date

@@ -74,6 +74,7 @@ class geom_qq(Geom):
     ...  + geom_qq())
     """
 
+    required_aes = ['sample']
     default_params = {"size": 8}
 
     def __init__(self, data=None, mapping=None, distribution=None, dparams=None, **params):

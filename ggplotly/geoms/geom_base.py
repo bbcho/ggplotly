@@ -2,7 +2,66 @@ import copy
 
 from ..aes import aes
 from ..aesthetic_mapper import AestheticMapper
+from ..exceptions import ColumnNotFoundError, RequiredAestheticError
 from ..trace_builders import get_trace_builder
+
+
+# CSS named colors for validation (avoids mistaking column names for colors)
+CSS_COLORS = frozenset({
+    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+    'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet',
+    'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
+    'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+    'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen',
+    'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange',
+    'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue',
+    'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet',
+    'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
+    'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro',
+    'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow',
+    'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory',
+    'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon',
+    'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
+    'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
+    'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
+    'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
+    'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid',
+    'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen',
+    'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
+    'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive',
+    'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod',
+    'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip',
+    'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple',
+    'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown',
+    'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver',
+    'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow',
+    'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato',
+    'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow',
+    'yellowgreen'
+})
+
+
+def is_valid_color(value):
+    """
+    Check if a value looks like a valid color (not a column name).
+
+    Parameters:
+        value: The value to check
+
+    Returns:
+        bool: True if value appears to be a valid CSS color
+    """
+    if value is None:
+        return False
+    if not isinstance(value, str):
+        return False
+    # Check for common color formats
+    if value.startswith('#'):
+        return True
+    if value.startswith('rgb') or value.startswith('hsl'):
+        return True
+    # Check against CSS color names
+    return value.lower() in CSS_COLORS
 
 
 class Geom:
@@ -17,15 +76,26 @@ class Geom:
         data (DataFrame, optional): Data to use for this geom. If None,
             uses the data from the ggplot object.
         mapping (aes, optional): Aesthetic mappings for this geom.
+        na_rm (bool): If True, silently remove missing values. Default False.
+        show_legend (bool): Whether to show this geom in the legend. Default True.
         **params: Additional parameters passed to the geom.
 
     Examples:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point()
         >>> ggplot(df, aes(x='x', y='y')) + geom_point(color='red', size=3)
+        >>> ggplot(df, aes(x='x', y='y')) + geom_point(na_rm=True)
     """
 
     # Default parameters for this geom. Subclasses should override this.
+    # Note: na_rm and show_legend are always added via base_defaults in __init__
     default_params: dict = {}
+
+    # Required aesthetics for this geom. Subclasses should override.
+    # Example: required_aes = ['x', 'y'] for geom_point
+    required_aes: list = []
+
+    # Optional aesthetics that can be mapped to columns
+    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group']
 
     def __init__(self, data=None, mapping=None, **params):
         """
@@ -44,8 +114,27 @@ class Geom:
             self.data = data
             self.mapping = mapping.mapping if mapping else {}
 
-        # Merge default params with user-provided params (user params take precedence)
-        self.params = {**self.default_params, **params}
+        # Merge base class defaults, subclass defaults, and user-provided params
+        # Base class defaults for na_rm, show_legend
+        base_defaults = {"na_rm": False, "show_legend": True}
+        self.params = {**base_defaults, **self.default_params, **params}
+
+        # Handle parameter aliases for ggplot2 compatibility
+        # linewidth is an alias for size (line width in ggplot2 3.4+)
+        if "linewidth" in self.params and "size" not in params:
+            self.params["size"] = self.params["linewidth"]
+
+        # showlegend is an alias for show_legend (Plotly convention)
+        if "showlegend" in self.params and "show_legend" not in params:
+            self.params["show_legend"] = self.params["showlegend"]
+
+        # colour is an alias for color (British spelling)
+        if "colour" in self.params and "color" not in params:
+            self.params["color"] = self.params["colour"]
+
+        # na.rm style can be passed as na_rm (Python convention)
+        # Already handled by default, but normalize any variants
+
         self.stats = []
         self.layers = []
         # Track whether this geom has explicit data or inherited from plot
@@ -53,14 +142,6 @@ class Geom:
         # Global color/shape maps for consistent colors across facets
         self._global_color_map = None
         self._global_shape_map = None
-
-    # def __add__(self, other):
-    #     if isinstance(other, Geom):
-    #         self.layers.append(other)
-
-    #     return self.copy()
-    # else:
-    # raise ValueError("Only Geom and Stat objects can be added to Geom objects.")
 
     def copy(self):
         """
@@ -84,10 +165,77 @@ class Geom:
         Returns:
             None: Modifies the geom in place.
         """
+        # Store original geom mapping before merging (for validation filtering)
+        self._original_mapping = self.mapping.copy()
+
         # Merge plot mapping and geom mapping, with geom mapping taking precedence
         combined_mapping = {**plot_mapping, **self.mapping}
         self.mapping = combined_mapping
         self.data = data.copy()
+
+    def validate_required_aesthetics(self, data=None):
+        """
+        Validate that required aesthetics are present and reference valid columns.
+
+        This method checks:
+        1. All required aesthetics are present in the mapping
+        2. Mapped columns actually exist in the data
+
+        Parameters:
+            data (DataFrame, optional): Data to validate against. Uses self.data if not provided.
+
+        Raises:
+            RequiredAestheticError: If required aesthetics are missing
+            ColumnNotFoundError: If mapped columns don't exist in data
+        """
+        data = data if data is not None else self.data
+
+        # Check required aesthetics are present
+        missing = []
+        for aes_name in self.required_aes:
+            if aes_name not in self.mapping:
+                missing.append(aes_name)
+
+        if missing:
+            geom_name = self.__class__.__name__
+            raise RequiredAestheticError(geom_name, missing)
+
+        # Validate that mapped columns exist in data
+        if data is not None and not data.empty:
+            columns = frozenset(data.columns)
+            all_aes = self.required_aes + self.optional_aes
+
+            # Get original mapping to identify inherited vs explicit aesthetics
+            original_mapping = getattr(self, '_original_mapping', {})
+
+            for aes_name in all_aes:
+                value = self.mapping.get(aes_name)
+                if value is not None and isinstance(value, str):
+                    # Skip validation for inherited aesthetics when geom has explicit data
+                    # (inherited aesthetics reference columns in the global data, not geom's data)
+                    if self._has_explicit_data and aes_name not in original_mapping:
+                        continue
+
+                    # Check if it's supposed to be a column reference
+                    if aes_name in ('x', 'y', 'xend', 'yend', 'xmin', 'xmax', 'ymin', 'ymax',
+                                   'label', 'group', 'weight'):
+                        # These are always column references
+                        if value not in columns:
+                            raise ColumnNotFoundError(value, list(data.columns), aes_name)
+                    elif aes_name in ('color', 'fill', 'size', 'shape', 'alpha'):
+                        # These could be literal values or column references
+                        # Only validate if it looks like a column reference (not a color name, etc.)
+                        if value in columns:
+                            pass  # Valid column reference
+                        elif not is_valid_color(value) and value not in columns:
+                            # It's a string but not a color and not a column - might be a typo
+                            # Only raise error if it's plausibly a column name (no spaces, etc.)
+                            if ' ' not in value and not value.startswith('#'):
+                                # Could be a typo - check for similar columns
+                                from difflib import get_close_matches
+                                similar = get_close_matches(value, list(columns), n=1, cutoff=0.6)
+                                if similar:
+                                    raise ColumnNotFoundError(value, list(data.columns), aes_name)
 
     def draw(self, fig, data=None, row=1, col=1):
         """
@@ -104,14 +252,51 @@ class Geom:
 
         Returns:
             None: Modifies the figure in place.
+
+        Raises:
+            RequiredAestheticError: If required aesthetics are missing
+            ColumnNotFoundError: If mapped columns don't exist in data
         """
         data = data if data is not None else self.data
 
+        # Handle na_rm: remove rows with missing values in mapped columns
+        if self.params.get("na_rm", False):
+            data = self._remove_missing(data)
+
         # Apply any stats to transform the data
+        # Stats may add aesthetics (e.g., stat_ecdf adds 'y')
         data = self._apply_stats(data)
+
+        # Validate required aesthetics and column references AFTER stats
+        # (stats may provide required aesthetics like 'y' from stat_ecdf)
+        if self.required_aes:
+            self.validate_required_aesthetics(data)
 
         # Delegate to subclass implementation
         self._draw_impl(fig, data, row, col)
+
+    def _remove_missing(self, data):
+        """
+        Remove rows with missing values in mapped columns.
+
+        Parameters:
+            data (DataFrame): Input data.
+
+        Returns:
+            DataFrame: Data with missing values removed from mapped columns.
+        """
+        if data is None or data.empty:
+            return data
+
+        # Get columns that are mapped to aesthetics
+        mapped_cols = []
+        for col in self.mapping.values():
+            if isinstance(col, str) and col in data.columns:
+                mapped_cols.append(col)
+
+        if mapped_cols:
+            return data.dropna(subset=mapped_cols)
+        return data
 
     def _apply_stats(self, data):
         """
@@ -126,6 +311,35 @@ class Geom:
         for stat in self.stats:
             data, self.mapping = stat.compute(data)
         return data
+
+    def _get_reference_line_color(self, default='#1f77b4'):
+        """
+        Get color for reference lines (vline, hline, abline).
+
+        Resolves color from params, theme palette, or default value.
+
+        Parameters:
+            default (str): Default color if no other source available.
+
+        Returns:
+            str: Color string for the reference line.
+        """
+        color = self.params.get("color", None)
+        if color is not None:
+            return color
+
+        # Try theme palette
+        if hasattr(self, 'theme') and self.theme:
+            if hasattr(self.theme, 'color_map') and self.theme.color_map:
+                return self.theme.color_map[0]
+            # Try Plotly's default palette
+            try:
+                import plotly.express as px
+                return px.colors.qualitative.Plotly[0]
+            except (ImportError, IndexError):
+                pass
+
+        return default
 
     def _draw_impl(self, fig, data, row, col):
         """
@@ -179,54 +393,6 @@ class Geom:
             Dict of trace properties to apply
         """
         result = {}
-
-        def is_valid_color(value):
-            """Check if a value looks like a valid color (not a column name)."""
-            if value is None:
-                return False
-            if not isinstance(value, str):
-                return False
-            # Check for common color formats
-            if value.startswith('#'):
-                return True
-            if value.startswith('rgb') or value.startswith('hsl'):
-                return True
-            # Check against a list of known CSS color names
-            # This is safer than heuristics since column names like 'group', 'species', etc.
-            # could otherwise be mistaken for colors
-            css_colors = {
-                'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
-                'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet',
-                'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate',
-                'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
-                'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen',
-                'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange',
-                'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue',
-                'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet',
-                'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
-                'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro',
-                'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow',
-                'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory',
-                'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon',
-                'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
-                'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
-                'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
-                'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
-                'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid',
-                'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen',
-                'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream',
-                'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive',
-                'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod',
-                'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip',
-                'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple',
-                'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown',
-                'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver',
-                'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow',
-                'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato',
-                'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow',
-                'yellowgreen'
-            }
-            return value.lower() in css_colors
 
         # Determine the color to use
         if value_key is not None:

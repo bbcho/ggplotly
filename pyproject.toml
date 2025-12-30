@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ggplotly"
-version = "0.3.5"
+version = "0.4.0"
 description = "A grammar of graphics for Python built on Plotly"
 readme = "README.md"
 license = {text = "MIT"}
@@ -83,7 +83,7 @@ Homepage = "https://github.com/bbcho/ggplotly"
 Documentation = "https://bbcho.github.io/ggplotly"
 Repository = "https://github.com/bbcho/ggplotly"
 Issues = "https://github.com/bbcho/ggplotly/issues"
-Changelog = "https://github.com/bbcho/ggplotly/blob/main/CHANGELOG.md"
+Roadmap = "https://github.com/bbcho/ggplotly/blob/main/ROADMAP.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -93,7 +93,7 @@ include = ["ggplotly*"]
 ggplotly = ["data/*.csv"]
 
 [tool.pytest.ini_options]
-testpaths = ["pytest", "docs"]
+testpaths = ["pytest", "examples", "docs"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short --nbmake"
 

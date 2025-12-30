@@ -14,8 +14,10 @@ from .scale_x_date import scale_x_date, scale_x_datetime
 from .scale_x_log10 import scale_x_log10
 from .scale_x_rangeselector import scale_x_rangeselector
 from .scale_x_rangeslider import scale_x_rangeslider
+from .scale_x_reverse import scale_x_reverse
 from .scale_y_continuous import scale_y_continuous
 from .scale_y_log10 import scale_y_log10
+from .scale_y_reverse import scale_y_reverse
 
 __all__ = [
     "Scale",
@@ -23,6 +25,8 @@ __all__ = [
     "scale_y_continuous",
     "scale_x_log10",
     "scale_y_log10",
+    "scale_x_reverse",
+    "scale_y_reverse",
     "scale_x_date",
     "scale_x_datetime",
     "scale_x_rangeslider",

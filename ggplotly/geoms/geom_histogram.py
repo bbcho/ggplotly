@@ -38,6 +38,8 @@ class geom_histogram(Geom):
         >>> ggplot(df, aes(x='value', fill='category')) + geom_histogram(alpha=0.5)
     """
 
+    required_aes = ['x']  # y is computed by stat_bin
+
     def __init__(self, data=None, mapping=None, bins=30, binwidth=None, boundary=None,
                  center=None, barmode="stack", bin=None, **params):
         """
@@ -72,7 +74,10 @@ class geom_histogram(Geom):
         Handles grouping by fill/color/group aesthetics automatically.
         """
         na_rm = self.params.get("na_rm", False)
-        x_col = self.mapping.get("x")
+        # Store original x column name (mapping may have been modified by previous facet panel)
+        if not hasattr(self, '_original_x_col'):
+            self._original_x_col = self.mapping.get("x")
+        x_col = self._original_x_col
 
         # Determine grouping column from fill, color, or group mapping
         group_col = None
@@ -95,11 +100,43 @@ class geom_histogram(Geom):
 
         # Compute bins - either grouped or ungrouped
         if group_col is not None:
-            # Grouped histogram: compute separate bins for each group
+            # Grouped histogram: compute bins using SAME edges for all groups
+            # First, compute bin edges from ALL data so groups align for stacking
+            import numpy as np
+            all_x = data[x_col].dropna().values
+            x_min, x_max = np.nanmin(all_x), np.nanmax(all_x)
+            x_range = x_max - x_min
+
+            # Determine bin width
+            if self.binwidth is not None:
+                width = self.binwidth
+            else:
+                width = x_range / self.bins
+
+            # Compute shared bin edges
+            if self.boundary is not None:
+                shift = (x_min - self.boundary) % width
+                bin_min = x_min - shift
+            elif self.center is not None:
+                shift = (x_min - self.center + width / 2) % width
+                bin_min = x_min - shift
+            else:
+                bin_min = x_min
+
+            n_bins = int(np.ceil((x_max - bin_min) / width)) + 1
+            shared_breaks = bin_min + np.arange(n_bins + 1) * width
+
+            # Now compute bins for each group using the shared breaks
             binned_frames = []
             for group_value in data[group_col].unique():
                 group_data = data[data[group_col] == group_value].copy()
-                binned_data = bin_stat.compute(group_data)
+                # Create a new stat_bin with the shared breaks
+                group_bin_stat = stat_bin(
+                    mapping={'x': x_col},
+                    breaks=shared_breaks,
+                    na_rm=na_rm
+                )
+                binned_data = group_bin_stat.compute(group_data)
                 binned_data[group_col] = group_value
                 binned_frames.append(binned_data)
 
@@ -170,23 +207,80 @@ class geom_histogram(Geom):
         Returns:
             None: Modifies the figure in place.
         """
-        payload = dict()
-        payload["name"] = self.params.get("name", "Histogram")
+        # Get style properties for color mapping
+        style_props = self._get_style_props(data)
+        alpha = style_props['alpha']
 
-        # Use Bar trace with width from stat_bin
-        plot = go.Bar
+        # Determine grouping column from fill, color, or group mapping
+        group_col = None
+        for aesthetic in ['fill', 'color', 'group']:
+            if aesthetic in self.mapping:
+                potential_col = self.mapping[aesthetic]
+                if potential_col in data.columns:
+                    group_col = potential_col
+                    break
 
-        color_targets = dict(
-            color="marker_color",
-        )
+        # Get x and y column names from mapping
+        x_col = self.mapping.get("x", "x")
+        y_col = self.mapping.get("y", "count")
 
-        self._transform_fig(
-            plot,
-            fig,
-            data,
-            payload,
-            color_targets,
-            row,
-            col,
-            barmode=self.barmode,
-        )
+        # Initialize legend tracking on figure if not present
+        if not hasattr(fig, '_ggplotly_shown_legendgroups'):
+            fig._ggplotly_shown_legendgroups = set()
+
+        if group_col is not None:
+            # Grouped histogram - one trace per group with proper width
+            cat_map = style_props.get('color_map') or style_props.get('fill_map', {})
+            if not cat_map:
+                # Build a color map from unique values
+                import plotly.express as px
+                unique_vals = data[group_col].unique()
+                colors = px.colors.qualitative.Plotly
+                cat_map = {val: colors[i % len(colors)] for i, val in enumerate(unique_vals)}
+
+            for cat_value in cat_map.keys():
+                cat_mask = data[group_col] == cat_value
+                if not cat_mask.any():
+                    continue
+
+                subset = data[cat_mask]
+                legend_name = str(cat_value)
+
+                # Check if we should show this legend entry
+                show_legend = legend_name not in fig._ggplotly_shown_legendgroups
+                if show_legend:
+                    fig._ggplotly_shown_legendgroups.add(legend_name)
+
+                fig.add_trace(
+                    go.Bar(
+                        x=subset[x_col],
+                        y=subset[y_col],
+                        width=subset['width'] if 'width' in subset.columns else None,
+                        marker_color=cat_map.get(cat_value, style_props['default_color']),
+                        opacity=alpha,
+                        name=legend_name,
+                        showlegend=show_legend,
+                        legendgroup=legend_name,
+                    ),
+                    row=row,
+                    col=col,
+                )
+        else:
+            # Single histogram - one trace
+            color = style_props.get('color') or style_props.get('fill') or style_props['default_color']
+            fig.add_trace(
+                go.Bar(
+                    x=data[x_col],
+                    y=data[y_col],
+                    width=data['width'] if 'width' in data.columns else None,
+                    marker_color=color,
+                    opacity=alpha,
+                    name=self.params.get("name", "Histogram"),
+                    showlegend=self.params.get("showlegend", True),
+                ),
+                row=row,
+                col=col,
+            )
+
+        fig.update_yaxes(rangemode="tozero")
+        fig.update_layout(barmode=self.barmode)

@@ -32,7 +32,7 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 
 ## ggplot2 Function Coverage
 
-### Geoms (44)
+### Geoms (46)
 
 | Function | Description |
 |----------|-------------|
@@ -50,7 +50,9 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `geom_ribbon` | Ribbons with ymin/ymax |
 | `geom_smooth` | Smoothed lines (LOESS, linear) |
 | `geom_tile` | Rectangular tiles/heatmaps |
+| `geom_rect` | Rectangles (xmin/xmax/ymin/ymax) |
 | `geom_text` | Text labels |
+| `geom_label` | Text labels with background |
 | `geom_errorbar` | Error bars |
 | `geom_segment` | Line segments |
 | `geom_step` | Step plots |
@@ -66,13 +68,13 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `geom_range` | Range plots (min/max/avg) |
 | `geom_edgebundle` | Edge bundling for networks |
 | `geom_searoute` | Maritime shipping routes |
+| `geom_sankey` | Sankey flow diagrams |
 | `geom_point_3d` | 3D scatter plots |
 | `geom_surface` | 3D surface plots |
 | `geom_wireframe` | 3D wireframe plots |
 | `geom_candlestick` | Candlestick charts (financial) |
 | `geom_ohlc` | OHLC charts (financial) |
 | `geom_waterfall` | Waterfall charts (financial) |
-| `geom_sankey` | Sankey flow diagrams |
 | `geom_fanchart` | Fan charts for uncertainty |
 | `geom_stl` | STL decomposition plots |
 | `geom_acf` | Autocorrelation function plots |
@@ -99,7 +101,7 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `stat_qq` | Compute Q-Q quantiles |
 | `stat_qq_line` | Compute Q-Q reference line |
 
-### Scales (17)
+### Scales (19)
 
 | Function | Description |
 |----------|-------------|
@@ -107,6 +109,8 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `scale_y_continuous` | Continuous y-axis |
 | `scale_x_log10` | Log10 x-axis |
 | `scale_y_log10` | Log10 y-axis |
+| `scale_x_reverse` | Reversed x-axis |
+| `scale_y_reverse` | Reversed y-axis |
 | `scale_x_date` | Date x-axis |
 | `scale_x_datetime` | DateTime x-axis |
 | `scale_x_rangeslider` | Interactive range slider for zooming |
@@ -121,11 +125,12 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `scale_shape_manual` | Manual shape mapping |
 | `scale_size` | Size scaling |
 
-### Coordinates (4)
+### Coordinates (5)
 
 | Function | Description |
 |----------|-------------|
-| `coord_cartesian` | Cartesian coordinates |
+| `coord_cartesian` | Cartesian coordinates with zoom |
+| `coord_fixed` | Fixed aspect ratio coordinates |
 | `coord_flip` | Flip x and y axes |
 | `coord_polar` | Polar coordinates |
 | `coord_sf` | Spatial/geographic coordinates |
@@ -151,16 +156,25 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `theme_custom` | Custom theme builder |
 | `theme` | Theme modification |
 
-### Position Adjustments (6)
+### Theme Elements (3)
 
 | Function | Description |
 |----------|-------------|
+| `element_text` | Text element styling |
+| `element_line` | Line element styling |
+| `element_rect` | Rectangle element styling |
+
+### Position Adjustments (7)
+
+| Function | Description |
+|----------|-------------|
+| `position_identity` | No adjustment (identity) |
 | `position_dodge` | Dodge overlapping objects |
+| `position_dodge2` | Dodge with variable widths |
 | `position_jitter` | Add random noise |
 | `position_stack` | Stack objects |
 | `position_fill` | Stack and normalize to 100% |
 | `position_nudge` | Nudge points by fixed amount |
-| `position_identity` | No adjustment (identity) |
 
 ### Guides & Labels (7)
 
@@ -181,4 +195,14 @@ ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 | `ggsave` | Save plots to file |
 | `ggsize` | Set plot dimensions |
 
-## Total: ~113 ggplot2-equivalent functions
+### Other
+
+| Function | Description |
+|----------|-------------|
+| `aes` | Aesthetic mappings |
+| `after_stat` | Reference computed statistics |
+| `layer` | Create custom layers |
+| `map_data` | Load map data |
+| `data` | Access built-in datasets |
+
+## Total: ~120 ggplot2-equivalent functions

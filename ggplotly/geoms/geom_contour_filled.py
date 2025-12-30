@@ -9,6 +9,7 @@ from .geom_base import Geom
 class geom_contour_filled(Geom):
     """Geom for drawing filled contours from 2D data."""
 
+    required_aes = ['x', 'y']  # z is optional (computed from KDE if not provided)
     default_params = {"alpha": 0.8}
 
     def __init__(self, data=None, mapping=None, **params):

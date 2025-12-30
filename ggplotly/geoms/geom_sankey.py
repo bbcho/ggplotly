@@ -88,6 +88,8 @@ class geom_sankey(Geom):
     Each row represents a flow from source to target with the given value.
     """
 
+    required_aes = ['source', 'target', 'value']
+
     def __init__(self, data=None, mapping=None, **params):
         super().__init__(data, mapping, **params)
 

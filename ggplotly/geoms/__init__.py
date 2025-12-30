@@ -17,6 +17,7 @@ from .geom_fanchart import geom_fanchart
 from .geom_histogram import geom_histogram
 from .geom_hline import geom_hline
 from .geom_jitter import geom_jitter
+from .geom_label import geom_label
 from .geom_line import geom_line
 from .geom_lines import geom_lines
 from .geom_map import geom_map, geom_sf
@@ -28,6 +29,7 @@ from .geom_point_3d import geom_point_3d
 from .geom_qq import geom_qq
 from .geom_qq_line import geom_qq_line
 from .geom_range import geom_range
+from .geom_rect import geom_rect
 from .geom_ribbon import geom_ribbon
 from .geom_rug import geom_rug
 from .geom_sankey import geom_sankey
@@ -60,6 +62,8 @@ __all__ = [
     "geom_ribbon",
     "geom_tile",
     "geom_text",
+    "geom_label",
+    "geom_rect",
     "geom_errorbar",
     "geom_segment",
     "geom_step",

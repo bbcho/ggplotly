@@ -185,6 +185,9 @@ class AestheticMapper:
 
         Parameters:
             aesthetic: Name of the aesthetic to resolve (e.g., 'color', 'fill', 'size')
+
+        Raises:
+            ColumnNotFoundError: If value looks like a column name but doesn't exist
         """
         # First check mapping (aes), then params
         value = self.mapping.get(aesthetic) or self.params.get(aesthetic)
@@ -202,7 +205,12 @@ class AestheticMapper:
                 color_map = self._create_color_map(series)
             return value, series, color_map
         else:
-            # It's a literal value
+            # Value is not a column - could be a literal or a typo
+            # If validation is enabled and value is a string that looks like it could
+            # be a column name (not a color/known value), provide helpful error
+            if self.validate and isinstance(value, str) and aesthetic in ('x', 'y', 'group', 'label'):
+                # For positional aesthetics, a string must be a column reference
+                self.validate_column(value, aesthetic)
             return value, None, None
 
     def _is_continuous(self, series: pd.Series) -> bool:

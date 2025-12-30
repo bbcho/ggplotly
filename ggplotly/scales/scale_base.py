@@ -44,6 +44,59 @@ class Scale:
         """
         pass  # To be implemented by subclasses
 
+    def _apply_manual_color_mapping(self, fig, values, name=None, breaks=None,
+                                     labels=None, update_fill=False, guide='legend'):
+        """
+        Apply manual color mapping to figure traces.
+
+        Shared implementation for scale_color_manual and scale_fill_manual.
+
+        Parameters:
+            fig (Figure): Plotly figure object.
+            values (dict or list): Color mapping or list of colors.
+            name (str, optional): Legend title.
+            breaks (list, optional): Categories to show in legend.
+            labels (list, optional): Labels for breaks.
+            update_fill (bool): If True, also update fillcolor attribute.
+            guide (str): 'legend' or 'none' to control legend visibility.
+        """
+        # Create a mapping of categories to colors
+        if isinstance(values, dict):
+            color_map = values
+        else:
+            # Extract categories from trace names
+            categories = []
+            for trace in fig.data:
+                if hasattr(trace, 'name') and trace.name not in categories:
+                    categories.append(trace.name)
+            color_map = dict(zip(categories, values))
+
+        # Update trace colors based on the mapping
+        for trace in fig.data:
+            if hasattr(trace, 'name') and trace.name in color_map:
+                color = color_map[trace.name]
+                if hasattr(trace, 'marker') and trace.marker is not None:
+                    trace.marker.color = color
+                if hasattr(trace, 'line') and trace.line is not None:
+                    trace.line.color = color
+                if update_fill and hasattr(trace, 'fillcolor'):
+                    trace.fillcolor = color
+
+        # Update the legend title if provided
+        if name is not None:
+            fig.update_layout(legend_title_text=name)
+
+        # Update legend items if breaks and labels are provided
+        if breaks is not None and labels is not None:
+            for trace in fig.data:
+                if hasattr(trace, 'name') and trace.name in breaks:
+                    idx = breaks.index(trace.name)
+                    trace.name = labels[idx]
+
+        # Hide legend if guide is 'none'
+        if guide == 'none':
+            fig.update_layout(showlegend=False)
+
 
 class ScaleRegistry:
     """

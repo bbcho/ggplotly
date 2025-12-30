@@ -54,6 +54,8 @@ class geom_norm(Geom):
     >>> ggplot(df, aes(x='x')) + geom_histogram(aes(y=after_stat('density'))) + geom_norm(color='blue', size=3)
     """
 
+    required_aes = ['x']
+
     default_params = {
         "n": 101,
         "color": "red",

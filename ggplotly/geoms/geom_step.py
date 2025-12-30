@@ -15,13 +15,32 @@ class geom_step(Geom):
 
     Parameters:
         color (str, optional): Color of the steps.
+        colour (str, optional): Alias for color (British spelling).
+        size (float, optional): Line width. Default is 2.
+        linewidth (float, optional): Alias for size (ggplot2 3.4+ compatibility).
         linetype (str, optional): Line style ('solid', 'dash', etc.). Default is 'solid'.
         alpha (float, optional): Transparency level for the steps. Default is 1.
         group (str, optional): Grouping variable for the steps.
         stat (str, optional): The statistical transformation to use. Default is 'identity'.
+            Use 'ecdf' for empirical cumulative distribution function.
+        na_rm (bool, optional): If True, remove missing values. Default is False.
+        show_legend (bool, optional): Whether to show in legend. Default is True.
+
+    Examples:
+        >>> ggplot(df, aes(x='x', y='y')) + geom_step()
+        >>> ggplot(df, aes(x='x')) + geom_step(stat='ecdf')
     """
 
+    required_aes = ['x']  # y is optional when stat='ecdf'
     default_params = {"size": 2}
+
+    def _apply_stats(self, data):
+        """Add stat_ecdf if stat='ecdf'."""
+        if self.stats == []:
+            stat = self.params.get("stat", "identity")
+            if stat == "ecdf":
+                self.stats.append(stat_ecdf(mapping=self.mapping))
+        return super()._apply_stats(data)
 
     def _draw_impl(self, fig, data, row, col):
 
@@ -29,12 +48,6 @@ class geom_step(Geom):
         # Only use size from params (literal values)
         if "size" in self.mapping:
             del self.mapping["size"]
-
-        # Handle ECDF transformation using stat_ecdf
-        stat = self.params.get("stat", "identity")
-        if stat == "ecdf":
-            ecdf_stat = stat_ecdf(mapping=self.mapping)
-            data, self.mapping = ecdf_stat.compute(data)
 
         plot = go.Scatter
         line_dash = self.params.get("linetype", "solid")
