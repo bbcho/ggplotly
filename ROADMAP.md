@@ -110,7 +110,6 @@
 | `geom_freqpoly` | Geom | Frequency polygons | TODO |
 | `geom_spoke` | Geom | Line segments by angle | TODO |
 | `geom_curve` | Geom | Curved line segments | TODO |
-| `stat_spoke` | Stat | Spoke statistics | TODO |
 | `stat_bin_2d` | Stat | 2D binning | TODO |
 | `stat_boxplot` | Stat | Boxplot statistics | TODO |
 | `stat_unique` | Stat | Remove duplicates | TODO |
