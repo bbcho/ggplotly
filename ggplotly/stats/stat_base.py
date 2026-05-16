@@ -1,6 +1,19 @@
 import copy
 
 
+def coerce_stat_result(result):
+    """
+    Normalize stat outputs to the internal (data, mapping_updates) contract.
+
+    Older direct stat consumers returned bare data. Keep that public behavior
+    usable while giving render paths one explicit boundary.
+    """
+    if isinstance(result, tuple) and len(result) == 2:
+        data, mapping = result
+        return data, mapping or {}
+    return result, {}
+
+
 class Stat:
     """
     Base class for statistical transformations in ggplotly.
@@ -64,15 +77,12 @@ class Stat:
         Returns:
             Geom: A new geom with this stat applied.
         """
-        # if isinstance(other, Geom):
-        # other.add_stat(self)
-        self.mapping = {**self.mapping, **other.mapping}
-        self.params = {**self.params, **other.params}
-        self.data = other.data.copy()
-
+        new_stat = self.copy()
+        new_stat.mapping = {**new_stat.mapping, **other.mapping}
+        new_stat.params = {**new_stat.params, **other.params}
+        new_stat.data = other.data.copy() if other.data is not None else None
         new = other.copy()
-        new.stats = [*other.stats.copy()]
-        new.stats.append(self.copy())
+        new.stats = [*new.stats, new_stat]
         return new
 
     def compute(self, data):

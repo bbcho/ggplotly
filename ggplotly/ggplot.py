@@ -119,8 +119,13 @@ class ggplot:
             raise TypeError("Unsupported component")
 
     def __add__(self, other):
-        self.add_component(other)
-        return self.copy()
+        new_plot = self.copy()
+        if hasattr(other, "copy"):
+            component = other.copy()
+        else:
+            component = copy.deepcopy(other)
+        new_plot.add_component(component)
+        return new_plot
 
     def _needs_mathjax(self):
         """Check if any geom uses parse=True for LaTeX rendering."""
@@ -315,7 +320,8 @@ class ggplot:
 
             # Draw all geoms on the main figure
             for geom in self.layers:
-                geom.draw(self.fig, row=1, col=1)
+                draw_geom = geom.copy()
+                draw_geom.draw(self.fig, row=1, col=1)
 
         # Apply scales after plotting the geoms
         for scale in self.scales:

@@ -1,4 +1,5 @@
 import warnings
+import copy
 from typing import Optional
 
 from plotly.graph_objects import Figure
@@ -62,6 +63,41 @@ class Facet:
         """Apply global aesthetic maps to a geom."""
         geom._global_color_map = global_color_map
         geom._global_shape_map = global_shape_map
+
+    def _facet_geom_data(self, geom, plot_facet_data, facet_filters):
+        """Return per-panel data without mutating a stored geom's data."""
+        if not getattr(geom, '_has_explicit_data', False):
+            return plot_facet_data
+
+        geom_data = geom.data
+        if geom_data is None:
+            return geom_data
+
+        facet_data = geom_data
+        for facet_col, facet_value in facet_filters:
+            if facet_col is None or facet_col == '.':
+                continue
+            if facet_col not in facet_data.columns:
+                continue
+            facet_data = facet_data[facet_data[facet_col] == facet_value]
+        return facet_data
+
+    def _clone_geom_for_panel(
+        self,
+        geom,
+        panel_data,
+        plot_mapping,
+        global_color_map,
+        global_shape_map,
+        panel_params=None,
+    ):
+        """Prepare a panel-local geom clone for rendering."""
+        panel_geom = geom.copy() if hasattr(geom, "copy") else copy.deepcopy(geom)
+        self._apply_global_maps_to_geom(panel_geom, global_color_map, global_shape_map)
+        panel_geom.setup_data(panel_data, plot_mapping)
+        if panel_params:
+            panel_geom.params.update(panel_params)
+        return panel_geom
 
     def apply(self, plot) -> Optional[Figure]:
         """
@@ -299,31 +335,21 @@ class facet_grid(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting instead of plot.data
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        if has_rows and has_cols:
-                            geom_facet_data = geom.data[
-                                (geom.data[self.rows] == row_value)
-                                & (geom.data[self.cols] == col_value)
-                            ]
-                        elif has_rows:
-                            geom_facet_data = geom.data[geom.data[self.rows] == row_value]
-                        elif has_cols:
-                            geom_facet_data = geom.data[geom.data[self.cols] == col_value]
-                        else:
-                            geom_facet_data = geom.data
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass scene key for 3D geoms
-                    if scene_key:
-                        geom.params['_scene_key'] = scene_key
-
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom,
+                        facet_data,
+                        [(self.rows if has_rows else None, row_value), (self.cols if has_cols else None, col_value)],
+                    )
+                    panel_params = {'_scene_key': scene_key} if scene_key else None
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        panel_params,
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         return fig
 
@@ -512,19 +538,18 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass scene key for 3D geoms
-                    geom.params['_scene_key'] = scene_key
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        {'_scene_key': scene_key},
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         elif is_geo:
             # For geo subplots, we need to manually position each geo
@@ -578,25 +603,27 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass geo index and shared scale info
-                    geom.params['_geo_key'] = geo_key
-                    geom.params['_facet_idx'] = idx
-                    geom.params['_facet_count'] = n_facets
-                    geom.params['_facet_scales'] = self.scales
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_params = {
+                        '_geo_key': geo_key,
+                        '_facet_idx': idx,
+                        '_facet_count': n_facets,
+                        '_facet_scales': self.scales,
+                    }
                     if global_zmin is not None:
-                        geom.params['_global_zmin'] = global_zmin
-                        geom.params['_global_zmax'] = global_zmax
-                    geom.draw(fig, row=row+1, col=col+1)
+                        panel_params['_global_zmin'] = global_zmin
+                        panel_params['_global_zmax'] = global_zmax
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        panel_params,
+                    )
+                    panel_geom.draw(fig, row=row+1, col=col+1)
 
                 # Set up geo layout for this subplot with domain positioning
                 if map_type in ('state', 'usa'):
@@ -670,15 +697,16 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         return fig

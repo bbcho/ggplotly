@@ -3,6 +3,7 @@ import copy
 from ..aes import aes
 from ..aesthetic_mapper import AestheticMapper
 from ..exceptions import ColumnNotFoundError, RequiredAestheticError
+from ..stats.stat_base import coerce_stat_result
 from ..trace_builders import get_trace_builder
 
 
@@ -125,8 +126,11 @@ class Geom:
             self.params["size"] = self.params["linewidth"]
 
         # showlegend is an alias for show_legend (Plotly convention)
-        if "showlegend" in self.params and "show_legend" not in params:
-            self.params["show_legend"] = self.params["showlegend"]
+        show_legend = self.params.get("show_legend", True)
+        if "showlegend" in params and "show_legend" not in params:
+            show_legend = self.params["showlegend"]
+        self.params["show_legend"] = show_legend
+        self.params["showlegend"] = show_legend
 
         # colour is an alias for color (British spelling)
         if "colour" in self.params and "color" not in params:
@@ -151,7 +155,7 @@ class Geom:
             Geom: A new geom instance with copied data and stats.
         """
         new = copy.deepcopy(self)
-        new.stats = [*self.stats.copy()]
+        new.stats = [copy.deepcopy(stat) for stat in self.stats]
         return new
 
     def setup_data(self, data, plot_mapping):
@@ -309,7 +313,9 @@ class Geom:
             DataFrame: Transformed data after all stats applied.
         """
         for stat in self.stats:
-            data, self.mapping = stat.compute(data)
+            data, mapping_updates = coerce_stat_result(stat.compute(data))
+            if mapping_updates:
+                self.mapping = {**self.mapping, **mapping_updates}
         return data
 
     def _get_reference_line_color(self, default='#1f77b4'):
@@ -397,9 +403,9 @@ class Geom:
         # Determine the color to use
         if value_key is not None:
             # Looking up color for a specific category
-            if style_props['color_series'] is not None:
+            if style_props['color_series'] is not None and style_props.get('color_map') is not None:
                 color_value = style_props['color_map'].get(value_key)
-            elif style_props['fill_series'] is not None:
+            elif style_props['fill_series'] is not None and style_props.get('fill_map') is not None:
                 color_value = style_props['fill_map'].get(value_key)
             else:
                 # Handle None explicitly for literal values

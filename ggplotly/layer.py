@@ -51,6 +51,7 @@ import copy
 import pandas as pd
 
 from .aes import aes
+from .stats.stat_base import coerce_stat_result
 
 
 class Layer:
@@ -306,8 +307,8 @@ class Layer:
             stat_instance = self.stat
 
         # Apply the stat transformation
-        # Stats return (result, new_mapping) tuple
-        result, new_mapping = stat_instance.compute(data)
+        # Stats return (result, new_mapping) tuples; legacy stats may return bare data.
+        result, new_mapping = coerce_stat_result(stat_instance.compute(data))
 
         # Handle different result types from stats
         if isinstance(result, dict):
@@ -362,7 +363,7 @@ class Layer:
             )
         else:
             # Geom is already an instance - update its state
-            geom_instance = self.geom
+            geom_instance = self.geom.copy() if hasattr(self.geom, "copy") else copy.deepcopy(self.geom)
             geom_instance.data = draw_data
             geom_instance.mapping = self._mapping
 
