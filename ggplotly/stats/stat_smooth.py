@@ -1,5 +1,7 @@
 # stats/stat_smooth.py
 
+import warnings
+
 import numpy as np
 from scipy import stats as scipy_stats
 from sklearn.linear_model import LinearRegression
@@ -115,6 +117,9 @@ class stat_smooth(Stat):
 
         elif self.method == "loess":
             # Custom LOESS with configurable polynomial degree (default degree=2)
+            if self.degree not in (1, 2):
+                raise ValueError(f"Degree must be 1 or 2, got {self.degree}")
+
             x_array = np.array(x)
             y_array = np.array(y)
             n = len(x_array)
@@ -123,6 +128,7 @@ class stat_smooth(Stat):
             # Arrays to store results
             smoothed = np.zeros(n)
             hat_diag = np.zeros(n) if return_hat_diag else None
+            fallback_count = 0
 
             # For each data point, fit a local polynomial
             for i in range(n):
@@ -164,9 +170,6 @@ class stat_smooth(Stat):
                             x_norm,
                             x_norm ** 2
                         ])
-                    else:
-                        raise ValueError(f"Degree must be 1 or 2, got {self.degree}")
-
                     # Weighted least squares
                     W_sqrt = np.sqrt(weights)
                     X_weighted = X_design * W_sqrt[:, np.newaxis]
@@ -190,8 +193,9 @@ class stat_smooth(Stat):
                         XtX_inv = np.linalg.inv(XtX)
                         hat_diag[i] = XtX_inv[0, 0]
 
-                except Exception:
+                except (np.linalg.LinAlgError, FloatingPointError):
                     # Fallback to weighted mean
+                    fallback_count += 1
                     if np.sum(weights) > 0:
                         smoothed[i] = np.average(y_local, weights=weights)
                     else:
@@ -199,6 +203,13 @@ class stat_smooth(Stat):
 
                     if return_hat_diag:
                         hat_diag[i] = 1.0 / n_local  # Rough approximation
+
+            if fallback_count:
+                warnings.warn(
+                    f"LOESS used weighted-mean fallback for {fallback_count} local fits.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
 
             if return_hat_diag:
                 return smoothed, hat_diag

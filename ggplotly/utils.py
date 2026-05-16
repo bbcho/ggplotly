@@ -88,7 +88,6 @@ class ggsave(Utils):
         MathJax CDN enables LaTeX rendering (e.g., geom_text with parse=True).
         """
         plot.fig.write_html(self.filename, include_plotlyjs='cdn', include_mathjax='cdn')
-        print(f"Plot saved as HTML: {self.filename}")
 
     def save_png(self, plot, width, height):
         """
@@ -99,7 +98,6 @@ class ggsave(Utils):
             plot.fig.write_image(
                 self.filename, width=width, height=height, scale=self.scale
             )
-            print(f"Plot saved as PNG: {self.filename}")
         except ValueError as e:
             raise RuntimeError(
                 "Failed to save PNG. Ensure that `kaleido` is installed for saving PNG images."

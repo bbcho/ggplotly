@@ -218,17 +218,25 @@ class geom_searoute(Geom):
 
             try:
                 import searoute as sr
-            except (ImportError, ModuleNotFoundError):
-                raise ImportError("searoute package is required for geom_searoute but is not installed.")
+            except (ImportError, ModuleNotFoundError) as exc:
+                raise ImportError(
+                    "searoute package is required for geom_searoute but is not installed."
+                ) from exc
 
             route = sr.searoute(origin_list, dest_list, **kwargs)
-            self._route_cache[cache_key] = route
-            return route
-        except Exception as e:
-            if self.verbose:
-                print(f"Warning: Could not compute route from {origin} to {destination}: {e}")
+        except ImportError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to compute sea route from {origin} to {destination}."
+            ) from exc
+
+        if route is None:
             self._route_cache[cache_key] = None
             return None
+
+        self._route_cache[cache_key] = route
+        return route
 
     def _extract_route_coords(self, route):
         """

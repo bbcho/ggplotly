@@ -111,7 +111,7 @@ class geom_edgebundle(Geom):
         node_color: str = 'white',
         node_size: float = 3,
         node_alpha: float = 1.0,
-        verbose: bool = True,
+        verbose: bool = False,
         **kwargs
     ):
         """
@@ -180,7 +180,7 @@ class geom_edgebundle(Geom):
             Node marker size.
         node_alpha : float, default=1.0
             Node transparency (0-1).
-        verbose : bool, default=True
+        verbose : bool, default=False
             Print progress messages.
 
         Examples

@@ -5,6 +5,7 @@ Based on Holten & Van Wijk (2009) algorithm.
 Re-implementation from edgebundleexample with vectorized operations.
 """
 
+from collections import OrderedDict
 from typing import Optional
 
 import numpy as np
@@ -12,12 +13,29 @@ import pandas as pd
 from scipy import sparse
 
 # Module-level cache for bundling results (survives deepcopy of stat objects)
-_bundling_cache: dict[int, pd.DataFrame] = {}
+_MAX_BUNDLING_CACHE_SIZE = 32
+_bundling_cache: OrderedDict[int, pd.DataFrame] = OrderedDict()
 
 
 def clear_bundling_cache():
     """Clear the edge bundling cache."""
     _bundling_cache.clear()
+
+
+def _get_bundling_cache(cache_key: int) -> Optional[pd.DataFrame]:
+    """Return a copy of a cached bundling result."""
+    if cache_key not in _bundling_cache:
+        return None
+    _bundling_cache.move_to_end(cache_key)
+    return _bundling_cache[cache_key].copy(deep=True)
+
+
+def _store_bundling_cache(cache_key: int, result: pd.DataFrame) -> None:
+    """Store a copy of a bundling result and enforce LRU bounds."""
+    _bundling_cache[cache_key] = result.copy(deep=True)
+    _bundling_cache.move_to_end(cache_key)
+    while len(_bundling_cache) > _MAX_BUNDLING_CACHE_SIZE:
+        _bundling_cache.popitem(last=False)
 
 
 def _euclidean_distance(p1, p2):
@@ -472,7 +490,7 @@ class stat_edgebundle:
         Rate of iteration decrease per cycle
     compatibility_threshold : float, default=0.6
         Threshold for edge compatibility (0-1)
-    verbose : bool, default=True
+    verbose : bool, default=False
         Print progress messages
 
     Examples
@@ -496,7 +514,7 @@ class stat_edgebundle:
         I: int = 50,
         I_rate: float = 2/3,
         compatibility_threshold: float = 0.6,
-        verbose: bool = True
+        verbose: bool = False
     ):
         self.K = K
         self.E = E
@@ -577,10 +595,11 @@ class stat_edgebundle:
 
         # Check module-level cache (survives deepcopy of stat objects)
         cache_key = self._compute_cache_key(data, weights)
-        if cache_key in _bundling_cache:
+        cached = _get_bundling_cache(cache_key)
+        if cached is not None:
             if self.verbose:
                 print("Using cached bundling result")
-            return _bundling_cache[cache_key]
+            return cached
 
         # Normalize weights if provided
         normalized_weights = None
@@ -600,7 +619,7 @@ class stat_edgebundle:
         result = self._bundle_edges(edges_xy, normalized_weights)
 
         # Cache the result at module level
-        _bundling_cache[cache_key] = result
+        _store_bundling_cache(cache_key, result)
 
         return result
 
