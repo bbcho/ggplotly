@@ -126,9 +126,16 @@ class Geom:
             self.params["size"] = self.params["linewidth"]
 
         # showlegend is an alias for show_legend (Plotly convention)
-        show_legend = self.params.get("show_legend", True)
-        if "showlegend" in params and "show_legend" not in params:
-            show_legend = self.params["showlegend"]
+        if "show_legend" in params:
+            show_legend = params["show_legend"]
+        elif "showlegend" in params:
+            show_legend = params["showlegend"]
+        elif "show_legend" in self.default_params:
+            show_legend = self.default_params["show_legend"]
+        elif "showlegend" in self.default_params:
+            show_legend = self.default_params["showlegend"]
+        else:
+            show_legend = self.params.get("show_legend", True)
         self.params["show_legend"] = show_legend
         self.params["showlegend"] = show_legend
 
