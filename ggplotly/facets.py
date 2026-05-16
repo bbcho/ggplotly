@@ -21,6 +21,24 @@ class Facet:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('category')
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + facet_grid('row_var', 'col_var')
     """
+    def _is_continuous_aesthetic(self, series):
+        """Mirror aesthetic mapper's continuous color heuristic for global maps."""
+        import pandas as pd
+
+        if not pd.api.types.is_numeric_dtype(series):
+            return False
+
+        n_unique = series.nunique()
+        n_total = len(series)
+        if n_unique > 20:
+            return True
+        if n_total > 0 and n_unique / n_total > 0.5:
+            return True
+        if pd.api.types.is_float_dtype(series):
+            if not series.dropna().apply(lambda x: float(x).is_integer()).all():
+                return True
+        return False
+
     def _compute_global_aesthetic_maps(self, plot):
         """
         Compute global color and shape maps from the full dataset.
@@ -41,12 +59,16 @@ class Facet:
 
         # Compute global color map
         global_color_map = None
-        color_col = mapping.get('color') or mapping.get('fill')
+        color_col = mapping.get('color')
+        if color_col is None:
+            color_col = mapping.get('fill')
         if color_col and color_col in data.columns:
-            unique_values = data[color_col].dropna().unique()
-            global_color_map = {}
-            for i, val in enumerate(unique_values):
-                global_color_map[val] = palette[i % len(palette)]
+            series = data[color_col]
+            if not self._is_continuous_aesthetic(series):
+                unique_values = series.dropna().unique()
+                global_color_map = {}
+                for i, val in enumerate(unique_values):
+                    global_color_map[val] = palette[i % len(palette)]
 
         # Compute global shape map
         global_shape_map = None

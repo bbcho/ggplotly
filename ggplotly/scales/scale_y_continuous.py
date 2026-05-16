@@ -53,7 +53,20 @@ class scale_y_continuous(Scale):
                 # Custom transformation needed as Plotly doesn't support 'sqrt' natively
                 yaxis_update["type"] = "linear"
                 yaxis_update["tickmode"] = "linear"
-                fig.data[0].y = [np.sqrt(val) for val in fig.data[0].y]
+                def sqrt_value(val):
+                    if val is None:
+                        return None
+                    try:
+                        if np.isnan(val) or val < 0:
+                            return None
+                    except TypeError:
+                        return None
+                    return np.sqrt(val)
+
+                for trace in fig.data:
+                    if not hasattr(trace, "y") or trace.y is None:
+                        continue
+                    trace.y = [sqrt_value(val) for val in trace.y]
             else:
                 raise ValueError(f"Unsupported transformation: {self.trans}")
 

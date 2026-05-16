@@ -100,7 +100,7 @@ class geom_smooth(Geom):
         group_col = None
         if style_props['group_series'] is not None:
             group_col = self.mapping.get('group')
-        elif style_props['color_series'] is not None:
+        elif style_props['color_series'] is not None and not style_props.get('color_is_continuous', False):
             group_col = self.mapping.get('color')
 
         if group_col and group_col in data.columns:

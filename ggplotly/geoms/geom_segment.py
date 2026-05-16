@@ -47,6 +47,8 @@ class geom_segment(Geom):
         linetype = self.params.get("linetype", "solid")
         alpha = style_props['alpha']
         group_values = style_props['group_series']
+        base_showlegend = self._showlegend()
+        continuous_colors = self._continuous_color_values(style_props)
 
         # Arrow configuration
         arrow = self.params.get("arrow", False)
@@ -77,6 +79,9 @@ class geom_segment(Geom):
 
                 # Create separate segments for each data point in the group
                 for i, idx in enumerate(data[group_mask].index):
+                    row_props = trace_props.copy()
+                    if continuous_colors is not None:
+                        row_props["line_color"] = continuous_colors.loc[idx]
                     scatter_kwargs = dict(
                         x=[x[idx], xend[idx]],
                         y=[y[idx], yend[idx]],
@@ -85,13 +90,13 @@ class geom_segment(Geom):
                         opacity=alpha,
                         name=str(group),
                         legendgroup=str(group),
-                        showlegend=(i == 0),  # Only show legend for first segment
-                        **trace_props,
+                        showlegend=base_showlegend and continuous_colors is None and i == 0,
+                        **row_props,
                     )
                     if marker_config:
                         scatter_kwargs["marker"] = marker_config
                     fig.add_trace(go.Scatter(**scatter_kwargs), row=row, col=col)
-        elif style_props['color_series'] is not None:
+        elif style_props['color_series'] is not None and not style_props.get('color_is_continuous', False):
             # Case 2: Colored by categorical variable
             cat_map = style_props['color_map']
             cat_col = style_props['color']
@@ -110,7 +115,7 @@ class geom_segment(Geom):
                         opacity=alpha,
                         name=str(cat_value),
                         legendgroup=str(cat_value),
-                        showlegend=(i == 0),  # Only show legend for first segment
+                        showlegend=base_showlegend and i == 0,
                         **trace_props,
                     )
                     if marker_config:
@@ -121,6 +126,9 @@ class geom_segment(Geom):
             trace_props = self._apply_color_targets(color_targets, style_props)
 
             for i, idx in enumerate(data.index):
+                row_props = trace_props.copy()
+                if continuous_colors is not None:
+                    row_props["line_color"] = continuous_colors.loc[idx]
                 scatter_kwargs = dict(
                     x=[x[idx], xend[idx]],
                     y=[y[idx], yend[idx]],
@@ -129,8 +137,8 @@ class geom_segment(Geom):
                     opacity=alpha,
                     name=self.params.get("name", "Segment"),
                     legendgroup="segment",
-                    showlegend=(i == 0),  # Only show legend for first segment
-                    **trace_props,
+                    showlegend=base_showlegend and continuous_colors is None and i == 0,
+                    **row_props,
                 )
                 if marker_config:
                     scatter_kwargs["marker"] = marker_config

@@ -1,7 +1,7 @@
 import copy
 
 from ..aes import aes
-from ..aesthetic_mapper import AestheticMapper
+from ..aesthetic_mapper import AestheticMapper, map_continuous_colors
 from ..exceptions import ColumnNotFoundError, RequiredAestheticError
 from ..stats.stat_base import coerce_stat_result
 from ..trace_builders import get_trace_builder
@@ -382,6 +382,32 @@ class Geom:
             global_shape_map=self._global_shape_map
         )
         return mapper.get_style_properties()
+
+    def _showlegend(self, default=True):
+        """Return the normalized legend flag for direct trace-building geoms."""
+        return bool(self.params.get("showlegend", self.params.get("show_legend", default)))
+
+    def _continuous_color_values(self, style_props, prefer_fill=False):
+        """Return per-row colors for continuous color/fill mappings, or None."""
+        if prefer_fill:
+            if style_props.get('fill_series') is not None and style_props.get('fill_is_continuous'):
+                series = style_props['fill_series']
+            elif style_props.get('color_series') is not None and style_props.get('color_is_continuous'):
+                series = style_props['color_series']
+            else:
+                return None
+        elif style_props.get('color_series') is not None and style_props.get('color_is_continuous'):
+            series = style_props['color_series']
+        elif style_props.get('fill_series') is not None and style_props.get('fill_is_continuous'):
+            series = style_props['fill_series']
+        else:
+            return None
+
+        return map_continuous_colors(
+            series,
+            palette=self.params.get("palette", "Viridis"),
+            default_color=style_props['default_color'],
+        )
 
     def _apply_color_targets(self, target_props: dict, style_props: dict, value_key=None, data_mask=None, shape_key=None) -> dict:
         """

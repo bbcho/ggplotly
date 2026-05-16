@@ -46,28 +46,46 @@ class geom_tile(Geom):
                     col=col,
                 )
             else:
-                # Handle categorical fill (converts to color map)
-                if not pd.api.types.is_categorical_dtype(z):
-                    data[self.mapping["fill"]] = pd.Categorical(z)
-                    z = data[self.mapping["fill"]]
+                # Handle categorical fill as numeric codes with labeled colorbar.
+                categorical = pd.Categorical(z)
+                categories = list(categorical.categories)
+                if not categories:
+                    return
 
-                unique_colors = z.unique()
                 color_map = {
                     val: px.colors.qualitative.Plotly[
                         i % len(px.colors.qualitative.Plotly)
                     ]
-                    for i, val in enumerate(unique_colors)
+                    for i, val in enumerate(categories)
                 }
-                z = z.map(color_map)
+
+                codes = pd.Series(categorical.codes, index=z.index)
+                codes = codes.mask(codes < 0)
+                if len(categories) == 1:
+                    colorscale = [[0, color_map[categories[0]]], [1, color_map[categories[0]]]]
+                else:
+                    colorscale = []
+                    for i, category in enumerate(categories):
+                        start = i / len(categories)
+                        end = (i + 1) / len(categories)
+                        colorscale.extend([[start, color_map[category]], [end, color_map[category]]])
 
                 fig.add_trace(
                     go.Heatmap(
                         x=x,
                         y=y,
-                        z=None,  # z is ignored in case of categorical values
-                        colorscale=[(0, color_map[val]) for val in unique_colors],
+                        z=codes,
+                        zmin=0,
+                        zmax=max(len(categories) - 1, 1),
+                        colorscale=colorscale,
                         opacity=alpha,
                         name=self.params.get("name", "Tile"),
+                        colorbar=dict(
+                            title=self.params.get("name", "Tile"),
+                            tickmode="array",
+                            tickvals=list(range(len(categories))),
+                            ticktext=[str(category) for category in categories],
+                        ),
                     ),
                     row=row,
                     col=col,

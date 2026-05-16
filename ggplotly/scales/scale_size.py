@@ -39,6 +39,10 @@ class scale_size(Scale):
 
         size_min, size_max = min(size_data), max(size_data)
         size_range = self.range
+        if size_max == size_min:
+            constant_size = (size_range[0] + size_range[1]) / 2
+        else:
+            constant_size = None
 
         # Apply scaling to marker sizes
         for trace in fig.data:
@@ -46,16 +50,19 @@ class scale_size(Scale):
                 size = trace.marker.size
                 if isinstance(size, (list, tuple, np.ndarray)):
                     # Normalize and scale sizes
-                    normalized_sizes = [
-                        ((s - size_min) / (size_max - size_min))
-                        * (size_range[1] - size_range[0])
-                        + size_range[0]
-                        for s in size
-                    ]
+                    if constant_size is not None:
+                        normalized_sizes = [constant_size for _ in size]
+                    else:
+                        normalized_sizes = [
+                            ((s - size_min) / (size_max - size_min))
+                            * (size_range[1] - size_range[0])
+                            + size_range[0]
+                            for s in size
+                        ]
                     trace.marker.size = normalized_sizes
                 else:
                     # Single size value; scale directly
-                    trace.marker.size = size_range[0]
+                    trace.marker.size = constant_size if constant_size is not None else size_range[0]
 
         # Update legend if needed
         if self.name is not None:
