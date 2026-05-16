@@ -47,7 +47,7 @@ class geom_segment(Geom):
         linetype = self.params.get("linetype", "solid")
         alpha = style_props['alpha']
         group_values = style_props['group_series']
-        base_showlegend = self._showlegend()
+        base_showlegend = self._show_legend()
         continuous_colors = self._continuous_color_values(style_props)
 
         # Arrow configuration

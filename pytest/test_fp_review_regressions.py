@@ -89,9 +89,17 @@ def test_bare_stat_results_still_render_through_geom_boundary():
 def test_show_legend_aliases_are_normalized():
     df = pd.DataFrame({"x": [1, 2], "y": [3, 4]})
 
-    fig = (ggplot(df, aes(x="x", y="y")) + geom_point(show_legend=False)).draw()
+    fig = (ggplot(df, aes(x="x", y="y")) + geom_point(**{"show.legend": False})).draw()
 
     assert fig.data[0].showlegend is False
+
+
+def test_na_rm_accepts_ggplot2_dotted_alias():
+    df = pd.DataFrame({"x": [1, 2], "y": [3.0, None]})
+
+    fig = (ggplot(df, aes(x="x", y="y")) + geom_point(**{"na.rm": True})).draw()
+
+    assert list(fig.data[0].x) == [1]
 
 
 def test_falsey_group_column_name_is_resolved():

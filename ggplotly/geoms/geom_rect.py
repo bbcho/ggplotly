@@ -71,7 +71,7 @@ class geom_rect(Geom):
         linewidth = style_props.get("size", 1)
         alpha = style_props["alpha"]
         group_values = style_props["group_series"]
-        base_showlegend = self._showlegend()
+        base_showlegend = self._show_legend()
         continuous_colors = self._continuous_color_values(style_props, prefer_fill=True)
 
         # Border color - use 'color' param or None for no border

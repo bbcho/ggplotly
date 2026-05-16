@@ -98,6 +98,16 @@ class Geom:
     # Optional aesthetics that can be mapped to columns
     optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group']
 
+    @staticmethod
+    def _normalize_param_aliases(params):
+        """Normalize ggplot2-style parameter aliases before default merging."""
+        normalized = params.copy()
+        if "na.rm" in normalized and "na_rm" not in normalized:
+            normalized["na_rm"] = normalized["na.rm"]
+        if "show.legend" in normalized and "show_legend" not in normalized and "showlegend" not in normalized:
+            normalized["show_legend"] = normalized["show.legend"]
+        return normalized
+
     def __init__(self, data=None, mapping=None, **params):
         """
         Initialize the geom.
@@ -115,6 +125,8 @@ class Geom:
             self.data = data
             self.mapping = mapping.mapping if mapping else {}
 
+        params = self._normalize_param_aliases(params)
+
         # Merge base class defaults, subclass defaults, and user-provided params
         # Base class defaults for na_rm, show_legend
         base_defaults = {"na_rm": False, "show_legend": True}
@@ -125,7 +137,8 @@ class Geom:
         if "linewidth" in self.params and "size" not in params:
             self.params["size"] = self.params["linewidth"]
 
-        # showlegend is an alias for show_legend (Plotly convention)
+        # show_legend is the Python spelling of ggplot2's show.legend.
+        # showlegend remains accepted for older Plotly-style call sites.
         if "show_legend" in params:
             show_legend = params["show_legend"]
         elif "showlegend" in params:
@@ -143,8 +156,7 @@ class Geom:
         if "colour" in self.params and "color" not in params:
             self.params["color"] = self.params["colour"]
 
-        # na.rm style can be passed as na_rm (Python convention)
-        # Already handled by default, but normalize any variants
+        # na.rm aliases are normalized before default merging.
 
         self.stats = []
         self.layers = []
@@ -390,7 +402,7 @@ class Geom:
         )
         return mapper.get_style_properties()
 
-    def _showlegend(self, default=True):
+    def _show_legend(self, default=True):
         """Return the normalized legend flag for direct trace-building geoms."""
         return bool(self.params.get("showlegend", self.params.get("show_legend", default)))
 
