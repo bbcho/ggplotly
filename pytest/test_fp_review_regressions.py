@@ -7,19 +7,24 @@ import pytest
 from ggplotly import (
     aes,
     facet_wrap,
+    geom_abline,
     geom_bar,
     geom_col,
     geom_density,
     geom_errorbar,
     geom_histogram,
+    geom_line,
+    geom_lines,
     geom_point,
     geom_rect,
     geom_segment,
     geom_smooth,
+    geom_text,
     geom_tile,
     ggplot,
     ggsave,
     position_fill,
+    position_nudge,
     scale_size,
     scale_y_continuous,
 )
@@ -365,3 +370,70 @@ def test_bar_trace_specs_keep_position_fill_invariants():
     assert result.barmode == "relative"
     assert result.yaxis_range == (0.0, 1.0)
     assert totals == {"A": 1.0, "B": 1.0}
+
+
+def test_abline_uses_finite_data_extent_instead_of_huge_fake_range():
+    df = pd.DataFrame({"x": [1, 2, 3], "y": [1, 2, 4]})
+
+    fig = (
+        ggplot(df, aes(x="x", y="y"))
+        + geom_point()
+        + geom_abline(slope=1, intercept=0)
+    ).draw()
+
+    assert list(fig.data[-1].x) == [1.0, 3.0]
+
+
+def test_mapped_linetype_creates_distinct_line_dashes():
+    df = pd.DataFrame({
+        "x": [1, 2, 3, 1, 2, 3],
+        "y": [1, 2, 3, 3, 2, 1],
+        "style": ["forecast", "forecast", "forecast", "actual", "actual", "actual"],
+    })
+
+    fig = (ggplot(df, aes(x="x", y="y", linetype="style")) + geom_line()).draw()
+
+    assert len(fig.data) == 2
+    assert {trace.line.dash for trace in fig.data} == {"solid", "dash"}
+
+
+def test_position_nudge_object_offsets_text_coordinates():
+    df = pd.DataFrame({"x": [1, 2], "y": [3, 4], "label": ["a", "b"]})
+
+    fig = (
+        ggplot(df, aes(x="x", y="y", label="label"))
+        + geom_text(position=position_nudge(x=0.5, y=0.25))
+    ).draw()
+
+    assert list(fig.data[0].x) == [1.5, 2.5]
+    assert list(fig.data[0].y) == [3.25, 4.25]
+
+
+def test_size_mapped_points_are_scaled_to_visible_marker_range():
+    df = pd.DataFrame({"x": [1, 2], "y": [1, 2], "s": [1, 100]})
+
+    fig = (ggplot(df, aes(x="x", y="y", size="s")) + geom_point()).draw()
+
+    assert list(fig.data[0].marker.size) == [5.0, 20.0]
+
+
+def test_lm_smooth_confidence_band_is_narrowest_near_x_mean():
+    df = pd.DataFrame({
+        "x": [0, 1, 2, 3, 4],
+        "y": [0.0, 1.2, 1.9, 3.1, 4.0],
+    })
+
+    result = stat_smooth(method="lm", se=True).compute_stat(df, x_col="x", y_col="y")
+    widths = result["ymax"] - result["ymin"]
+
+    assert widths.iloc[2] < widths.iloc[0]
+    assert widths.max() < 1.0
+
+
+def test_wide_datetime_index_lines_preserve_datetime_values():
+    dates = pd.date_range("2024-01-01", periods=3)
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [3, 2, 1]}, index=dates)
+
+    fig = (ggplot(df) + geom_lines()).draw()
+
+    assert pd.Timestamp(fig.data[0].x[0]) == dates[0]

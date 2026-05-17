@@ -337,7 +337,7 @@ class TestSizeMappingAcrossBuilders:
         p = ggplot(data, aes(x='x', y='y', size='size_val')) + geom_point()
         fig = p.draw()
 
-        assert list(fig.data[0].marker.size) == [5, 10, 15]
+        assert list(fig.data[0].marker.size) == [5.0, 12.5, 20.0]
 
     def test_size_mapped_in_grouped_traces(self, grouped_data):
         """Test that size is preserved when splitting by color."""

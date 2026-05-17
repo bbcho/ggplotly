@@ -339,6 +339,22 @@ class stat_smooth(Stat):
                 se_i = residual_std * np.sqrt(hat_diag[i]) * 4.0
                 margin[i] = t_value * se_i
 
+        elif self.method == "lm":
+            x_array = np.asarray(x, dtype=float)
+            df = max(n - 2, 1)
+            t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
+            if n <= 2:
+                margin = np.zeros(n)
+            else:
+                x_mean = np.mean(x_array)
+                sxx = np.sum((x_array - x_mean) ** 2)
+                if sxx == 0:
+                    margin = np.zeros(n)
+                else:
+                    sigma = np.sqrt(np.sum(residuals ** 2) / df)
+                    se_fit = sigma * np.sqrt((1 / n) + ((x_array - x_mean) ** 2 / sxx))
+                    margin = t_value * se_fit
+
         elif self.method == "lowess":
             # For LOWESS, use edge-adjusted confidence intervals
             x_array = np.array(x)
@@ -369,7 +385,7 @@ class stat_smooth(Stat):
 
                 margin[i] = t_value * se_i
         else:
-            # For linear models, use constant margin
+            # Conservative fallback for other smoothers.
             df = max(n - 2, 1)
             t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
             margin = t_value * residual_std

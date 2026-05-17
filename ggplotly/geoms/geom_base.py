@@ -96,7 +96,7 @@ class Geom:
     required_aes: list = []
 
     # Optional aesthetics that can be mapped to columns
-    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group']
+    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group', 'linetype']
 
     @staticmethod
     def _normalize_param_aliases(params):
