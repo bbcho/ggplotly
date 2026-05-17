@@ -7,7 +7,11 @@ import pytest
 from ggplotly import (
     aes,
     facet_wrap,
+    geom_bar,
+    geom_col,
+    geom_density,
     geom_errorbar,
+    geom_histogram,
     geom_point,
     geom_rect,
     geom_segment,
@@ -15,9 +19,11 @@ from ggplotly import (
     geom_tile,
     ggplot,
     ggsave,
+    position_fill,
     scale_size,
     scale_y_continuous,
 )
+from ggplotly.geoms._bar_positioning import compute_bar_trace_specs
 from ggplotly.aesthetic_mapper import AestheticMapper
 from ggplotly.geoms.geom_searoute import geom_searoute
 from ggplotly.stats.stat_base import Stat
@@ -251,3 +257,111 @@ def test_ggsave_does_not_print_by_default(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_geom_col_fill_and_outline_are_separate_marker_properties():
+    df = pd.DataFrame({"x": ["A", "B"], "y": [2, 3]})
+
+    fig = (
+        ggplot(df, aes(x="x", y="y"))
+        + geom_col(fill="steelblue", color="black")
+    ).draw()
+
+    assert fig.data[0].marker.color == "steelblue"
+    assert fig.data[0].marker.line.color == "black"
+    assert fig.data[0].marker.line.width == 1
+
+
+def test_geom_bar_default_stacks_and_dodge_uses_grouped_barmode():
+    df = pd.DataFrame({
+        "category": ["A", "A", "A", "B", "B", "B"],
+        "group": ["X", "Y", "Y", "X", "X", "Y"],
+    })
+
+    stacked = (ggplot(df, aes(x="category", fill="group")) + geom_bar()).draw()
+    dodged = (
+        ggplot(df, aes(x="category", fill="group"))
+        + geom_bar(position="dodge")
+    ).draw()
+
+    assert stacked.layout.barmode == "relative"
+    assert all(trace.offsetgroup is None for trace in stacked.data)
+    assert dodged.layout.barmode == "group"
+    assert {trace.offsetgroup for trace in dodged.data} == {"X", "Y"}
+
+
+def test_position_fill_normalizes_each_x_stack_to_one():
+    df = pd.DataFrame({
+        "category": ["A", "A", "B", "B"],
+        "group": ["X", "Y", "X", "Y"],
+        "value": [1, 3, 2, 2],
+    })
+
+    fig = (
+        ggplot(df, aes(x="category", y="value", fill="group"))
+        + geom_col(position=position_fill())
+    ).draw()
+
+    totals = {"A": 0.0, "B": 0.0}
+    for trace in fig.data:
+        for x_value, y_value in zip(trace.x, trace.y):
+            totals[x_value] += float(y_value)
+
+    assert totals == {"A": 1.0, "B": 1.0}
+    assert tuple(fig.layout.yaxis.range) == (0, 1)
+
+
+def test_histogram_fill_and_outline_follow_ggplot2_roles():
+    df = pd.DataFrame({"x": [1, 1, 2, 2, 3, 3]})
+
+    fig = (
+        ggplot(df, aes(x="x"))
+        + geom_histogram(bins=2, fill="#FF6B6B", color="white")
+    ).draw()
+
+    assert fig.data[0].marker.color == "#FF6B6B"
+    assert fig.data[0].marker.line.color == "white"
+    assert fig.data[0].marker.line.width == 1
+
+
+def test_density_fill_literal_draws_filled_area():
+    df = pd.DataFrame({"x": [-2, -1, -0.5, 0, 0.5, 1, 2]})
+
+    fig = (ggplot(df, aes(x="x")) + geom_density(fill="lightblue")).draw()
+
+    assert fig.data[0].fill == "tozeroy"
+    assert fig.data[0].fillcolor == "lightblue"
+
+
+def test_bar_trace_specs_keep_position_fill_invariants():
+    data = pd.DataFrame({
+        "x": ["A", "A", "B", "B"],
+        "y": [2, 6, 5, 5],
+        "group": ["left", "right", "left", "right"],
+    })
+    style_props = {
+        "fill_series": data["group"],
+        "fill_map": {"left": "red", "right": "blue"},
+        "color_series": None,
+        "color_map": None,
+        "fill": "group",
+        "color": None,
+        "default_color": "#1f77b4",
+    }
+
+    result = compute_bar_trace_specs(
+        data,
+        {"x": "x", "y": "y", "fill": "group"},
+        {"position": position_fill(), "width": 0.9},
+        style_props,
+        "Column",
+    )
+
+    totals = {"A": 0.0, "B": 0.0}
+    for trace in result.traces:
+        for x_value, y_value in zip(trace.x, trace.y):
+            totals[x_value] += y_value
+
+    assert result.barmode == "relative"
+    assert result.yaxis_range == (0.0, 1.0)
+    assert totals == {"A": 1.0, "B": 1.0}

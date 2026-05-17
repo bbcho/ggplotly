@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from ..stats.stat_bin import stat_bin
+from ._bar_positioning import resolve_bar_position_kind
 from .geom_base import Geom
 
 
@@ -223,6 +224,8 @@ class geom_histogram(Geom):
         # Get x and y column names from mapping
         x_col = self.mapping.get("x", "x")
         y_col = self.mapping.get("y", "count")
+        position_kind = resolve_bar_position_kind(self.params.get("position"))
+        line_width = self.params.get("linewidth", self.params.get("size", None))
 
         # Initialize legend tracking on figure if not present
         if not hasattr(fig, '_ggplotly_shown_legendgroups'):
@@ -230,7 +233,7 @@ class geom_histogram(Geom):
 
         if group_col is not None:
             # Grouped histogram - one trace per group with proper width
-            cat_map = style_props.get('color_map') or style_props.get('fill_map', {})
+            cat_map = style_props.get('fill_map') or style_props.get('color_map') or {}
             if not cat_map:
                 # Build a color map from unique values
                 import plotly.express as px
@@ -238,13 +241,27 @@ class geom_histogram(Geom):
                 colors = px.colors.qualitative.Plotly
                 cat_map = {val: colors[i % len(colors)] for i, val in enumerate(unique_vals)}
 
+            plot_data = data.copy()
+            if position_kind == "fill":
+                totals = plot_data.groupby(x_col, dropna=False)[y_col].transform("sum")
+                plot_data[y_col] = plot_data[y_col] / totals.where(totals != 0, 1)
+
             for cat_value in cat_map.keys():
-                cat_mask = data[group_col] == cat_value
+                cat_mask = plot_data[group_col] == cat_value
                 if not cat_mask.any():
                     continue
 
-                subset = data[cat_mask]
+                subset = plot_data[cat_mask]
                 legend_name = str(cat_value)
+                if style_props.get('fill_series') is not None:
+                    fill_color = (style_props.get('fill_map') or {}).get(cat_value, style_props['default_color'])
+                else:
+                    fill_color = style_props.get('fill') or style_props['default_color']
+                if style_props.get('color_series') is not None:
+                    outline_color = (style_props.get('color_map') or {}).get(cat_value)
+                else:
+                    outline_color = style_props.get('color')
+                outline_width = line_width if line_width is not None else (1 if outline_color is not None else 0)
 
                 # Check if we should show this legend entry
                 show_legend = legend_name not in fig._ggplotly_shown_legendgroups
@@ -256,7 +273,9 @@ class geom_histogram(Geom):
                         x=subset[x_col],
                         y=subset[y_col],
                         width=subset['width'] if 'width' in subset.columns else None,
-                        marker_color=cat_map.get(cat_value, style_props['default_color']),
+                        marker_color=fill_color,
+                        marker_line_color=outline_color,
+                        marker_line_width=outline_width,
                         opacity=alpha,
                         name=legend_name,
                         showlegend=show_legend,
@@ -267,13 +286,20 @@ class geom_histogram(Geom):
                 )
         else:
             # Single histogram - one trace
-            color = style_props.get('color') or style_props.get('fill') or style_props['default_color']
+            fill_color = style_props.get('fill') or style_props['default_color']
+            outline_color = style_props.get('color')
+            outline_width = line_width if line_width is not None else (1 if outline_color is not None else 0)
+            y_values = data[y_col]
+            if position_kind == "fill":
+                y_values = y_values / y_values.where(y_values != 0, 1)
             fig.add_trace(
                 go.Bar(
                     x=data[x_col],
-                    y=data[y_col],
+                    y=y_values,
                     width=data['width'] if 'width' in data.columns else None,
-                    marker_color=color,
+                    marker_color=fill_color,
+                    marker_line_color=outline_color,
+                    marker_line_width=outline_width,
                     opacity=alpha,
                     name=self.params.get("name", "Histogram"),
                     showlegend=self.params.get("showlegend", True),
@@ -283,4 +309,7 @@ class geom_histogram(Geom):
             )
 
         fig.update_yaxes(rangemode="tozero")
-        fig.update_layout(barmode=self.barmode)
+        if position_kind == "fill":
+            fig.update_yaxes(range=(0, 1), row=row, col=col)
+        barmode = {"dodge": "group", "fill": "relative", "stack": "relative", "identity": "overlay"}.get(position_kind, self.barmode)
+        fig.update_layout(barmode=barmode)

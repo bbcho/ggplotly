@@ -187,11 +187,15 @@ class geom_density(Geom):
         # Handle Plotly's fill parameter (tonexty, tozeroy, etc.) separately from fill aesthetic
         fill_param = self.params.get("fill", None)
         plotly_fill = None
+        removed_plotly_fill_param = False
         if fill_param in ['tonexty', 'tozeroy', 'tonextx', 'tozerox', 'toself', 'tonext']:
             # This is a Plotly fill mode, not a color aesthetic
             plotly_fill = fill_param
             # Temporarily remove from params so AestheticMapper doesn't treat it as a fill aesthetic
             self.params.pop("fill", None)
+            removed_plotly_fill_param = True
+        elif fill_param is not None or "fill" in self.mapping:
+            plotly_fill = "tozeroy"
 
         line_dash = self.params.get("linetype", "solid")
         name = self.params.get("name", "Density")
@@ -205,7 +209,7 @@ class geom_density(Geom):
         )
 
         # Restore fill parameter if it was removed
-        if plotly_fill is not None:
+        if removed_plotly_fill_param:
             self.params["fill"] = plotly_fill
 
         color_targets = dict(
