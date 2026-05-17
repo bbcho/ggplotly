@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from ..aesthetic_mapper import map_continuous_colors
+from ._geo_overlay import has_geo_context, infer_tile_polygons
 from .geom_base import Geom
 
 
@@ -24,6 +26,10 @@ class geom_tile(Geom):
     required_aes = ['x', 'y']
 
     def _draw_impl(self, fig, data, row, col):
+        if has_geo_context(fig):
+            self._draw_geo(fig, data)
+            return
+
         x = data[self.mapping["x"]]
         y = data[self.mapping["y"]]
         z = data[self.mapping["fill"]] if "fill" in self.mapping else None
@@ -103,3 +109,71 @@ class geom_tile(Geom):
                 row=row,
                 col=col,
             )
+
+    def _draw_geo(self, fig, data):
+        x = data[self.mapping["x"]]
+        y = data[self.mapping["y"]]
+        geo_key = self.params.get("_geo_key")
+        alpha = self.params.get("alpha", 1)
+
+        if "fill" in self.mapping and self.mapping["fill"] in data.columns:
+            fill_values = data[self.mapping["fill"]]
+        else:
+            fill_values = pd.Series(
+                [self.params.get("fill", self.params.get("color", "#1f77b4"))] * len(data),
+                index=data.index,
+            )
+
+        if pd.api.types.is_numeric_dtype(fill_values):
+            colors = map_continuous_colors(
+                fill_values,
+                palette=self.params.get("palette", "Viridis"),
+                default_color="#1f77b4",
+            )
+            show_colorbar = True
+        else:
+            categorical = pd.Categorical(fill_values)
+            categories = list(categorical.categories)
+            color_map = {
+                val: px.colors.qualitative.Plotly[i % len(px.colors.qualitative.Plotly)]
+                for i, val in enumerate(categories)
+            }
+            colors = fill_values.map(color_map)
+            show_colorbar = False
+
+        for spec in infer_tile_polygons(x, y, fill_values, colors):
+            trace = go.Scattergeo(
+                lon=spec.lon,
+                lat=spec.lat,
+                mode="lines",
+                fill="toself",
+                fillcolor=spec.fill,
+                line=dict(color=spec.fill, width=0),
+                opacity=alpha,
+                showlegend=False,
+                name=self.params.get("name", "Tile"),
+                hoverinfo="skip",
+            )
+            if geo_key:
+                trace.geo = geo_key
+            fig.add_trace(trace)
+
+        if show_colorbar and not fill_values.empty:
+            trace = go.Scattergeo(
+                lon=[None],
+                lat=[None],
+                mode="markers",
+                marker=dict(
+                    color=[fill_values.min(), fill_values.max()],
+                    colorscale=self.params.get("palette", "Viridis"),
+                    showscale=True,
+                    colorbar=dict(title=self.params.get("name", self.mapping.get("fill", "fill"))),
+                    opacity=0,
+                ),
+                showlegend=False,
+                hoverinfo="skip",
+                name="_tile_colorbar",
+            )
+            if geo_key:
+                trace.geo = geo_key
+            fig.add_trace(trace)

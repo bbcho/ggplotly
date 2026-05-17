@@ -166,3 +166,8 @@ class geom_boxplot(Geom):
             color="line_color",
         )
         self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+        if any(
+            isinstance(self.mapping.get(aesthetic), str) and self.mapping.get(aesthetic) in data.columns
+            for aesthetic in ("fill", "color", "group")
+        ):
+            fig.update_layout(boxmode="group")

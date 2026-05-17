@@ -1,24 +1,30 @@
 import builtins
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import pytest
 
 from ggplotly import (
     aes,
+    coord_polar,
+    facet_grid,
     facet_wrap,
     geom_abline,
     geom_bar,
+    geom_boxplot,
     geom_col,
     geom_density,
     geom_errorbar,
     geom_histogram,
     geom_line,
     geom_lines,
+    geom_map,
     geom_point,
     geom_rect,
     geom_segment,
     geom_smooth,
+    geom_surface,
     geom_text,
     geom_tile,
     ggplot,
@@ -437,3 +443,97 @@ def test_wide_datetime_index_lines_preserve_datetime_values():
     fig = (ggplot(df) + geom_lines()).draw()
 
     assert pd.Timestamp(fig.data[0].x[0]) == dates[0]
+
+
+def test_grouped_boxplot_uses_grouped_boxmode():
+    df = pd.DataFrame({
+        "x": ["A"] * 6 + ["B"] * 6,
+        "group": ["g1", "g1", "g1", "g2", "g2", "g2"] * 2,
+        "y": [1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6],
+    })
+
+    fig = (
+        ggplot(df, aes(x="x", y="y", fill="group"))
+        + geom_boxplot()
+    ).draw()
+
+    assert fig.layout.boxmode == "group"
+
+
+def test_map_segments_render_as_scattergeo_not_cartesian_scatter():
+    df = pd.DataFrame({
+        "lon": [-120, -100],
+        "lat": [35, 40],
+        "lon2": [-110, -90],
+        "lat2": [37, 42],
+    })
+
+    fig = (
+        ggplot(df, aes(x="lon", y="lat", xend="lon2", yend="lat2"))
+        + geom_map(map_type="usa")
+        + geom_segment()
+    ).draw()
+
+    segment_traces = [trace for trace in fig.data if trace.name == "Segment"]
+    assert segment_traces
+    assert all(trace.type == "scattergeo" for trace in segment_traces)
+
+
+def test_map_tiles_render_as_geo_polygons_not_heatmap():
+    df = pd.DataFrame({
+        "lon": [-101, -100],
+        "lat": [39, 40],
+        "value": [1.0, 2.0],
+    })
+
+    fig = (
+        ggplot(df, aes(x="lon", y="lat", fill="value"))
+        + geom_map(map_type="usa")
+        + geom_tile()
+    ).draw()
+
+    assert not any(trace.type == "heatmap" for trace in fig.data)
+    assert any(trace.type == "scattergeo" and trace.fill == "toself" for trace in fig.data)
+
+
+def test_facet_grid_auto_height_preserves_multirow_panels():
+    df = pd.DataFrame({
+        "x": [1, 2] * 6,
+        "y": list(range(12)),
+        "row": ["r1"] * 4 + ["r2"] * 4 + ["r3"] * 4,
+        "col": ["c1", "c1", "c2", "c2"] * 3,
+    })
+
+    fig = (
+        ggplot(df, aes(x="x", y="y"))
+        + geom_point()
+        + facet_grid(rows="row", cols="col")
+    ).draw()
+
+    assert fig.layout.height >= 780
+
+
+def test_coord_polar_converts_radian_theta_to_degrees_for_lines():
+    df = pd.DataFrame({"theta": [0, np.pi / 2], "r": [1, 1]})
+
+    fig = (
+        ggplot(df, aes(x="theta", y="r"))
+        + geom_line()
+        + coord_polar()
+    ).draw()
+
+    assert fig.data[0].type == "scatterpolar"
+    assert list(fig.data[0].theta) == [0.0, 90.0]
+
+
+def test_surface_scene_uses_cube_aspect_and_tight_margins():
+    df = pd.DataFrame({
+        "x": [0, 1, 0, 1],
+        "y": [0, 0, 1, 1],
+        "z": [0, 1, 1, 0],
+    })
+
+    fig = (ggplot(df, aes(x="x", y="y", z="z")) + geom_surface()).draw()
+
+    assert fig.layout.scene.aspectmode == "cube"
+    assert fig.layout.margin.l == 0

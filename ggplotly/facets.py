@@ -325,6 +325,8 @@ class facet_grid(Facet):
             horizontal_spacing=0.05 if is_3d else 0.2,
             vertical_spacing=0.1 if is_3d else 0.3,
         )
+        if getattr(plot, "size", None) is None and nrows > 1:
+            fig.update_layout(height=max(450, 260 * nrows))
 
         # Compute global color/shape maps from full dataset for consistent colors across facets
         global_color_map, global_shape_map = self._compute_global_aesthetic_maps(plot)

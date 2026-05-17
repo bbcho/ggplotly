@@ -348,6 +348,8 @@ class ggplot:
         if self.guides_obj:
             self.guides_obj.apply(self.fig)
 
+        self._harmonize_guide_layout(self.fig)
+
         # Apply annotations
         for annotation in self.annotations:
             annotation.apply(self.fig)
@@ -358,6 +360,30 @@ class ggplot:
 
         # Show the plot
         return self.fig
+
+    def _harmonize_guide_layout(self, fig):
+        """Separate colorbars from legends when multiple guides share the right edge."""
+        colorbars = []
+        for trace in fig.data:
+            if getattr(trace, "type", None) in ("heatmap", "contour", "surface", "choropleth"):
+                if hasattr(trace, "colorbar"):
+                    colorbars.append(trace.colorbar)
+            marker = getattr(trace, "marker", None)
+            if marker is not None and getattr(marker, "showscale", False) and hasattr(marker, "colorbar"):
+                colorbars.append(marker.colorbar)
+
+        if not colorbars:
+            return
+
+        for idx, colorbar in enumerate(colorbars):
+            colorbar.update(x=1.02 + idx * 0.08)
+
+        if any(getattr(trace, "showlegend", False) for trace in fig.data):
+            fig.update_layout(legend=dict(x=1.02 + len(colorbars) * 0.08, xanchor="left"))
+
+        current_margin = fig.layout.margin.to_plotly_json() if fig.layout.margin else {}
+        current_right = current_margin.get("r", 80)
+        fig.update_layout(margin={**current_margin, "r": max(current_right, 90 + 55 * len(colorbars))})
 
     def show(self):
         """
