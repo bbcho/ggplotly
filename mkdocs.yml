@@ -67,6 +67,8 @@ nav:
     - Theming: gallery/theming.ipynb
     - Advanced Capabilities: gallery/advanced-capabilities.ipynb
     - Visual Regression Edge Cases: gallery/visual-regression-edge-cases.ipynb
+  - Development:
+    - Notebook Visual Review: development/notebook-visual-review.md
   - API Reference:
     - ggplot: api/ggplot.md
     - Geoms: api/geoms.md

@@ -1,0 +1,12 @@
+{
+  "name": "ggplotly",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "playwright:install": "playwright install chromium",
+    "visual-review:notebooks": ".venv/bin/python scripts/notebook_visual_review.py"
+  },
+  "devDependencies": {
+    "playwright": "1.60.0"
+  }
+}

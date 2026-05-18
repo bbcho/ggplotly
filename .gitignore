@@ -142,6 +142,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Node tooling for notebook visual review
+node_modules/
+
 # mypy
 .mypy_cache/
 .dmypy.json
