@@ -20,6 +20,7 @@ from ggplotly import (
     geom_line,
     geom_lines,
     geom_map,
+    geom_path,
     geom_point,
     geom_rect,
     geom_segment,
@@ -31,6 +32,7 @@ from ggplotly import (
     ggsave,
     position_fill,
     position_nudge,
+    scale_color_gradient,
     scale_fill_viridis_c,
     scale_size,
     scale_y_continuous,
@@ -553,6 +555,44 @@ def test_map_tiles_with_viridis_fill_keep_distinct_tile_values():
     assert len(tile_traces[0].geojson["features"]) == len(df)
     assert tile_traces[0].marker.opacity == 0.6
     assert tile_traces[0].showscale is True
+
+
+def test_path_continuous_color_gradient_keeps_segments_visible():
+    t = np.linspace(0, 4 * np.pi, 30)
+    df = pd.DataFrame({
+        "x": t * np.cos(t),
+        "y": t * np.sin(t),
+        "t": t,
+    })
+
+    fig = (
+        ggplot(df, aes(x="x", y="y", color="t"))
+        + geom_path()
+        + scale_color_gradient(low="blue", high="red")
+    ).draw()
+
+    segments = [
+        trace
+        for trace in fig.data
+        if isinstance(trace.meta, dict)
+        and trace.meta.get("_ggplotly_line_gradient")
+    ]
+    colorbar_traces = [
+        trace
+        for trace in fig.data
+        if (
+            hasattr(trace, "marker")
+            and trace.marker is not None
+            and "showscale" in trace.marker
+            and trace.marker.showscale
+        )
+    ]
+
+    assert len(segments) == len(df) - 1
+    assert all(list(segment.x) != [None] for segment in segments)
+    assert all(segment.line.color.startswith("rgb(") for segment in segments)
+    assert all(segment.marker.showscale is None for segment in segments)
+    assert len(colorbar_traces) == 1
 
 
 def test_facet_grid_auto_height_preserves_multirow_panels():

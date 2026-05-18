@@ -69,8 +69,22 @@ class scale_color_gradient(Scale):
         new_colorscale = [[0, self.low], [1, self.high]]
 
         for trace in fig.data:
+            # Handle line gradient segments (created by ContinuousColorTraceBuilder)
+            if hasattr(trace, 'meta') and trace.meta:
+                meta = trace.meta
+                if isinstance(meta, dict) and meta.get('_ggplotly_line_gradient'):
+                    t_norm = meta.get('_color_norm', 0)
+                    new_color = self._interpolate_color(new_colorscale, t_norm)
+                    trace.line.color = new_color
+                    continue
+
             # Handle marker-based traces (scatter points, etc.)
-            if hasattr(trace, 'marker') and trace.marker is not None:
+            if (
+                hasattr(trace, 'marker')
+                and trace.marker is not None
+                and 'color' in trace.marker
+                and trace.marker.color is not None
+            ):
                 trace.marker.colorscale = new_colorscale
 
                 # Apply limits if specified
@@ -92,14 +106,6 @@ class scale_color_gradient(Scale):
                     trace.marker.showscale = True
                 else:
                     trace.marker.showscale = False
-
-            # Handle line gradient segments (created by ContinuousColorTraceBuilder)
-            if hasattr(trace, 'meta') and trace.meta:
-                meta = trace.meta
-                if isinstance(meta, dict) and meta.get('_ggplotly_line_gradient'):
-                    t_norm = meta.get('_color_norm', 0)
-                    new_color = self._interpolate_color(new_colorscale, t_norm)
-                    trace.line.color = new_color
 
     @staticmethod
     def _interpolate_color(colorscale, t):
