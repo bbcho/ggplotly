@@ -1,5 +1,6 @@
 # geoms/geom_abline.py
 
+import pandas as pd
 import plotly.graph_objects as go
 
 from .geom_base import Geom
@@ -68,9 +69,7 @@ class geom_abline(Geom):
         if len(intercepts) < max_len:
             intercepts = intercepts * max_len
 
-        # Get current axis ranges to determine line extent
-        # We'll use a wide range and let Plotly clip it
-        x_range = [-1e10, 1e10]
+        x_range = self._finite_x_range(fig, data)
 
         for i, (slope, intercept) in enumerate(zip(slopes, intercepts)):
             # Calculate y values at the x range boundaries
@@ -94,3 +93,25 @@ class geom_abline(Geom):
                 row=row,
                 col=col,
             )
+
+    def _finite_x_range(self, fig, data):
+        values = []
+        for trace in fig.data:
+            trace_x = getattr(trace, "x", None)
+            if trace_x is not None:
+                values.extend([value for value in trace_x if value is not None])
+
+        x_col = self.mapping.get("x")
+        if not values and data is not None and x_col in getattr(data, "columns", []):
+            values.extend(data[x_col].dropna().tolist())
+
+        numeric = pd.to_numeric(pd.Series(values), errors="coerce").dropna()
+        if numeric.empty:
+            return [0, 1]
+
+        x_min = float(numeric.min())
+        x_max = float(numeric.max())
+        if x_min == x_max:
+            pad = 0.5 if x_min == 0 else abs(x_min) * 0.05
+            return [x_min - pad, x_max + pad]
+        return [x_min, x_max]

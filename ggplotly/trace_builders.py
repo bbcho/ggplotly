@@ -142,6 +142,31 @@ class TraceBuilder(ABC):
         shown_groups.add(legendgroup)
         return True
 
+    def payload_for_mask(self, data_mask=None, value_key=None):
+        """Return payload with mapped line dash applied for line traces."""
+        payload = self.payload.copy()
+        if self.params.get("_ggplotly_box_grouped") and value_key is not None:
+            payload["offsetgroup"] = str(value_key)
+            payload["alignmentgroup"] = "boxplot"
+        if payload.get("mode") != "lines":
+            return payload
+
+        linetype_series = self.style_props.get("linetype_series")
+        linetype_map = self.style_props.get("linetype_map") or {}
+        if linetype_series is None:
+            payload["line_dash"] = self.style_props.get("linetype", payload.get("line_dash", "solid"))
+            return payload
+
+        if value_key in linetype_map:
+            payload["line_dash"] = linetype_map[value_key]
+            return payload
+
+        subset = linetype_series[data_mask] if data_mask is not None else linetype_series
+        values = list(subset.dropna().unique())
+        if values:
+            payload["line_dash"] = linetype_map.get(values[0], payload.get("line_dash", "solid"))
+        return payload
+
     @abstractmethod
     def build(self, apply_color_targets_fn):
         """
@@ -199,6 +224,7 @@ class GroupedTraceBuilder(TraceBuilder):
                 self.color_targets, self.style_props,
                 value_key=color_key, data_mask=group_mask, shape_key=shape_key
             )
+            payload = self.payload_for_mask(group_mask, value_key=group)
 
             legend_name = str(group)
             self.fig.add_trace(
@@ -209,7 +235,7 @@ class GroupedTraceBuilder(TraceBuilder):
                     legendgroup=legend_name,  # Links traces across facets
                     opacity=self.alpha,
                     name=legend_name,
-                    **self.payload,
+                    **payload,
                     **trace_props,
                 ),
                 row=self.row,
@@ -272,6 +298,7 @@ class ColorAndShapeTraceBuilder(TraceBuilder):
                     self.color_targets, style_props,
                     value_key=color_val, data_mask=combo_mask, shape_key=shape_val
                 )
+                payload = self.payload_for_mask(combo_mask, value_key=color_val)
 
                 # Create legend name - avoid redundancy if same column
                 if same_column:
@@ -287,7 +314,7 @@ class ColorAndShapeTraceBuilder(TraceBuilder):
                         name=legend_name,
                         showlegend=self.should_show_legend(legend_name),
                         legendgroup=legend_name,
-                        **self.payload,
+                        **payload,
                         **trace_props,
                     ),
                     row=self.row,
@@ -337,6 +364,7 @@ class ColorOnlyTraceBuilder(TraceBuilder):
                 self.color_targets, style_props,
                 value_key=cat_value, data_mask=cat_mask, shape_key=None
             )
+            payload = self.payload_for_mask(cat_mask, value_key=cat_value)
 
             legend_name = str(cat_value)
             self.fig.add_trace(
@@ -347,7 +375,7 @@ class ColorOnlyTraceBuilder(TraceBuilder):
                     name=legend_name,
                     showlegend=self.should_show_legend(legend_name),
                     legendgroup=legend_name,
-                    **self.payload,
+                    **payload,
                     **trace_props,
                 ),
                 row=self.row,
@@ -389,6 +417,7 @@ class ShapeOnlyTraceBuilder(TraceBuilder):
                 self.color_targets, style_props,
                 value_key=None, data_mask=shape_mask, shape_key=shape_val
             )
+            payload = self.payload_for_mask(shape_mask, value_key=shape_val)
 
             legend_name = str(shape_val)
             self.fig.add_trace(
@@ -399,7 +428,7 @@ class ShapeOnlyTraceBuilder(TraceBuilder):
                     name=legend_name,
                     showlegend=self.should_show_legend(legend_name),
                     legendgroup=legend_name,
-                    **self.payload,
+                    **payload,
                     **trace_props,
                 ),
                 row=self.row,
@@ -617,6 +646,9 @@ class SingleTraceBuilder(TraceBuilder):
 
         # Use name from payload or default to 'trace'
         trace_name = self.original_payload.get('name', 'trace')
+        payload = self.original_payload.copy()
+        if payload.get("mode") == "lines":
+            payload["line_dash"] = self.payload_for_mask().get("line_dash", payload.get("line_dash", "solid"))
 
         self.fig.add_trace(
             self.plot(
@@ -625,12 +657,48 @@ class SingleTraceBuilder(TraceBuilder):
                 opacity=self.alpha,
                 showlegend=self.should_show_legend(trace_name),
                 legendgroup=trace_name,
-                **self.original_payload,  # Includes 'name'
+                **payload,  # Includes 'name'
                 **trace_props,
             ),
             row=self.row,
             col=self.col,
         )
+
+
+class LinetypeOnlyTraceBuilder(TraceBuilder):
+    """Builds one line trace per mapped linetype value."""
+
+    def build(self, apply_color_targets_fn):
+        style_props = self.style_props
+        linetype_col = style_props["linetype"]
+        linetype_map = style_props["linetype_map"]
+
+        for linetype_value in linetype_map.keys():
+            mask = self.data[linetype_col] == linetype_value
+            if not mask.any():
+                continue
+
+            trace_props = apply_color_targets_fn(
+                self.color_targets, style_props,
+                value_key=None, data_mask=mask, shape_key=None
+            )
+            legend_name = str(linetype_value)
+            payload = self.payload_for_mask(mask, value_key=linetype_value)
+
+            self.fig.add_trace(
+                self.plot(
+                    x=self.x[mask] if self.x is not None else None,
+                    y=self.y[mask] if self.y is not None else None,
+                    opacity=self.alpha,
+                    name=legend_name,
+                    showlegend=self.should_show_legend(legend_name),
+                    legendgroup=legend_name,
+                    **payload,
+                    **trace_props,
+                ),
+                row=self.row,
+                col=self.col,
+            )
 
 
 def get_trace_builder(fig, plot, data, mapping, style_props, color_targets,
@@ -668,6 +736,7 @@ def get_trace_builder(fig, plot, data, mapping, style_props, color_targets,
     # Extract grouping information from style properties
     group_values = style_props['group_series']
     shape_series = style_props.get('shape_series')
+    linetype_series = style_props.get('linetype_series')
 
     # Check for continuous (numeric) color mapping
     has_continuous_color = (
@@ -683,6 +752,7 @@ def get_trace_builder(fig, plot, data, mapping, style_props, color_targets,
     ) and not has_continuous_color
 
     has_shape_grouping = shape_series is not None
+    has_linetype_grouping = linetype_series is not None and payload.get('mode') == 'lines'
 
     # Common arguments for all builders
     args = (fig, plot, data, mapping, style_props, color_targets,
@@ -706,6 +776,9 @@ def get_trace_builder(fig, plot, data, mapping, style_props, color_targets,
     # Case 4: Only shape is mapped
     if has_shape_grouping:
         return ShapeOnlyTraceBuilder(*args)
+
+    if has_linetype_grouping:
+        return LinetypeOnlyTraceBuilder(*args)
 
     # Case 5: Continuous color mapping (numeric values with colorscale)
     if has_continuous_color:

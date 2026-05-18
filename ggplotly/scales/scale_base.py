@@ -75,7 +75,7 @@ class Scale:
         for trace in fig.data:
             if hasattr(trace, 'name') and trace.name in color_map:
                 color = color_map[trace.name]
-                if hasattr(trace, 'marker') and trace.marker is not None:
+                if hasattr(trace, 'marker') and trace.marker is not None and 'color' in trace.marker:
                     trace.marker.color = color
                 if hasattr(trace, 'line') and trace.line is not None:
                     trace.line.color = color

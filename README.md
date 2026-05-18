@@ -30,6 +30,16 @@ ggplot(df, aes(x='x', y='y', color='group')) + geom_point() + theme_minimal()
 ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('group')
 ```
 
+## Development Notes
+
+### Notebook Image Review
+
+When visually validating notebook output, render the notebooks to HTML and
+capture PNG screenshots with npm Playwright using its managed Chromium browser.
+Do not use Kaleido or the installed macOS Chrome app for batch notebook review;
+those paths can launch the user's desktop Chrome profile/updater and may hang or
+crash during large Plotly export runs.
+
 ## ggplot2 Function Coverage
 
 ### Geoms (46)

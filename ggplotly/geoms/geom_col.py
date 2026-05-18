@@ -2,6 +2,7 @@
 
 import plotly.graph_objects as go
 
+from ._bar_positioning import compute_bar_trace_specs
 from .geom_base import Geom
 
 
@@ -45,21 +46,43 @@ class geom_col(Geom):
             None: Modifies the figure in place.
         """
 
-        payload = dict()
-        payload["name"] = self.params.get("name", "Column")
+        style_props = self._get_style_props(data)
+        result = compute_bar_trace_specs(data, self.mapping, self.params, style_props, "Column")
 
-        # Apply width parameter for bar width
-        width = self.params.get("width", 0.9)
-        payload["width"] = width
+        if not hasattr(fig, '_ggplotly_shown_legendgroups'):
+            fig._ggplotly_shown_legendgroups = set()
 
-        # Note: opacity/alpha is handled by _transform_fig via AestheticMapper
-        # Don't add it to payload to avoid duplicate keyword argument
+        line_width = self.params.get("linewidth", self.params.get("size", None))
+        for spec in result.traces:
+            show_legend = self._show_legend_once(fig, spec.legendgroup)
+            outline_width = line_width if line_width is not None else (1 if spec.outline is not None else 0)
+            fig.add_trace(
+                go.Bar(
+                    x=spec.x,
+                    y=spec.y,
+                    width=spec.width,
+                    marker_color=spec.fill,
+                    marker_line_color=spec.outline,
+                    marker_line_width=outline_width,
+                    opacity=style_props["alpha"],
+                    name=spec.name,
+                    showlegend=show_legend,
+                    legendgroup=spec.legendgroup,
+                    offsetgroup=spec.offsetgroup,
+                ),
+                row=row,
+                col=col,
+            )
 
-        plot = go.Bar
+        fig.update_yaxes(rangemode="tozero")
+        if result.yaxis_range is not None:
+            fig.update_yaxes(range=result.yaxis_range, row=row, col=col)
+        fig.update_layout(barmode=result.barmode)
 
-        color_targets = dict(
-            fill="marker_color",
-            color="marker_color",
-        )
-
-        self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+    def _show_legend_once(self, fig, legendgroup):
+        if not self.params.get("showlegend", True):
+            return False
+        if legendgroup in fig._ggplotly_shown_legendgroups:
+            return False
+        fig._ggplotly_shown_legendgroups.add(legendgroup)
+        return True

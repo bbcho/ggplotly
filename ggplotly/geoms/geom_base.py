@@ -1,8 +1,9 @@
 import copy
 
 from ..aes import aes
-from ..aesthetic_mapper import AestheticMapper
+from ..aesthetic_mapper import AestheticMapper, map_continuous_colors
 from ..exceptions import ColumnNotFoundError, RequiredAestheticError
+from ..stats.stat_base import coerce_stat_result
 from ..trace_builders import get_trace_builder
 
 
@@ -95,7 +96,17 @@ class Geom:
     required_aes: list = []
 
     # Optional aesthetics that can be mapped to columns
-    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group']
+    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group', 'linetype']
+
+    @staticmethod
+    def _normalize_param_aliases(params):
+        """Normalize ggplot2-style parameter aliases before default merging."""
+        normalized = params.copy()
+        if "na.rm" in normalized and "na_rm" not in normalized:
+            normalized["na_rm"] = normalized["na.rm"]
+        if "show.legend" in normalized and "show_legend" not in normalized and "showlegend" not in normalized:
+            normalized["show_legend"] = normalized["show.legend"]
+        return normalized
 
     def __init__(self, data=None, mapping=None, **params):
         """
@@ -114,6 +125,8 @@ class Geom:
             self.data = data
             self.mapping = mapping.mapping if mapping else {}
 
+        params = self._normalize_param_aliases(params)
+
         # Merge base class defaults, subclass defaults, and user-provided params
         # Base class defaults for na_rm, show_legend
         base_defaults = {"na_rm": False, "show_legend": True}
@@ -124,16 +137,26 @@ class Geom:
         if "linewidth" in self.params and "size" not in params:
             self.params["size"] = self.params["linewidth"]
 
-        # showlegend is an alias for show_legend (Plotly convention)
-        if "showlegend" in self.params and "show_legend" not in params:
-            self.params["show_legend"] = self.params["showlegend"]
+        # show_legend is the Python spelling of ggplot2's show.legend.
+        # showlegend remains accepted for older Plotly-style call sites.
+        if "show_legend" in params:
+            show_legend = params["show_legend"]
+        elif "showlegend" in params:
+            show_legend = params["showlegend"]
+        elif "show_legend" in self.default_params:
+            show_legend = self.default_params["show_legend"]
+        elif "showlegend" in self.default_params:
+            show_legend = self.default_params["showlegend"]
+        else:
+            show_legend = self.params.get("show_legend", True)
+        self.params["show_legend"] = show_legend
+        self.params["showlegend"] = show_legend
 
         # colour is an alias for color (British spelling)
         if "colour" in self.params and "color" not in params:
             self.params["color"] = self.params["colour"]
 
-        # na.rm style can be passed as na_rm (Python convention)
-        # Already handled by default, but normalize any variants
+        # na.rm aliases are normalized before default merging.
 
         self.stats = []
         self.layers = []
@@ -151,7 +174,7 @@ class Geom:
             Geom: A new geom instance with copied data and stats.
         """
         new = copy.deepcopy(self)
-        new.stats = [*self.stats.copy()]
+        new.stats = [copy.deepcopy(stat) for stat in self.stats]
         return new
 
     def setup_data(self, data, plot_mapping):
@@ -309,7 +332,9 @@ class Geom:
             DataFrame: Transformed data after all stats applied.
         """
         for stat in self.stats:
-            data, self.mapping = stat.compute(data)
+            data, mapping_updates = coerce_stat_result(stat.compute(data))
+            if mapping_updates:
+                self.mapping = {**self.mapping, **mapping_updates}
         return data
 
     def _get_reference_line_color(self, default='#1f77b4'):
@@ -377,6 +402,32 @@ class Geom:
         )
         return mapper.get_style_properties()
 
+    def _show_legend(self, default=True):
+        """Return the normalized legend flag for direct trace-building geoms."""
+        return bool(self.params.get("showlegend", self.params.get("show_legend", default)))
+
+    def _continuous_color_values(self, style_props, prefer_fill=False):
+        """Return per-row colors for continuous color/fill mappings, or None."""
+        if prefer_fill:
+            if style_props.get('fill_series') is not None and style_props.get('fill_is_continuous'):
+                series = style_props['fill_series']
+            elif style_props.get('color_series') is not None and style_props.get('color_is_continuous'):
+                series = style_props['color_series']
+            else:
+                return None
+        elif style_props.get('color_series') is not None and style_props.get('color_is_continuous'):
+            series = style_props['color_series']
+        elif style_props.get('fill_series') is not None and style_props.get('fill_is_continuous'):
+            series = style_props['fill_series']
+        else:
+            return None
+
+        return map_continuous_colors(
+            series,
+            palette=self.params.get("palette", "Viridis"),
+            default_color=style_props['default_color'],
+        )
+
     def _apply_color_targets(self, target_props: dict, style_props: dict, value_key=None, data_mask=None, shape_key=None) -> dict:
         """
         Apply color/fill/size/shape to trace properties based on target mapping.
@@ -397,9 +448,9 @@ class Geom:
         # Determine the color to use
         if value_key is not None:
             # Looking up color for a specific category
-            if style_props['color_series'] is not None:
+            if style_props['color_series'] is not None and style_props.get('color_map') is not None:
                 color_value = style_props['color_map'].get(value_key)
-            elif style_props['fill_series'] is not None:
+            elif style_props['fill_series'] is not None and style_props.get('fill_map') is not None:
                 color_value = style_props['fill_map'].get(value_key)
             else:
                 # Handle None explicitly for literal values

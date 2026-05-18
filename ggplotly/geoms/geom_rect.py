@@ -71,6 +71,8 @@ class geom_rect(Geom):
         linewidth = style_props.get("size", 1)
         alpha = style_props["alpha"]
         group_values = style_props["group_series"]
+        base_showlegend = self._show_legend()
+        continuous_colors = self._continuous_color_values(style_props, prefer_fill=True)
 
         # Border color - use 'color' param or None for no border
         border_color = self.params.get("color", None)
@@ -106,7 +108,17 @@ class geom_rect(Geom):
             )
 
         # Handle grouped or colored rectangles
-        if group_values is not None:
+        if continuous_colors is not None:
+            name = self.params.get("name", "Rectangle")
+            for idx in data.index:
+                add_rect_trace(
+                    xmin[idx], xmax[idx], ymin[idx], ymax[idx],
+                    continuous_colors.loc[idx], name,
+                    showlegend=False,
+                    legendgroup="rect"
+                )
+
+        elif group_values is not None:
             # Case 1: Grouped by 'group' aesthetic
             for group in group_values.unique():
                 group_mask = group_values == group
@@ -121,11 +133,11 @@ class geom_rect(Geom):
                     add_rect_trace(
                         xmin[idx], xmax[idx], ymin[idx], ymax[idx],
                         fill_color, str(group),
-                        showlegend=(i == 0),
+                        showlegend=base_showlegend and i == 0,
                         legendgroup=str(group)
                     )
 
-        elif style_props["fill_series"] is not None:
+        elif style_props["fill_series"] is not None and not style_props.get("fill_is_continuous", False):
             # Case 2: Fill mapped to categorical variable
             fill_map = style_props["fill_map"]
             fill_col = style_props["fill"]
@@ -139,11 +151,11 @@ class geom_rect(Geom):
                     add_rect_trace(
                         xmin[idx], xmax[idx], ymin[idx], ymax[idx],
                         fill_color, str(cat_value),
-                        showlegend=(i == 0),
+                        showlegend=base_showlegend and i == 0,
                         legendgroup=str(cat_value)
                     )
 
-        elif style_props["color_series"] is not None:
+        elif style_props["color_series"] is not None and not style_props.get("color_is_continuous", False):
             # Case 3: Color mapped to categorical variable (use for fill)
             color_map = style_props["color_map"]
             color_col = style_props["color"]
@@ -156,7 +168,7 @@ class geom_rect(Geom):
                     add_rect_trace(
                         xmin[idx], xmax[idx], ymin[idx], ymax[idx],
                         fill_color, str(cat_value),
-                        showlegend=(i == 0),
+                        showlegend=base_showlegend and i == 0,
                         legendgroup=str(cat_value)
                     )
 
@@ -173,6 +185,6 @@ class geom_rect(Geom):
                 add_rect_trace(
                     xmin[idx], xmax[idx], ymin[idx], ymax[idx],
                     fill_color, name,
-                    showlegend=(i == 0),
+                    showlegend=base_showlegend and i == 0,
                     legendgroup="rect"
                 )

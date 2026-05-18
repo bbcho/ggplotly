@@ -1,5 +1,7 @@
 # stats/stat_smooth.py
 
+import warnings
+
 import numpy as np
 from scipy import stats as scipy_stats
 from sklearn.linear_model import LinearRegression
@@ -115,6 +117,9 @@ class stat_smooth(Stat):
 
         elif self.method == "loess":
             # Custom LOESS with configurable polynomial degree (default degree=2)
+            if self.degree not in (1, 2):
+                raise ValueError(f"Degree must be 1 or 2, got {self.degree}")
+
             x_array = np.array(x)
             y_array = np.array(y)
             n = len(x_array)
@@ -123,6 +128,7 @@ class stat_smooth(Stat):
             # Arrays to store results
             smoothed = np.zeros(n)
             hat_diag = np.zeros(n) if return_hat_diag else None
+            fallback_count = 0
 
             # For each data point, fit a local polynomial
             for i in range(n):
@@ -164,9 +170,6 @@ class stat_smooth(Stat):
                             x_norm,
                             x_norm ** 2
                         ])
-                    else:
-                        raise ValueError(f"Degree must be 1 or 2, got {self.degree}")
-
                     # Weighted least squares
                     W_sqrt = np.sqrt(weights)
                     X_weighted = X_design * W_sqrt[:, np.newaxis]
@@ -190,8 +193,9 @@ class stat_smooth(Stat):
                         XtX_inv = np.linalg.inv(XtX)
                         hat_diag[i] = XtX_inv[0, 0]
 
-                except Exception:
+                except (np.linalg.LinAlgError, FloatingPointError):
                     # Fallback to weighted mean
+                    fallback_count += 1
                     if np.sum(weights) > 0:
                         smoothed[i] = np.average(y_local, weights=weights)
                     else:
@@ -199,6 +203,13 @@ class stat_smooth(Stat):
 
                     if return_hat_diag:
                         hat_diag[i] = 1.0 / n_local  # Rough approximation
+
+            if fallback_count:
+                warnings.warn(
+                    f"LOESS used weighted-mean fallback for {fallback_count} local fits.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
 
             if return_hat_diag:
                 return smoothed, hat_diag
@@ -328,6 +339,22 @@ class stat_smooth(Stat):
                 se_i = residual_std * np.sqrt(hat_diag[i]) * 4.0
                 margin[i] = t_value * se_i
 
+        elif self.method == "lm":
+            x_array = np.asarray(x, dtype=float)
+            df = max(n - 2, 1)
+            t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
+            if n <= 2:
+                margin = np.zeros(n)
+            else:
+                x_mean = np.mean(x_array)
+                sxx = np.sum((x_array - x_mean) ** 2)
+                if sxx == 0:
+                    margin = np.zeros(n)
+                else:
+                    sigma = np.sqrt(np.sum(residuals ** 2) / df)
+                    se_fit = sigma * np.sqrt((1 / n) + ((x_array - x_mean) ** 2 / sxx))
+                    margin = t_value * se_fit
+
         elif self.method == "lowess":
             # For LOWESS, use edge-adjusted confidence intervals
             x_array = np.array(x)
@@ -358,7 +385,7 @@ class stat_smooth(Stat):
 
                 margin[i] = t_value * se_i
         else:
-            # For linear models, use constant margin
+            # Conservative fallback for other smoothers.
             df = max(n - 2, 1)
             t_value = scipy_stats.t.ppf((1 + self.level) / 2, df)
             margin = t_value * residual_std

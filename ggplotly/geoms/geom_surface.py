@@ -207,6 +207,10 @@ class geom_surface(Geom):
 
         if scene_dict:
             fig.update_layout(**{scene_key: scene_dict})
+        fig.update_layout(
+            margin=dict(l=0, r=0, b=0, t=40),
+            **{scene_key: dict(aspectmode=self.params.get('aspectmode', 'cube'))},
+        )
 
 
 class geom_wireframe(Geom):

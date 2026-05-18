@@ -1,6 +1,7 @@
 # geoms/geom_lines.py
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 
 from .geom_base import Geom
@@ -79,9 +80,15 @@ class geom_lines(Geom):
         # Determine x values
         x_col = self.mapping.get("x") if self.mapping else None
         if x_col and x_col in data.columns:
-            x_values = data[x_col].values
+            if pd.api.types.is_datetime64_any_dtype(data[x_col]):
+                x_values = data[x_col].dt.to_pydatetime()
+            else:
+                x_values = data[x_col].values
         else:
-            x_values = data.index.values
+            if isinstance(data.index, pd.DatetimeIndex):
+                x_values = data.index.to_pydatetime()
+            else:
+                x_values = data.index.values
 
         # Determine which columns to plot
         columns = self.params.get("columns")

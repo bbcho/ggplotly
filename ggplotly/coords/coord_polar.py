@@ -130,6 +130,7 @@ class coord_polar(Coord):
             else:
                 theta_values = trace.y
                 r_values = trace.x
+            theta_values = self._to_plotly_degrees(theta_values)
 
             scatterpolar_kwargs = dict(
                 r=r_values,
@@ -173,3 +174,13 @@ class coord_polar(Coord):
                 ),
             )
             fig.update_layout(polar=polar_config)
+
+    def _to_plotly_degrees(self, values):
+        try:
+            numeric = np.asarray(values, dtype=float)
+        except (TypeError, ValueError):
+            return values
+        finite = numeric[np.isfinite(numeric)]
+        if finite.size and finite.min() >= -2 * np.pi and finite.max() <= 2 * np.pi:
+            return np.degrees(numeric)
+        return values

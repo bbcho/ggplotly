@@ -99,9 +99,7 @@ class TestGeomLines:
         plot = ggplot(df) + geom_lines()
         fig = plot.draw()
         assert len(fig.data) == 1
-        # X values should be from datetime index (converted to nanoseconds)
-        first_timestamp_ns = pd.Timestamp('2024-01-01').value
-        assert first_timestamp_ns in fig.data[0].x
+        assert pd.Timestamp(fig.data[0].x[0]) == dates[0]
 
     def test_empty_columns_list(self):
         """Test with empty columns parameter."""

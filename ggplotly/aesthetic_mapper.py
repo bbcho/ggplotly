@@ -16,6 +16,50 @@ from .constants import SHAPE_PALETTE
 from .constants import get_color_palette as _get_color_palette
 from .exceptions import ColumnNotFoundError
 
+LINETYPE_PALETTE = ("solid", "dash", "dot", "dashdot", "longdash", "longdashdot")
+LINETYPE_ALIASES = {
+    "solid": "solid",
+    "dashed": "dash",
+    "dash": "dash",
+    "dotted": "dot",
+    "dot": "dot",
+    "dotdash": "dashdot",
+    "dashdot": "dashdot",
+    "longdash": "longdash",
+    "twodash": "longdashdot",
+    "longdashdot": "longdashdot",
+}
+
+
+def map_continuous_colors(
+    series: pd.Series,
+    palette: str = "Viridis",
+    default_color: str = "#1f77b4",
+) -> pd.Series:
+    """Map a continuous series to Plotly color strings without mutating data."""
+    import plotly.colors as pc
+
+    numeric = pd.to_numeric(series, errors="coerce")
+    valid = numeric.dropna()
+    if valid.empty:
+        return pd.Series([default_color] * len(series), index=series.index)
+
+    vmin = valid.min()
+    vmax = valid.max()
+    span = vmax - vmin
+
+    def sample(value):
+        if pd.isna(value):
+            return default_color
+        if span == 0:
+            position = 0.5
+        else:
+            position = (value - vmin) / span
+        position = max(0.0, min(1.0, float(position)))
+        return pc.sample_colorscale(palette, [position])[0]
+
+    return numeric.map(sample)
+
 
 # Module-level cache for color conversions (expensive Plotly operations)
 @lru_cache(maxsize=512)
@@ -189,8 +233,11 @@ class AestheticMapper:
         Raises:
             ColumnNotFoundError: If value looks like a column name but doesn't exist
         """
-        # First check mapping (aes), then params
-        value = self.mapping.get(aesthetic) or self.params.get(aesthetic)
+        # First check mapping (aes), then params. Explicit falsey values are valid.
+        if aesthetic in self.mapping:
+            value = self.mapping[aesthetic]
+        else:
+            value = self.params.get(aesthetic)
 
         if value is None:
             return None, None, None
@@ -289,6 +336,14 @@ class AestheticMapper:
 
         return shape_map
 
+    def _create_linetype_map(self, series: pd.Series) -> dict[Any, str]:
+        """Create a mapping from unique values to Plotly dash styles."""
+        unique_values = series.dropna().unique()
+        return {
+            val: LINETYPE_ALIASES.get(str(val), LINETYPE_PALETTE[i % len(LINETYPE_PALETTE)])
+            for i, val in enumerate(unique_values)
+        }
+
     def get_style_properties(self) -> dict[str, Any]:
         """
         Extract all relevant style properties for a geom.
@@ -321,10 +376,25 @@ class AestheticMapper:
         fill, fill_series, fill_map = self.resolve_aesthetic('fill')
         size, size_series, _ = self.resolve_aesthetic('size')
         alpha = self.params.get('alpha', 1.0)
-        linetype = self.params.get('linetype', 'solid')
+
+        if 'linetype' in self.mapping:
+            linetype_value = self.mapping['linetype']
+        else:
+            linetype_value = self.params.get('linetype', 'solid')
+        linetype_series = None
+        linetype_map = None
+        if linetype_value is not None and self.is_column_reference('linetype', linetype_value):
+            linetype_series = self.data[linetype_value]
+            linetype_map = self._create_linetype_map(linetype_series)
+            linetype = linetype_value
+        else:
+            linetype = LINETYPE_ALIASES.get(str(linetype_value), linetype_value)
 
         # Resolve shape aesthetic
-        shape_value = self.mapping.get('shape') or self.params.get('shape')
+        if 'shape' in self.mapping:
+            shape_value = self.mapping['shape']
+        else:
+            shape_value = self.params.get('shape')
         shape_series = None
         shape_map = None
         if shape_value is not None and self.is_column_reference('shape', shape_value):
@@ -340,7 +410,7 @@ class AestheticMapper:
 
         # Group is special - it's always a column reference if provided
         group = self.mapping.get('group')
-        group_series = self.data[group] if group and group in self.data.columns else None
+        group_series = self.data[group] if group is not None and group in self.data.columns else None
 
         # Get default color if neither color nor fill is mapped
         default_color = self.params.get('color', '#1f77b4')
@@ -370,6 +440,8 @@ class AestheticMapper:
             'shape_map': shape_map,
             'alpha': alpha,
             'linetype': linetype,
+            'linetype_series': linetype_series,
+            'linetype_map': linetype_map,
             'group': group,
             'group_series': group_series,
             'default_color': default_color,
@@ -401,9 +473,9 @@ class AestheticMapper:
         if prefer_fill:
             # Prefer fill for area/ribbon/bar geoms
             if style_props['fill_series'] is not None:
-                return style_props['fill_map'].get(value_key, style_props['default_color'])
+                return (style_props.get('fill_map') or {}).get(value_key, style_props['default_color'])
             elif style_props['color_series'] is not None:
-                return style_props['color_map'].get(value_key, style_props['default_color'])
+                return (style_props.get('color_map') or {}).get(value_key, style_props['default_color'])
             elif style_props['fill'] is not None:
                 return style_props['fill']
             elif style_props['color'] is not None:
@@ -411,9 +483,9 @@ class AestheticMapper:
         else:
             # Prefer color for line/point geoms
             if style_props['color_series'] is not None:
-                return style_props['color_map'].get(value_key, style_props['default_color'])
+                return (style_props.get('color_map') or {}).get(value_key, style_props['default_color'])
             elif style_props['fill_series'] is not None:
-                return style_props['fill_map'].get(value_key, style_props['default_color'])
+                return (style_props.get('fill_map') or {}).get(value_key, style_props['default_color'])
             elif style_props['color'] is not None:
                 return style_props['color']
             elif style_props['fill'] is not None:
@@ -484,9 +556,9 @@ class AestheticMapper:
         # Determine which color/fill to use
         if value_key is not None:
             # We're drawing a specific group - look up its color
-            if style_props['color_series'] is not None:
+            if style_props['color_series'] is not None and style_props.get('color_map') is not None:
                 color_value = style_props['color_map'].get(value_key)
-            elif style_props['fill_series'] is not None:
+            elif style_props['fill_series'] is not None and style_props.get('fill_map') is not None:
                 color_value = style_props['fill_map'].get(value_key)
             else:
                 color_value = style_props.get('color') or style_props.get('fill') or style_props['default_color']

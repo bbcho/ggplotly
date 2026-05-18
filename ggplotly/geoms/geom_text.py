@@ -1,6 +1,7 @@
 # geoms/geom_text.py
 
 import plotly.graph_objects as go
+import pandas as pd
 
 from ..aesthetic_mapper import AestheticMapper
 from .geom_base import Geom
@@ -117,6 +118,17 @@ class geom_text(Geom):
         parse = self.params.get("parse", False)
         if parse:
             label = label.apply(lambda t: f"${t}$" if not str(t).startswith("$") else t)
+
+        # Apply position object offsets, then explicit nudge offsets.
+        position = self.params.get("position")
+        if position is not None and hasattr(position, "adjust"):
+            adjusted = position.adjust(x, y)
+            if isinstance(adjusted, tuple):
+                x, y = adjusted
+            else:
+                x = adjusted
+            x = pd.Series(x, index=data.index)
+            y = pd.Series(y, index=data.index)
 
         # Apply nudge offsets
         nudge_x = self.params.get("nudge_x", 0)

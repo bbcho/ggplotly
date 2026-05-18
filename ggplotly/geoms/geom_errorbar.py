@@ -44,11 +44,35 @@ class geom_errorbar(Geom):
         width = self.params.get("width", 4)
         alpha = style_props['alpha']
         group_values = style_props['group_series']
+        base_showlegend = self._show_legend()
+        continuous_colors = self._continuous_color_values(style_props)
 
         color_targets = dict(color="marker_color")
 
         # Handle grouped or colored error bars
-        if group_values is not None:
+        if continuous_colors is not None:
+            for idx in data.index:
+                fig.add_trace(
+                    go.Scatter(
+                        x=[x[idx]],
+                        y=[y[idx]],
+                        error_y=dict(
+                            type="data",
+                            array=[ymax[idx] - y[idx]],
+                            arrayminus=[y[idx] - ymin[idx]],
+                            width=width,
+                        ),
+                        mode="markers",
+                        line_dash=linetype,
+                        opacity=alpha,
+                        name=self.params.get("name", "Errorbar"),
+                        showlegend=False,
+                        marker_color=continuous_colors.loc[idx],
+                    ),
+                    row=row,
+                    col=col,
+                )
+        elif group_values is not None:
             # Case 1: Grouped by 'group' aesthetic
             for group in group_values.unique():
                 group_mask = group_values == group
@@ -72,12 +96,13 @@ class geom_errorbar(Geom):
                         line_dash=linetype,
                         opacity=alpha,
                         name=str(group),
+                        showlegend=base_showlegend,
                         **trace_props,
                     ),
                     row=row,
                     col=col,
                 )
-        elif style_props['color_series'] is not None:
+        elif style_props['color_series'] is not None and not style_props.get('color_is_continuous', False):
             # Case 2: Colored by categorical variable
             style_props['color_series']
             cat_map = style_props['color_map']
@@ -101,6 +126,7 @@ class geom_errorbar(Geom):
                         line_dash=linetype,
                         opacity=alpha,
                         name=str(cat_value),
+                        showlegend=base_showlegend,
                         **trace_props,
                     ),
                     row=row,
@@ -124,6 +150,7 @@ class geom_errorbar(Geom):
                     line_dash=linetype,
                     opacity=alpha,
                     name=self.params.get("name", "Errorbar"),
+                    showlegend=base_showlegend,
                     **trace_props,
                 ),
                 row=row,

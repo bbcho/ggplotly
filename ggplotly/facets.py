@@ -1,4 +1,5 @@
 import warnings
+import copy
 from typing import Optional
 
 from plotly.graph_objects import Figure
@@ -6,6 +7,12 @@ from plotly.subplots import make_subplots
 
 from .constants import SHAPE_PALETTE, get_color_palette
 from .exceptions import FacetColumnNotFoundError, TooManyFacetsWarning
+
+
+def _subplot_spacing(count, preferred):
+    if count <= 1:
+        return 0
+    return min(preferred, 0.25 / (count - 1))
 
 
 # facets.py
@@ -20,6 +27,24 @@ class Facet:
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + facet_wrap('category')
         >>> ggplot(df, aes(x='x', y='y')) + geom_point() + facet_grid('row_var', 'col_var')
     """
+    def _is_continuous_aesthetic(self, series):
+        """Mirror aesthetic mapper's continuous color heuristic for global maps."""
+        import pandas as pd
+
+        if not pd.api.types.is_numeric_dtype(series):
+            return False
+
+        n_unique = series.nunique()
+        n_total = len(series)
+        if n_unique > 20:
+            return True
+        if n_total > 0 and n_unique / n_total > 0.5:
+            return True
+        if pd.api.types.is_float_dtype(series):
+            if not series.dropna().apply(lambda x: float(x).is_integer()).all():
+                return True
+        return False
+
     def _compute_global_aesthetic_maps(self, plot):
         """
         Compute global color and shape maps from the full dataset.
@@ -40,12 +65,16 @@ class Facet:
 
         # Compute global color map
         global_color_map = None
-        color_col = mapping.get('color') or mapping.get('fill')
+        color_col = mapping.get('color')
+        if color_col is None:
+            color_col = mapping.get('fill')
         if color_col and color_col in data.columns:
-            unique_values = data[color_col].dropna().unique()
-            global_color_map = {}
-            for i, val in enumerate(unique_values):
-                global_color_map[val] = palette[i % len(palette)]
+            series = data[color_col]
+            if not self._is_continuous_aesthetic(series):
+                unique_values = series.dropna().unique()
+                global_color_map = {}
+                for i, val in enumerate(unique_values):
+                    global_color_map[val] = palette[i % len(palette)]
 
         # Compute global shape map
         global_shape_map = None
@@ -62,6 +91,41 @@ class Facet:
         """Apply global aesthetic maps to a geom."""
         geom._global_color_map = global_color_map
         geom._global_shape_map = global_shape_map
+
+    def _facet_geom_data(self, geom, plot_facet_data, facet_filters):
+        """Return per-panel data without mutating a stored geom's data."""
+        if not getattr(geom, '_has_explicit_data', False):
+            return plot_facet_data
+
+        geom_data = geom.data
+        if geom_data is None:
+            return geom_data
+
+        facet_data = geom_data
+        for facet_col, facet_value in facet_filters:
+            if facet_col is None or facet_col == '.':
+                continue
+            if facet_col not in facet_data.columns:
+                continue
+            facet_data = facet_data[facet_data[facet_col] == facet_value]
+        return facet_data
+
+    def _clone_geom_for_panel(
+        self,
+        geom,
+        panel_data,
+        plot_mapping,
+        global_color_map,
+        global_shape_map,
+        panel_params=None,
+    ):
+        """Prepare a panel-local geom clone for rendering."""
+        panel_geom = geom.copy() if hasattr(geom, "copy") else copy.deepcopy(geom)
+        self._apply_global_maps_to_geom(panel_geom, global_color_map, global_shape_map)
+        panel_geom.setup_data(panel_data, plot_mapping)
+        if panel_params:
+            panel_geom.params.update(panel_params)
+        return panel_geom
 
     def apply(self, plot) -> Optional[Figure]:
         """
@@ -264,9 +328,11 @@ class facet_grid(Facet):
             column_widths=column_widths,
             row_heights=row_heights,
             specs=specs,
-            horizontal_spacing=0.05 if is_3d else 0.2,
-            vertical_spacing=0.1 if is_3d else 0.3,
+            horizontal_spacing=_subplot_spacing(ncols, 0.05 if is_3d else 0.08),
+            vertical_spacing=_subplot_spacing(nrows, 0.05 if is_3d else 0.08),
         )
+        if getattr(plot, "size", None) is None and nrows > 1:
+            fig.update_layout(height=max(450, 260 * nrows))
 
         # Compute global color/shape maps from full dataset for consistent colors across facets
         global_color_map, global_shape_map = self._compute_global_aesthetic_maps(plot)
@@ -299,31 +365,21 @@ class facet_grid(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting instead of plot.data
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        if has_rows and has_cols:
-                            geom_facet_data = geom.data[
-                                (geom.data[self.rows] == row_value)
-                                & (geom.data[self.cols] == col_value)
-                            ]
-                        elif has_rows:
-                            geom_facet_data = geom.data[geom.data[self.rows] == row_value]
-                        elif has_cols:
-                            geom_facet_data = geom.data[geom.data[self.cols] == col_value]
-                        else:
-                            geom_facet_data = geom.data
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass scene key for 3D geoms
-                    if scene_key:
-                        geom.params['_scene_key'] = scene_key
-
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom,
+                        facet_data,
+                        [(self.rows if has_rows else None, row_value), (self.cols if has_cols else None, col_value)],
+                    )
+                    panel_params = {'_scene_key': scene_key} if scene_key else None
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        panel_params,
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         return fig
 
@@ -512,19 +568,18 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass scene key for 3D geoms
-                    geom.params['_scene_key'] = scene_key
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        {'_scene_key': scene_key},
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         elif is_geo:
             # For geo subplots, we need to manually position each geo
@@ -578,25 +633,27 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-
-                    # Pass geo index and shared scale info
-                    geom.params['_geo_key'] = geo_key
-                    geom.params['_facet_idx'] = idx
-                    geom.params['_facet_count'] = n_facets
-                    geom.params['_facet_scales'] = self.scales
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_params = {
+                        '_geo_key': geo_key,
+                        '_facet_idx': idx,
+                        '_facet_count': n_facets,
+                        '_facet_scales': self.scales,
+                    }
                     if global_zmin is not None:
-                        geom.params['_global_zmin'] = global_zmin
-                        geom.params['_global_zmax'] = global_zmax
-                    geom.draw(fig, row=row+1, col=col+1)
+                        panel_params['_global_zmin'] = global_zmin
+                        panel_params['_global_zmax'] = global_zmax
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                        panel_params,
+                    )
+                    panel_geom.draw(fig, row=row+1, col=col+1)
 
                 # Set up geo layout for this subplot with domain positioning
                 if map_type in ('state', 'usa'):
@@ -670,15 +727,16 @@ class facet_wrap(Facet):
 
                 # Draw each geom on the subplot for the current facet
                 for geom in plot.layers:
-                    # Apply global aesthetic maps for consistent colors across facets
-                    self._apply_global_maps_to_geom(geom, global_color_map, global_shape_map)
-
-                    # If geom has its own explicit data, use that for faceting
-                    if hasattr(geom, '_has_explicit_data') and geom._has_explicit_data:
-                        geom_facet_data = geom.data[geom.data[self.facet_var] == facet_value]
-                        geom.setup_data(geom_facet_data, plot.mapping)
-                    else:
-                        geom.setup_data(facet_data, plot.mapping)
-                    geom.draw(fig, row=row, col=col)
+                    geom_facet_data = self._facet_geom_data(
+                        geom, facet_data, [(self.facet_var, facet_value)]
+                    )
+                    panel_geom = self._clone_geom_for_panel(
+                        geom,
+                        geom_facet_data,
+                        plot.mapping,
+                        global_color_map,
+                        global_shape_map,
+                    )
+                    panel_geom.draw(fig, row=row, col=col)
 
         return fig

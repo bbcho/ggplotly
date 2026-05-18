@@ -48,6 +48,7 @@ class geom_point(Geom):
         if has_geo:
             self._draw_geo(fig, data)
         else:
+            data = self._scale_mapped_marker_size(data)
             plot = go.Scatter
 
             # Handle stroke (border width) for markers
@@ -67,6 +68,28 @@ class geom_point(Geom):
             )
 
             self._transform_fig(plot, fig, data, payload, color_targets, row, col)
+
+    def _scale_mapped_marker_size(self, data):
+        size_col = self.mapping.get("size")
+        if size_col is None or size_col not in data.columns:
+            return data
+        size_values = data[size_col]
+        if not pd.api.types.is_numeric_dtype(size_values):
+            return data
+
+        scaled = data.copy()
+        size_min = self.params.get("size_min", 5)
+        size_max = self.params.get("size_max", 20)
+        valid = size_values.dropna()
+        if valid.empty:
+            marker_size = pd.Series([self.params.get("size", 8)] * len(size_values), index=size_values.index)
+        elif valid.max() == valid.min():
+            marker_size = pd.Series([(size_min + size_max) / 2] * len(size_values), index=size_values.index)
+        else:
+            marker_size = size_min + (size_values - valid.min()) / (valid.max() - valid.min()) * (size_max - size_min)
+        scaled["_ggplotly_marker_size"] = marker_size
+        self.mapping = {**self.mapping, "size": "_ggplotly_marker_size"}
+        return scaled
 
     def _draw_geo(self, fig, data):
         """Draw points on a geographic map using Scattergeo."""
