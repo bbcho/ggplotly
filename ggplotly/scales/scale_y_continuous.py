@@ -8,7 +8,7 @@ from .scale_base import Scale
 class scale_y_continuous(Scale):
     aesthetic = 'y'
 
-    def __init__(self, name=None, limits=None, breaks=None, labels=None, trans=None):
+    def __init__(self, name=None, limits=None, breaks=None, labels=None, trans=None, sec_axis=None):
         """
         Continuous position scale for the y-axis.
 
@@ -24,6 +24,7 @@ class scale_y_continuous(Scale):
         self.breaks = breaks
         self.labels = labels
         self.trans = trans
+        self.sec_axis = sec_axis
 
     def apply(self, fig):
         """
@@ -71,3 +72,6 @@ class scale_y_continuous(Scale):
                 raise ValueError(f"Unsupported transformation: {self.trans}")
 
         fig.update_yaxes(**yaxis_update)
+
+        if self.sec_axis is not None:
+            fig.update_layout(yaxis2=self.sec_axis.axis_update())

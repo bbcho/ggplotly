@@ -45,6 +45,7 @@ dependencies = [
     "scikit-learn>=1.0.0",
     "scipy>=1.7.0",
     "statsmodels>=0.13.0",
+    "networkx>=2.8,<4",
 ]
 
 [project.optional-dependencies]

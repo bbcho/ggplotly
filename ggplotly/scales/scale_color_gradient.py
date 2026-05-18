@@ -69,6 +69,8 @@ class scale_color_gradient(Scale):
         new_colorscale = [[0, self.low], [1, self.high]]
 
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             # Handle line gradient segments (created by ContinuousColorTraceBuilder)
             if hasattr(trace, 'meta') and trace.meta:
                 meta = trace.meta

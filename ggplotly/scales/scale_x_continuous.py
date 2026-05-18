@@ -57,7 +57,7 @@ class scale_x_continuous(Scale):
     def __init__(self, name=None, limits=None, breaks=None, minor_breaks=None,
                  n_breaks=5, labels=None, expand=(0.05, 0), oob='censor',
                  na_value=None, trans=None, position='bottom', guide='axis',
-                 format=None):
+                 format=None, sec_axis=None):
         """
         Initialize the continuous x-axis scale.
 
@@ -89,6 +89,7 @@ class scale_x_continuous(Scale):
         self.position = position
         self.guide = guide
         self.format = format
+        self.sec_axis = sec_axis
 
     def _apply_expansion(self, limits):
         """Apply expansion to limits."""
@@ -169,3 +170,9 @@ class scale_x_continuous(Scale):
             xaxis_update["side"] = "top"
 
         fig.update_xaxes(**xaxis_update)
+
+        if self.sec_axis is not None:
+            update = self.sec_axis.axis_update()
+            update["overlaying"] = "x"
+            update["side"] = "top"
+            fig.update_layout(xaxis2=update)

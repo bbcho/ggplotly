@@ -31,6 +31,7 @@ class Scale:
 
     # The aesthetic this scale affects. Subclasses should override.
     aesthetic = None
+    scale_slot = None
 
     def apply(self, fig):
         """
@@ -43,6 +44,18 @@ class Scale:
             Subclasses must implement this method.
         """
         pass  # To be implemented by subclasses
+
+    def _applies_to_trace(self, trace):
+        """Return True when this scale should update the trace."""
+        if self.aesthetic is None or self.scale_slot is None:
+            return True
+        meta = getattr(trace, "meta", None)
+        if not isinstance(meta, dict):
+            return True
+        slots = meta.get("_ggplotly_scale_slots")
+        if not isinstance(slots, dict):
+            return True
+        return slots.get(self.aesthetic, 0) == self.scale_slot
 
     def _apply_manual_color_mapping(self, fig, values, name=None, breaks=None,
                                      labels=None, update_fill=False, guide='legend'):
@@ -73,6 +86,8 @@ class Scale:
 
         # Update trace colors based on the mapping
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if hasattr(trace, 'name') and trace.name in color_map:
                 color = color_map[trace.name]
                 if hasattr(trace, 'marker') and trace.marker is not None and 'color' in trace.marker:
@@ -124,6 +139,12 @@ class ScaleRegistry:
             scale (Scale): The scale to add.
         """
         aesthetic = getattr(scale, 'aesthetic', None)
+
+        if getattr(scale, "_ggplotly_new_scale", False):
+            if aesthetic in self._scales:
+                del self._scales[aesthetic]
+            self._order.append(scale)
+            return
 
         if aesthetic is not None:
             # Check for existing scale for this aesthetic

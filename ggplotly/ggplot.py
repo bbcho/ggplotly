@@ -14,6 +14,7 @@ from .guides import Annotate, Guides, Labs
 from .scales.scale_base import Scale, ScaleRegistry
 from .stats.stat_base import Stat
 from .themes import Theme
+from .transitions import Transition
 from .utils import Utils, ggsize
 
 
@@ -66,6 +67,7 @@ class ggplot:
         self._index_name = index_name  # Store for axis labeling
         self.layers = []
         self._scale_registry = ScaleRegistry()  # Use registry for scale management
+        self._scale_slots = {}
         self.stats = []
         self.theme = Theme()
         self.facets = None
@@ -74,6 +76,7 @@ class ggplot:
         self.size = None  # Initialize size
         self.annotations = []  # Initialize annotations list
         self.guides_obj = None  # Initialize guides
+        self.transition = None
         self.fig = go.Figure()
         self.auto_draw = True  # Automatically draw after adding components by default
 
@@ -115,6 +118,8 @@ class ggplot:
             self.size = component
         elif isinstance(component, Stat):
             self.add_stat(component)
+        elif isinstance(component, Transition):
+            self.transition = component
         else:
             raise TypeError("Unsupported component")
 
@@ -231,6 +236,7 @@ class ggplot:
             geom.mapping = {**self.mapping, **geom.mapping}
 
         geom.theme = self.theme  # Pass the theme to the geom
+        geom.params["_scale_slots"] = self._scale_slots.copy()
 
         if hasattr(geom, "before_add"):
             geom = geom.before_add()
@@ -253,6 +259,7 @@ class ggplot:
                     tgeom.mapping = {**self.mapping, **tgeom.mapping}
 
                 tgeom.theme = self.theme
+                tgeom.params["_scale_slots"] = self._scale_slots.copy()
 
                 self.layers.append(tgeom)
         else:
@@ -273,6 +280,12 @@ class ggplot:
         Parameters:
             scale (Scale): The scale to add.
         """
+        aesthetic = getattr(scale, "aesthetic", None)
+        if getattr(scale, "_ggplotly_new_scale", False) and aesthetic is not None:
+            self._scale_slots[aesthetic] = self._scale_slots.get(aesthetic, 0) + 1
+            scale.scale_slot = self._scale_slots[aesthetic]
+        elif aesthetic is not None:
+            scale.scale_slot = self._scale_slots.get(aesthetic, 0)
         self._scale_registry.add(scale)
 
     def set_theme(self, theme):
@@ -349,6 +362,9 @@ class ggplot:
             self.guides_obj.apply(self.fig)
 
         self._harmonize_guide_layout(self.fig)
+
+        if self.transition:
+            self.transition.apply(self, self.fig)
 
         # Apply annotations
         for annotation in self.annotations:

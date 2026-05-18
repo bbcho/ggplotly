@@ -33,6 +33,8 @@ class scale_fill_gradient(Scale):
 
         # Update traces that use fill colors
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if "marker" in trace and "color" in trace.marker:
                 if isinstance(trace.marker.color, (list, tuple, np.ndarray)):
                     trace.marker.colorscale = colorscale

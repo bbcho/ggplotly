@@ -1,3 +1,19 @@
+from .stat_advanced import (
+    stat_alluvium,
+    stat_bin2d,
+    stat_bin_hex,
+    stat_bindot,
+    stat_density_2d,
+    stat_density_2d_filled,
+    stat_dotsinterval,
+    stat_ellipse,
+    stat_halfeye,
+    stat_mosaic,
+    stat_quantile,
+    stat_sum,
+    stat_summary_2d,
+    stat_summary_bin,
+)
 from .stat_bin import stat_bin
 from .stat_contour import stat_contour
 from .stat_count import stat_count
@@ -26,4 +42,18 @@ __all__ = [
     "stat_qq",
     "stat_qq_line",
     "stat_stl",
+    "stat_bin2d",
+    "stat_bin_hex",
+    "stat_bindot",
+    "stat_density_2d",
+    "stat_density_2d_filled",
+    "stat_ellipse",
+    "stat_quantile",
+    "stat_summary_bin",
+    "stat_summary_2d",
+    "stat_sum",
+    "stat_halfeye",
+    "stat_dotsinterval",
+    "stat_alluvium",
+    "stat_mosaic",
 ]

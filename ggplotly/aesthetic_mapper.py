@@ -375,7 +375,18 @@ class AestheticMapper:
         color, color_series, color_map = self.resolve_aesthetic('color')
         fill, fill_series, fill_map = self.resolve_aesthetic('fill')
         size, size_series, _ = self.resolve_aesthetic('size')
-        alpha = self.params.get('alpha', 1.0)
+        alpha_value, alpha_series, _ = self.resolve_aesthetic('alpha')
+        if alpha_series is not None and pd.api.types.is_numeric_dtype(alpha_series):
+            valid_alpha = alpha_series.dropna()
+            if valid_alpha.empty or valid_alpha.max() == valid_alpha.min():
+                alpha_series = pd.Series([self.params.get('alpha', 1.0)] * len(alpha_series), index=alpha_series.index)
+            else:
+                low, high = self.params.get('alpha_range', (0.1, 1.0))
+                alpha_series = low + (alpha_series - valid_alpha.min()) / (valid_alpha.max() - valid_alpha.min()) * (high - low)
+            alpha = self.params.get('alpha', 1.0)
+        else:
+            alpha = alpha_value if alpha_value is not None else self.params.get('alpha', 1.0)
+            alpha_series = None
 
         if 'linetype' in self.mapping:
             linetype_value = self.mapping['linetype']
@@ -439,6 +450,7 @@ class AestheticMapper:
             'shape_series': shape_series,
             'shape_map': shape_map,
             'alpha': alpha,
+            'alpha_series': alpha_series,
             'linetype': linetype,
             'linetype_series': linetype_series,
             'linetype_map': linetype_map,

@@ -29,6 +29,8 @@ class scale_size(Scale):
         # Find the min and max values in the size data
         size_data = []
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if "marker" in trace and "size" in trace.marker:
                 size = trace.marker.size
                 if isinstance(size, (list, tuple, np.ndarray)):
@@ -46,6 +48,8 @@ class scale_size(Scale):
 
         # Apply scaling to marker sizes
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if "marker" in trace and "size" in trace.marker:
                 size = trace.marker.size
                 if isinstance(size, (list, tuple, np.ndarray)):

@@ -124,6 +124,8 @@ class scale_color_brewer(Scale):
         # Extract categories from trace names
         categories = []
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if hasattr(trace, 'name') and trace.name and trace.name not in categories:
                 categories.append(trace.name)
 
@@ -135,6 +137,8 @@ class scale_color_brewer(Scale):
 
         # Apply colors to traces
         for trace in fig.data:
+            if not self._applies_to_trace(trace):
+                continue
             if hasattr(trace, 'name') and trace.name in color_map:
                 color = color_map[trace.name]
                 if hasattr(trace, 'marker') and trace.marker is not None:

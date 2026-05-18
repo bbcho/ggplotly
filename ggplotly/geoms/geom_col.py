@@ -53,6 +53,7 @@ class geom_col(Geom):
             fig._ggplotly_shown_legendgroups = set()
 
         line_width = self.params.get("linewidth", self.params.get("size", None))
+        pattern_shape = self.params.get("pattern")
         for spec in result.traces:
             show_legend = self._show_legend_once(fig, spec.legendgroup)
             outline_width = line_width if line_width is not None else (1 if spec.outline is not None else 0)
@@ -69,6 +70,7 @@ class geom_col(Geom):
                     showlegend=show_legend,
                     legendgroup=spec.legendgroup,
                     offsetgroup=spec.offsetgroup,
+                    marker_pattern_shape=pattern_shape,
                 ),
                 row=row,
                 col=col,

@@ -149,22 +149,66 @@ class TraceBuilder(ABC):
             payload["offsetgroup"] = str(value_key)
             payload["alignmentgroup"] = "boxplot"
         if payload.get("mode") != "lines":
-            return payload
+            return self._apply_interactive_payload(payload, data_mask)
 
         linetype_series = self.style_props.get("linetype_series")
         linetype_map = self.style_props.get("linetype_map") or {}
         if linetype_series is None:
             payload["line_dash"] = self.style_props.get("linetype", payload.get("line_dash", "solid"))
-            return payload
+            return self._apply_interactive_payload(payload, data_mask)
 
         if value_key in linetype_map:
             payload["line_dash"] = linetype_map[value_key]
-            return payload
+            return self._apply_interactive_payload(payload, data_mask)
 
         subset = linetype_series[data_mask] if data_mask is not None else linetype_series
         values = list(subset.dropna().unique())
         if values:
             payload["line_dash"] = linetype_map.get(values[0], payload.get("line_dash", "solid"))
+        return self._apply_interactive_payload(payload, data_mask)
+
+    def _column_or_param_series(self, aesthetic, data_mask=None):
+        value = self.mapping.get(aesthetic, self.params.get(aesthetic))
+        if value is None:
+            return None
+        if isinstance(value, str) and value in self.data.columns:
+            series = self.data[value]
+        else:
+            series = [value] * len(self.data)
+        if data_mask is None:
+            return series
+        try:
+            return series[data_mask]
+        except TypeError:
+            return [item for item, keep in zip(series, data_mask) if keep]
+
+    def _apply_interactive_payload(self, payload, data_mask=None):
+        """Attach tooltip/data_id/hovertemplate metadata without changing data."""
+        alpha_series = self.style_props.get("alpha_series")
+        if alpha_series is not None and payload.get("mode") != "lines":
+            values = alpha_series[data_mask] if data_mask is not None else alpha_series
+            payload["marker_opacity"] = values
+
+        tooltip = self._column_or_param_series("tooltip", data_mask)
+        if tooltip is not None:
+            payload["hovertext"] = tooltip
+            payload["hoverinfo"] = "text"
+
+        data_id = self._column_or_param_series("data_id", data_mask)
+        if data_id is not None:
+            payload["customdata"] = data_id
+
+        hovertemplate = self._column_or_param_series("hovertemplate", data_mask)
+        if hovertemplate is not None:
+            payload["hovertemplate"] = hovertemplate
+
+        onclick = self.mapping.get("onclick", self.params.get("onclick"))
+        if onclick is not None:
+            meta = payload.get("meta", {})
+            if not isinstance(meta, dict):
+                meta = {"value": meta}
+            meta["_ggplotly_onclick"] = onclick
+            payload["meta"] = meta
         return payload
 
     @abstractmethod
@@ -649,6 +693,7 @@ class SingleTraceBuilder(TraceBuilder):
         payload = self.original_payload.copy()
         if payload.get("mode") == "lines":
             payload["line_dash"] = self.payload_for_mask().get("line_dash", payload.get("line_dash", "solid"))
+        payload = self._apply_interactive_payload(payload)
 
         self.fig.add_trace(
             self.plot(

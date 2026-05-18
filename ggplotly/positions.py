@@ -497,3 +497,61 @@ class position_nudge:
 
         y = np.asarray(y, dtype=float) + self.y_nudge
         return x, y
+
+
+class position_jitterdodge:
+    """Combine dodging by group with reproducible jitter."""
+
+    def __init__(self, jitter_width=0.4, jitter_height=0, dodge_width=0.75, seed=None):
+        self.jitter_width = jitter_width
+        self.jitter_height = jitter_height
+        self.dodge_width = dodge_width
+        self.seed = seed
+
+    def adjust(self, x, y=None, group=None):
+        x_dodged = position_dodge(width=self.dodge_width).adjust(x, group=group)
+        return position_jitter(
+            width=self.jitter_width,
+            height=self.jitter_height,
+            seed=self.seed,
+        ).adjust(x_dodged, y)
+
+
+class position_quasirandom:
+    """Deterministic point spread for categorical distributions."""
+
+    def __init__(self, width=0.4, group_on="x", varwidth=False):
+        self.width = width
+        self.group_on = group_on
+        self.varwidth = varwidth
+
+    def adjust(self, x, y=None, group=None):
+        x_values = np.asarray(x, dtype=float)
+        if y is None:
+            return x_values
+        y_values = np.asarray(y, dtype=float)
+        keys = group if group is not None else x_values
+        keys = np.asarray(keys)
+        adjusted = x_values.copy()
+
+        for key in np.unique(keys):
+            idx = np.where(keys == key)[0]
+            if len(idx) <= 1:
+                continue
+            order = idx[np.argsort(y_values[idx])]
+            ranks = np.arange(len(order))
+            centered = ranks - (len(order) - 1) / 2
+            spread = centered / max(len(order) - 1, 1)
+            width = self.width * (np.sqrt(len(order)) / np.sqrt(len(keys))) if self.varwidth else self.width
+            adjusted[order] = adjusted[order] + spread * width
+
+        return adjusted, y_values
+
+
+class position_beeswarm(position_quasirandom):
+    """Alias for quasirandom packing with a ggplot extension-compatible name."""
+
+    def __init__(self, width=0.4, priority="ascending", cex=1, group_on="x"):
+        super().__init__(width=width, group_on=group_on)
+        self.priority = priority
+        self.cex = cex

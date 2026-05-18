@@ -96,7 +96,11 @@ class Geom:
     required_aes: list = []
 
     # Optional aesthetics that can be mapped to columns
-    optional_aes: list = ['color', 'fill', 'size', 'alpha', 'shape', 'group', 'linetype']
+    optional_aes: list = [
+        'color', 'fill', 'size', 'alpha', 'shape', 'group', 'linetype',
+        'tooltip', 'data_id', 'hovertemplate', 'onclick', 'pattern', 'z',
+        'stratum', 'alluvium', 'from', 'to', 'weight', 'xerr',
+    ]
 
     @staticmethod
     def _normalize_param_aliases(params):
@@ -241,11 +245,12 @@ class Geom:
 
                     # Check if it's supposed to be a column reference
                     if aes_name in ('x', 'y', 'xend', 'yend', 'xmin', 'xmax', 'ymin', 'ymax',
-                                   'label', 'group', 'weight'):
+                                   'label', 'group', 'weight', 'tooltip', 'data_id', 'z',
+                                   'stratum', 'alluvium', 'from', 'to', 'xerr'):
                         # These are always column references
                         if value not in columns:
                             raise ColumnNotFoundError(value, list(data.columns), aes_name)
-                    elif aes_name in ('color', 'fill', 'size', 'shape', 'alpha'):
+                    elif aes_name in ('color', 'fill', 'size', 'shape', 'alpha', 'linetype', 'pattern', 'hovertemplate', 'onclick'):
                         # These could be literal values or column references
                         # Only validate if it looks like a column reference (not a color name, etc.)
                         if value in columns:
@@ -295,8 +300,19 @@ class Geom:
         if self.required_aes:
             self.validate_required_aesthetics(data)
 
+        before_trace_count = len(fig.data)
+
         # Delegate to subclass implementation
         self._draw_impl(fig, data, row, col)
+
+        scale_slots = self.params.get("_scale_slots")
+        if isinstance(scale_slots, dict):
+            for trace in fig.data[before_trace_count:]:
+                meta = getattr(trace, "meta", None)
+                if not isinstance(meta, dict):
+                    meta = {}
+                meta["_ggplotly_scale_slots"] = scale_slots.copy()
+                trace.meta = meta
 
     def _remove_missing(self, data):
         """
