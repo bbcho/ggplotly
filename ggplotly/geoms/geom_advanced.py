@@ -37,8 +37,13 @@ def _fill_color(style_props, params, default="#1f77b4"):
 
 
 def _category_positions(values):
-    categorical = pd.Categorical(values)
-    return pd.Series(categorical.codes, index=values.index), list(categorical.categories)
+    categories = _ordered_unique(values)
+    category_index = {value: i for i, value in enumerate(categories)}
+    return pd.Series(values.map(category_index), index=values.index), categories
+
+
+def _ordered_unique(values):
+    return list(pd.Series(values).dropna().unique())
 
 
 def _with_names(fig, axis, tickvals, ticktext):
@@ -399,7 +404,7 @@ class geom_density_ridges(Geom):
     def _draw_impl(self, fig, data, row, col):
         x_col = self.mapping["x"]
         y_col = self.mapping["y"]
-        categories = list(pd.Categorical(data[y_col]).categories)
+        categories = _ordered_unique(data[y_col])
         colors = self.params.get("colors")
         for i, category in enumerate(categories):
             values = pd.to_numeric(data.loc[data[y_col] == category, x_col], errors="coerce").dropna()
@@ -410,12 +415,13 @@ class geom_density_ridges(Geom):
             density = gaussian_kde(values)(grid)
             density = density / density.max() * self.params.get("scale", 0.8)
             baseline = i
+            upper = baseline + density
             fig.add_trace(
                 go.Scatter(
-                    x=grid,
-                    y=baseline + density,
+                    x=list(grid) + list(grid[::-1]),
+                    y=list(upper) + [baseline] * len(grid),
                     mode="lines",
-                    fill="tonexty" if i > 0 else "tozeroy",
+                    fill="toself",
                     fillcolor=(colors[i % len(colors)] if colors else self.params.get("fill", "rgba(31,119,180,0.35)")),
                     line=dict(color=self.params.get("color", "#1f77b4")),
                     name=str(category),
@@ -509,8 +515,8 @@ class geom_alluvium(Geom):
         x_col = self.mapping["x"]
         stratum_col = self.mapping["stratum"]
         alluvium_col = self.mapping["alluvium"]
-        stages = list(pd.Categorical(data[x_col]).categories)
-        strata = list(pd.Categorical(data[stratum_col]).categories)
+        stages = _ordered_unique(data[x_col])
+        strata = _ordered_unique(data[stratum_col])
         stage_pos = {stage: i for i, stage in enumerate(stages)}
         stratum_pos = {stratum: i for i, stratum in enumerate(strata)}
         for alluvium, frame in data.groupby(alluvium_col):
