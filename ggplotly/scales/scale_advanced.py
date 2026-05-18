@@ -200,7 +200,7 @@ def _apply_discrete_palette(fig, scale, update_fill=False):
         fig.update_layout(legend_title_text=scale.name)
 
 
-class scale_color_viridis_d(Scale):
+class scale_color_viridis_d(_TraceNamePaletteScale):
     aesthetic = "color"
 
     def __init__(self, option="D", direction=1, name=None, **kwargs):

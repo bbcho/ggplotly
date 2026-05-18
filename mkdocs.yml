@@ -65,6 +65,8 @@ nav:
     - Network Graphs: gallery/networks.ipynb
     - Facets: gallery/facets.ipynb
     - Theming: gallery/theming.ipynb
+    - Advanced Capabilities: gallery/advanced-capabilities.ipynb
+    - Visual Regression Edge Cases: gallery/visual-regression-edge-cases.ipynb
   - API Reference:
     - ggplot: api/ggplot.md
     - Geoms: api/geoms.md

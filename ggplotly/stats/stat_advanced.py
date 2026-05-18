@@ -435,4 +435,11 @@ class stat_mosaic(Stat):
                 })
                 y_start += height
             x_start += x_width
-        return pd.DataFrame(rows), {"xmin": "xmin", "xmax": "xmax", "ymin": "ymin", "ymax": "ymax", "fill": "fill"}
+        return pd.DataFrame(rows), {
+            "x": "x",
+            "xmin": "xmin",
+            "xmax": "xmax",
+            "ymin": "ymin",
+            "ymax": "ymax",
+            "fill": "fill",
+        }
