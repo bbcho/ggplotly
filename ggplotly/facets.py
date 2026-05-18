@@ -9,6 +9,12 @@ from .constants import SHAPE_PALETTE, get_color_palette
 from .exceptions import FacetColumnNotFoundError, TooManyFacetsWarning
 
 
+def _subplot_spacing(count, preferred):
+    if count <= 1:
+        return 0
+    return min(preferred, 0.25 / (count - 1))
+
+
 # facets.py
 class Facet:
     """
@@ -322,8 +328,8 @@ class facet_grid(Facet):
             column_widths=column_widths,
             row_heights=row_heights,
             specs=specs,
-            horizontal_spacing=0.05 if is_3d else 0.2,
-            vertical_spacing=0.1 if is_3d else 0.3,
+            horizontal_spacing=_subplot_spacing(ncols, 0.05 if is_3d else 0.08),
+            vertical_spacing=_subplot_spacing(nrows, 0.05 if is_3d else 0.08),
         )
         if getattr(plot, "size", None) is None and nrows > 1:
             fig.update_layout(height=max(450, 260 * nrows))

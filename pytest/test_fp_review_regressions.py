@@ -557,10 +557,10 @@ def test_map_tiles_with_viridis_fill_keep_distinct_tile_values():
 
 def test_facet_grid_auto_height_preserves_multirow_panels():
     df = pd.DataFrame({
-        "x": [1, 2] * 6,
-        "y": list(range(12)),
-        "row": ["r1"] * 4 + ["r2"] * 4 + ["r3"] * 4,
-        "col": ["c1", "c1", "c2", "c2"] * 3,
+        "x": [1, 2] * 8,
+        "y": list(range(16)),
+        "row": ["r1"] * 4 + ["r2"] * 4 + ["r3"] * 4 + ["r4"] * 4,
+        "col": ["c1", "c1", "c2", "c2"] * 4,
     })
 
     fig = (
@@ -569,7 +569,14 @@ def test_facet_grid_auto_height_preserves_multirow_panels():
         + facet_grid(rows="row", cols="col")
     ).draw()
 
-    assert fig.layout.height >= 780
+    y_domains = []
+    for idx in range(1, 9):
+        axis_name = "yaxis" if idx == 1 else f"yaxis{idx}"
+        axis = getattr(fig.layout, axis_name)
+        y_domains.append(axis.domain)
+
+    assert fig.layout.height >= 1040
+    assert min(domain[1] - domain[0] for domain in y_domains) >= 0.15
 
 
 def test_coord_polar_converts_radian_theta_to_degrees_for_lines():
