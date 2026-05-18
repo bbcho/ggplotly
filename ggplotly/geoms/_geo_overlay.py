@@ -41,6 +41,33 @@ def infer_tile_polygons(x: pd.Series, y: pd.Series, fills: pd.Series, colors: pd
     return tuple(specs)
 
 
+def tile_specs_to_geojson(
+    specs: tuple[GeoTilePolygonSpec, ...],
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    features = []
+    locations = []
+    for index, spec in enumerate(specs):
+        feature_id = f"tile-{index}"
+        locations.append(feature_id)
+        features.append(
+            {
+                "type": "Feature",
+                "properties": {"id": feature_id, "name": spec.name},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [lon, lat]
+                            for lon, lat in reversed(tuple(zip(spec.lon, spec.lat)))
+                        ]
+                    ],
+                },
+            }
+        )
+
+    return {"type": "FeatureCollection", "features": features}, tuple(locations)
+
+
 def _half_spacing(values: pd.Series) -> float:
     unique = pd.Series(values.dropna().unique()).sort_values()
     if len(unique) < 2:

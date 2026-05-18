@@ -31,6 +31,7 @@ from ggplotly import (
     ggsave,
     position_fill,
     position_nudge,
+    scale_fill_viridis_c,
     scale_size,
     scale_y_continuous,
 )
@@ -513,7 +514,45 @@ def test_map_tiles_render_as_geo_polygons_not_heatmap():
     ).draw()
 
     assert not any(trace.type == "heatmap" for trace in fig.data)
-    assert any(trace.type == "scattergeo" and trace.fill == "toself" for trace in fig.data)
+    tile_traces = [
+        trace
+        for trace in fig.data
+        if trace.type == "choropleth"
+        and isinstance(trace.meta, dict)
+        and trace.meta.get("_ggplotly_geo_tile")
+    ]
+    assert len(tile_traces) == 1
+    assert len(tile_traces[0].locations) == len(df)
+    assert tile_traces[0].geojson["features"][0]["geometry"]["type"] == "Polygon"
+
+
+def test_map_tiles_with_viridis_fill_keep_distinct_tile_values():
+    df = pd.DataFrame({
+        "lon": [-101, -100, -101, -100],
+        "lat": [39, 39, 40, 40],
+        "value": [0.0, 0.25, 0.75, 1.0],
+    })
+
+    fig = (
+        ggplot(df, aes(x="lon", y="lat", fill="value"))
+        + geom_map(map_type="usa")
+        + geom_tile(alpha=0.6)
+        + scale_fill_viridis_c()
+    ).draw()
+
+    tile_traces = [
+        trace
+        for trace in fig.data
+        if trace.type == "choropleth"
+        and isinstance(trace.meta, dict)
+        and trace.meta.get("_ggplotly_geo_tile")
+    ]
+
+    assert len(tile_traces) == 1
+    assert list(tile_traces[0].z) == [0.0, 0.25, 0.75, 1.0]
+    assert len(tile_traces[0].geojson["features"]) == len(df)
+    assert tile_traces[0].marker.opacity == 0.6
+    assert tile_traces[0].showscale is True
 
 
 def test_facet_grid_auto_height_preserves_multirow_panels():

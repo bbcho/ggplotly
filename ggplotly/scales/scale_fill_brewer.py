@@ -138,7 +138,7 @@ class scale_fill_brewer(Scale):
             if hasattr(trace, 'name') and trace.name in color_map:
                 color = color_map[trace.name]
                 # For bar charts, histograms, etc.
-                if hasattr(trace, 'marker') and trace.marker is not None:
+                if hasattr(trace, 'marker') and trace.marker is not None and 'color' in trace.marker:
                     trace.marker.color = color
                 # For area fills
                 if hasattr(trace, 'fillcolor'):
