@@ -299,6 +299,24 @@ def test_geom_bar_default_stacks_and_dodge_uses_grouped_barmode():
     assert all(trace.offsetgroup is None for trace in stacked.data)
     assert dodged.layout.barmode == "group"
     assert {trace.offsetgroup for trace in dodged.data} == {"X", "Y"}
+    assert [trace.width for trace in dodged.data] == [pytest.approx(0.45), pytest.approx(0.45)]
+
+
+def test_geom_col_dodge_splits_bar_width_across_groups():
+    df = pd.DataFrame({
+        "category": ["A", "A", "A", "B", "B", "B"],
+        "group": ["X", "Y", "Z", "X", "Y", "Z"],
+        "value": [1, 2, 3, 4, 5, 6],
+    })
+
+    fig = (
+        ggplot(df, aes(x="category", y="value", fill="group"))
+        + geom_col(position="dodge", width=0.9)
+    ).draw()
+
+    assert fig.layout.barmode == "group"
+    assert {trace.offsetgroup for trace in fig.data} == {"X", "Y", "Z"}
+    assert [trace.width for trace in fig.data] == [pytest.approx(0.3)] * 3
 
 
 def test_position_fill_normalizes_each_x_stack_to_one():
@@ -458,6 +476,8 @@ def test_grouped_boxplot_uses_grouped_boxmode():
     ).draw()
 
     assert fig.layout.boxmode == "group"
+    assert {trace.offsetgroup for trace in fig.data} == {"g1", "g2"}
+    assert all(trace.width is None for trace in fig.data)
 
 
 def test_map_segments_render_as_scattergeo_not_cartesian_scatter():

@@ -90,6 +90,7 @@ def compute_bar_trace_specs(
 
     traces = []
     group_values = _group_values(data[group_col], style_props, group_col, mapping)
+    group_count = max(len(group_values), 1)
     working = data.copy()
     if position_kind == "fill":
         totals = working.groupby(x_col, dropna=False)[y_col].transform("sum")
@@ -108,7 +109,7 @@ def compute_bar_trace_specs(
                 name=name,
                 fill=_fill_for_group(group_value, style_props),
                 outline=_outline_for_group(group_value, style_props),
-                width=_bar_width(subset, width),
+                width=_positioned_bar_width(_bar_width(subset, width), position_kind, group_count),
                 offsetgroup=name if position_kind == "dodge" else None,
                 legendgroup=name,
             )
@@ -171,6 +172,21 @@ def _bar_width(data: pd.DataFrame, width: Any) -> Any:
     if "width" in data.columns:
         return tuple(data["width"])
     return width
+
+
+def _positioned_bar_width(width: Any, position_kind: str, group_count: int) -> Any:
+    if position_kind != "dodge" or group_count <= 1:
+        return width
+    if isinstance(width, tuple):
+        return tuple(_scale_width_value(value, group_count) for value in width)
+    return _scale_width_value(width, group_count)
+
+
+def _scale_width_value(value: Any, group_count: int) -> Any:
+    try:
+        return value / group_count
+    except TypeError:
+        return value
 
 
 def _normalize_single_stack(values: pd.Series) -> pd.Series:

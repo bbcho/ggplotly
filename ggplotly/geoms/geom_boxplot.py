@@ -161,6 +161,11 @@ class geom_boxplot(Geom):
             # For other values, we'd need custom calculation
             pass  # Note: Plotly doesn't support custom coef directly
 
+        group_count = self._group_count(data)
+        if group_count > 1:
+            payload.pop("width", None)
+            self.params["_ggplotly_box_grouped"] = True
+
         color_targets = dict(
             fill="fillcolor",
             color="line_color",
@@ -171,3 +176,10 @@ class geom_boxplot(Geom):
             for aesthetic in ("fill", "color", "group")
         ):
             fig.update_layout(boxmode="group")
+
+    def _group_count(self, data):
+        for aesthetic in ("fill", "color", "group"):
+            column = self.mapping.get(aesthetic)
+            if isinstance(column, str) and column in data.columns:
+                return max(len(data[column].dropna().unique()), 1)
+        return 1

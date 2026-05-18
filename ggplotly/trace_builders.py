@@ -145,6 +145,9 @@ class TraceBuilder(ABC):
     def payload_for_mask(self, data_mask=None, value_key=None):
         """Return payload with mapped line dash applied for line traces."""
         payload = self.payload.copy()
+        if self.params.get("_ggplotly_box_grouped") and value_key is not None:
+            payload["offsetgroup"] = str(value_key)
+            payload["alignmentgroup"] = "boxplot"
         if payload.get("mode") != "lines":
             return payload
 
