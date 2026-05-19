@@ -92,6 +92,9 @@ class stat_bin2d(Stat):
         return pd.DataFrame(rows), {"x": "x", "y": "y", "fill": "count"}
 
 
+stat_bin_2d = stat_bin2d
+
+
 class stat_bin_hex(stat_bin2d):
     """Count observations in approximate hexagonal bins."""
 
@@ -195,6 +198,9 @@ class stat_density_2d_filled(stat_density_2d):
     """Filled 2D density grid."""
 
     __name__ = "density_2d_filled"
+
+
+stat_density2d = stat_density_2d
 
 
 class stat_ellipse(Stat):

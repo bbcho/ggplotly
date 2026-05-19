@@ -6,6 +6,7 @@ from .geom_advanced import (
     geom_alluvium,
     geom_bar_pattern,
     geom_beeswarm,
+    geom_bin_2d,
     geom_bin2d,
     geom_col_pattern,
     geom_count,
@@ -42,6 +43,12 @@ from .geom_col import geom_col
 from .geom_contour import geom_contour
 from .geom_contour_filled import geom_contour_filled
 from .geom_density import geom_density
+from .geom_density_2d import (
+    geom_density2d,
+    geom_density2d_filled,
+    geom_density_2d,
+    geom_density_2d_filled,
+)
 from .geom_edgebundle import geom_edgebundle
 from .geom_errorbar import geom_errorbar
 from .geom_fanchart import geom_fanchart
@@ -132,6 +139,11 @@ __all__ = [
     "geom_dotplot",
     "geom_count",
     "geom_bin2d",
+    "geom_bin_2d",
+    "geom_density2d",
+    "geom_density2d_filled",
+    "geom_density_2d",
+    "geom_density_2d_filled",
     "geom_hex",
     "geom_raster",
     "geom_slabinterval",

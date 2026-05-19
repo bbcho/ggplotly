@@ -326,3 +326,9 @@ class stat_contour(Stat):
         # Compute and return result (discard the new_mapping)
         result, _ = self.compute(data)
         return result
+
+
+class stat_contour_filled(stat_contour):
+    """Compute grids for filled contour geoms."""
+
+    __name__ = "contour_filled"

@@ -305,6 +305,9 @@ class geom_bin2d(Geom):
         )
 
 
+geom_bin_2d = geom_bin2d
+
+
 class geom_hex(geom_bin2d):
     """Draw approximate hexagonal bin counts."""
 

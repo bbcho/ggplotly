@@ -12,6 +12,7 @@ from .geoms import (
     geom_bar,
     geom_bar_pattern,
     geom_beeswarm,
+    geom_bin_2d,
     geom_bin2d,
     geom_boxplot,
     geom_candlestick,
@@ -22,6 +23,10 @@ from .geoms import (
     geom_count,
     geom_crossbar,
     geom_density,
+    geom_density2d,
+    geom_density2d_filled,
+    geom_density_2d,
+    geom_density_2d_filled,
     geom_density_ridges,
     geom_dotplot,
     geom_dotsinterval,
@@ -83,7 +88,7 @@ from .geoms import (
 )
 from .ggplot import ggplot
 from .ggtitle import ggtitle
-from .guides import annotate, guide_colorbar, guide_legend, guides, labs
+from .guides import annotate, guide_colorbar, guide_colourbar, guide_legend, guides, labs
 from .layer import Layer, layer
 from .limits import lims, xlim, ylim
 from .map_data import map_data
@@ -155,12 +160,15 @@ from .scales import (
 from .stats import (
     stat_alluvium,
     stat_bin,
+    stat_bin_2d,
     stat_bin2d,
     stat_bin_hex,
     stat_bindot,
     stat_contour,
+    stat_contour_filled,
     stat_count,
     stat_density,
+    stat_density2d,
     stat_density_2d,
     stat_density_2d_filled,
     stat_dotsinterval,
@@ -174,6 +182,7 @@ from .stats import (
     stat_quantile,
     stat_qq,
     stat_qq_line,
+    stat_sf,
     stat_smooth,
     stat_stl,
     stat_sum,
@@ -238,6 +247,7 @@ __all__ = [
     "guides",
     "guide_legend",
     "guide_colorbar",
+    "guide_colourbar",
     "position_dodge",
     "position_dodge2",
     "position_fill",
@@ -302,6 +312,11 @@ __all__ = [
     "geom_dotplot",
     "geom_count",
     "geom_bin2d",
+    "geom_bin_2d",
+    "geom_density2d",
+    "geom_density2d_filled",
+    "geom_density_2d",
+    "geom_density_2d_filled",
     "geom_hex",
     "geom_raster",
     "geom_slabinterval",
@@ -388,10 +403,14 @@ __all__ = [
     "stat_qq_line",
     "stat_stl",
     "stat_bin2d",
+    "stat_bin_2d",
     "stat_bin_hex",
     "stat_bindot",
+    "stat_density2d",
     "stat_density_2d",
     "stat_density_2d_filled",
+    "stat_contour_filled",
+    "stat_sf",
     "stat_ellipse",
     "stat_quantile",
     "stat_summary_bin",

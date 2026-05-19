@@ -113,6 +113,9 @@ class guide_colorbar:
         self.reverse = reverse
 
 
+guide_colourbar = guide_colorbar
+
+
 class Guides:
     """Control guide (legend/colorbar) display for aesthetics."""
 
