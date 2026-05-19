@@ -91,3 +91,21 @@ Statistical transformations for data.
 ::: ggplotly.stats.stat_sf.stat_sf
     options:
       show_root_heading: true
+
+## Core ggplot2 Parity Stats
+
+::: ggplotly.stats.stat_advanced.stat_align
+    options:
+      show_root_heading: true
+
+::: ggplotly.stats.stat_advanced.stat_unique
+    options:
+      show_root_heading: true
+
+::: ggplotly.stats.stat_advanced.stat_summary_hex
+    options:
+      show_root_heading: true
+
+::: ggplotly.stats.stat_advanced.stat_ydensity
+    options:
+      show_root_heading: true

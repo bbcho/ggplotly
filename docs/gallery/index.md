@@ -14,3 +14,4 @@ A visual gallery of ggplotly examples organized by category. Each example includ
 - [Theming & Styling](theming.ipynb) - Custom themes, publication-ready charts
 - [Dataset Parity](dataset-parity.ipynb) - Bundled ggplot2 dataset compatibility checks
 - [ggplot2 Parity](ggplot2-parity.ipynb) - Compatibility aliases and wrappers
+- [Simple Core Stats](simple-core-stats.ipynb) - Core stats, no-op scale training, and wrapper geoms

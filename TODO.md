@@ -112,26 +112,26 @@ The list includes:
 
 ### Project 04: Simple Core Stats And No-Op Geoms
 
-- [ ] Add the pure or nearly pure ggplot2 primitives.
+- [x] Add the pure or nearly pure ggplot2 primitives.
   - Goal: cover common translated code paths with low Plotly risk.
   - Included APIs:
-    - [ ] `geom_blank(mapping=None, data=None, show_legend=False, **params)`.
+    - [x] `geom_blank(mapping=None, data=None, show_legend=False, **params)`.
       It should train scales and limits but produce no visible trace.
-    - [ ] `stat_unique(mapping=None, data=None, na_rm=False, **params)`.
+    - [x] `stat_unique(mapping=None, data=None, na_rm=False, **params)`.
       It should return unique rows over mapped aesthetics and grouping columns.
-    - [ ] `stat_align(mapping=None, data=None, **params)`. It should align
+    - [x] `stat_align(mapping=None, data=None, **params)`. It should align
       area/ribbon-like groups to a shared x-domain with deterministic
       interpolation.
-    - [ ] `stat_summary_hex(mapping=None, data=None, bins=30, fun="mean",
+    - [x] `stat_summary_hex(mapping=None, data=None, bins=30, fun="mean",
       na_rm=False, **params)`. It should aggregate `z`/`weight` values over
       existing hex-bin logic.
-    - [ ] `stat_ydensity(mapping=None, data=None, bw="nrd0", adjust=1,
+    - [x] `stat_ydensity(mapping=None, data=None, bw="nrd0", adjust=1,
       kernel="gaussian", trim=True, scale="area", na_rm=False, **params)`.
       It should expose violin-compatible density columns as a public stat.
-    - [ ] `geom_function(mapping=None, data=None, fun=None, xlim=None,
+    - [x] `geom_function(mapping=None, data=None, fun=None, xlim=None,
       n=101, args=None, **params)` as a wrapper over `stat_function()` plus a
       line geom.
-    - [ ] `geom_quantile(mapping=None, data=None, quantiles=(0.25, 0.5, 0.75),
+    - [x] `geom_quantile(mapping=None, data=None, quantiles=(0.25, 0.5, 0.75),
       formula=None, method="rq", **params)` as a wrapper over
       `stat_quantile()` plus paths.
   - Tests: empty data, grouping, alias imports, computed columns, scale
