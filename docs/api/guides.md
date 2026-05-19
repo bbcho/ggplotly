@@ -22,6 +22,10 @@ Guides help readers interpret the visual encodings in a plot (legends, colorbars
     options:
       show_root_heading: true
 
+::: ggplotly.guides.guide_colourbar
+    options:
+      show_root_heading: true
+
 ## Annotations
 
 ::: ggplotly.guides.annotate

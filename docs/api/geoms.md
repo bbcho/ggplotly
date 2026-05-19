@@ -150,6 +150,14 @@ Geometric objects (geoms) are the visual elements used to represent data in a pl
     options:
       show_root_heading: true
 
+::: ggplotly.geoms.geom_density_2d.geom_density_2d
+    options:
+      show_root_heading: true
+
+::: ggplotly.geoms.geom_density_2d.geom_density_2d_filled
+    options:
+      show_root_heading: true
+
 ## Map and Geo Geoms
 
 ::: ggplotly.geoms.geom_map.geom_map

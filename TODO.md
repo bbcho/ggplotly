@@ -87,22 +87,24 @@ The list includes:
 
 ### Project 03: Low-Risk ggplot2 Alias And Wrapper Pass
 
-- [ ] Add aliases and thin wrappers that should not change rendering behavior.
+- [x] Add aliases and thin wrappers that should not change rendering behavior.
   - Goal: improve drop-in compatibility without touching shared rendering math.
   - Included APIs:
-    - [ ] `geom_bin_2d()` alias for existing `geom_bin2d()`.
-    - [ ] `stat_bin_2d()` alias for existing `stat_bin2d()`.
-    - [ ] `stat_density2d()` alias for existing `stat_density_2d()`.
-    - [ ] `geom_density2d()` and `geom_density_2d()` wrappers over 2D density
+    - [x] `geom_bin_2d()` alias for existing `geom_bin2d()`.
+    - [x] `stat_bin_2d()` alias for existing `stat_bin2d()`.
+    - [x] `stat_density2d()` alias for existing `stat_density_2d()`.
+    - [x] `geom_density2d()` and `geom_density_2d()` wrappers over 2D density
       stat plus contour rendering.
-    - [ ] `geom_density2d_filled()` and `geom_density_2d_filled()` wrappers
+    - [x] `geom_density2d_filled()` and `geom_density_2d_filled()` wrappers
       over 2D filled density stat plus filled contour rendering.
-    - [ ] `stat_contour_filled()` export if existing contour-filled internals
+    - [x] `stat_contour_filled()` export if existing contour-filled internals
       can support it directly.
-    - [ ] `stat_sf()` no-op/simple-feature stat wrapper if `geom_sf()` already
+    - [x] `stat_sf()` no-op/simple-feature stat wrapper if `geom_sf()` already
       owns geometry handling.
-    - [ ] `guide_colourbar()` alias for `guide_colorbar()`.
-    - [ ] `guide_coloursteps()` alias when colorsteps support exists.
+    - [x] `guide_colourbar()` alias for `guide_colorbar()`.
+    - [x] `guide_coloursteps()` alias when colorsteps support exists. Not
+      applicable in Project 03 because `guide_colorsteps()` support does not
+      exist yet; Project 06 owns color-steps guide support.
   - Tests: import/export, alias identity or compatible class, basic draw for
     geom wrappers, and no behavior change for existing names.
   - Notebook: add a small ggplot2-parity notebook cell only if wrapper behavior

@@ -13,3 +13,4 @@ A visual gallery of ggplotly examples organized by category. Each example includ
 - [Multi-Panel Plots](facets.ipynb) - Faceting and small multiples
 - [Theming & Styling](theming.ipynb) - Custom themes, publication-ready charts
 - [Dataset Parity](dataset-parity.ipynb) - Bundled ggplot2 dataset compatibility checks
+- [ggplot2 Parity](ggplot2-parity.ipynb) - Compatibility aliases and wrappers

@@ -66,6 +66,7 @@ nav:
     - Facets: gallery/facets.ipynb
     - Theming: gallery/theming.ipynb
     - Dataset Parity: gallery/dataset-parity.ipynb
+    - ggplot2 Parity: gallery/ggplot2-parity.ipynb
     - Advanced Capabilities: gallery/advanced-capabilities.ipynb
     - Visual Regression Edge Cases: gallery/visual-regression-edge-cases.ipynb
   - Development:

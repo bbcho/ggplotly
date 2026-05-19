@@ -79,3 +79,15 @@ Statistical transformations for data.
 ::: ggplotly.stats.stat_contour.stat_contour
     options:
       show_root_heading: true
+
+## stat_contour_filled
+
+::: ggplotly.stats.stat_contour.stat_contour_filled
+    options:
+      show_root_heading: true
+
+## stat_sf
+
+::: ggplotly.stats.stat_sf.stat_sf
+    options:
+      show_root_heading: true
