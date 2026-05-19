@@ -23,8 +23,9 @@ class stat_function(Stat):
         Number of points to evaluate. Default is 101.
     xlim : tuple, optional
         (min, max) range for x values. If None, uses data range.
-    args : tuple, optional
-        Additional positional arguments to pass to fun.
+    args : tuple or dict, optional
+        Additional arguments to pass to fun. Tuples/lists are treated as
+        positional arguments; dicts are treated as keyword arguments.
 
     Examples
     --------
@@ -79,7 +80,7 @@ class stat_function(Stat):
         # Determine x range
         if self.xlim is not None:
             x_min, x_max = self.xlim
-        elif x_col and x_col in data.columns:
+        elif data is not None and x_col and x_col in data.columns:
             x_min, x_max = data[x_col].min(), data[x_col].max()
         else:
             x_min, x_max = 0, 1
@@ -91,7 +92,14 @@ class stat_function(Stat):
 
         # Generate x grid and compute y values
         x_vals = np.linspace(x_min, x_max, self.n)
-        y_vals = self.fun(x_vals, *self.args)
+        if self.args is None:
+            y_vals = self.fun(x_vals)
+        elif isinstance(self.args, dict):
+            y_vals = self.fun(x_vals, **self.args)
+        elif isinstance(self.args, (tuple, list)):
+            y_vals = self.fun(x_vals, *self.args)
+        else:
+            y_vals = self.fun(x_vals, self.args)
 
         result = pd.DataFrame({'x': x_vals, 'y': y_vals})
 

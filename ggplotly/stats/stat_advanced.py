@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from pandas.api import types as pd_types
 from scipy import stats as scipy_stats
 from scipy.stats import gaussian_kde
 
@@ -34,6 +35,154 @@ def _bin_edges(values, bins=30, binwidth=None):
         count = max(int(math.ceil((upper - lower) / binwidth)), 1)
         return lower + np.arange(count + 1) * binwidth
     return np.linspace(lower, upper, int(bins) + 1)
+
+
+def _mapped_columns(mapping, data, aesthetics=None):
+    columns = []
+    allowed = set(aesthetics) if aesthetics is not None else None
+    for aesthetic, column in mapping.items():
+        if allowed is not None and aesthetic not in allowed:
+            continue
+        if isinstance(column, str) and column in data.columns and column not in columns:
+            columns.append(column)
+    return columns
+
+
+def _group_columns(mapping, data):
+    return _mapped_columns(mapping, data, aesthetics=("group", "fill", "color", "colour", "linetype"))
+
+
+def _iter_groups(data, columns):
+    if not columns:
+        yield (), data
+        return
+    grouper = columns[0] if len(columns) == 1 else columns
+    for key, frame in data.groupby(grouper, sort=False, dropna=False):
+        if not isinstance(key, tuple):
+            key = (key,)
+        yield key, frame
+
+
+def _coerce_x_for_interpolation(series):
+    if pd_types.is_datetime64_any_dtype(series):
+        numeric = series.astype("int64").astype(float)
+
+        def restore(values):
+            return pd.to_datetime(values.astype("int64"))
+
+        return numeric, restore
+
+    numeric = pd.to_numeric(series, errors="coerce")
+    if numeric.notna().sum() == series.notna().sum():
+
+        def restore(values):
+            return values
+
+        return numeric.astype(float), restore
+
+    return None, None
+
+
+def _summary_value(series, fun):
+    if callable(fun):
+        return fun(series)
+
+    aliases = {
+        "length": "count",
+        "n": "count",
+    }
+    method = aliases.get(fun, fun)
+    if isinstance(method, str) and hasattr(series, method):
+        return getattr(series, method)()
+    return series.agg(fun)
+
+
+def _kde_bw_method(bw, adjust):
+    if bw in (None, "nrd0", "nrd", "scott"):
+        if adjust == 1:
+            return None
+        return lambda kde: kde.scotts_factor() * adjust
+    if bw == "silverman":
+        return lambda kde: kde.silverman_factor() * adjust
+    if isinstance(bw, (int, float)):
+        return float(bw) * adjust
+    return None
+
+
+class stat_unique(Stat):
+    """Drop duplicate rows using mapped aesthetics and grouping columns."""
+
+    __name__ = "unique"
+
+    def __init__(self, data=None, mapping=None, na_rm=False, **params):
+        super().__init__(data, mapping, **params)
+        self.na_rm = na_rm
+
+    def compute(self, data):
+        if data is None:
+            return pd.DataFrame(), self.mapping.copy()
+
+        frame = data.copy()
+        key_cols = _mapped_columns(self.mapping, frame)
+        for column in ("group", "PANEL"):
+            if column in frame.columns and column not in key_cols:
+                key_cols.append(column)
+
+        if self.na_rm and key_cols:
+            frame = frame.dropna(subset=key_cols)
+        if not key_cols:
+            return frame.drop_duplicates().reset_index(drop=True), self.mapping.copy()
+        return frame.drop_duplicates(subset=key_cols, keep="first").reset_index(drop=True), self.mapping.copy()
+
+
+class stat_align(Stat):
+    """Align grouped area data to a shared x-domain with interpolation."""
+
+    __name__ = "align"
+
+    def compute(self, data):
+        x_col = self.mapping.get("x")
+        y_col = self.mapping.get("y")
+        if x_col is None or y_col is None:
+            raise ValueError("stat_align requires x and y aesthetics")
+        if data is None:
+            return pd.DataFrame(columns=[x_col, y_col]), self.mapping.copy()
+
+        frame = data.copy()
+        if frame.empty:
+            return frame, self.mapping.copy()
+
+        x_numeric, restore_x = _coerce_x_for_interpolation(frame[x_col])
+        if x_numeric is None:
+            return frame.sort_values(x_col).reset_index(drop=True), self.mapping.copy()
+
+        frame["_ggplotly_x"] = x_numeric
+        frame["_ggplotly_y"] = pd.to_numeric(frame[y_col], errors="coerce")
+        frame = frame.dropna(subset=["_ggplotly_x", "_ggplotly_y"])
+        if frame.empty:
+            return pd.DataFrame(columns=[x_col, y_col]), self.mapping.copy()
+
+        group_cols = _group_columns(self.mapping, frame)
+        shared_x = np.sort(frame["_ggplotly_x"].drop_duplicates().to_numpy(dtype=float))
+        restored_x = restore_x(shared_x)
+        rows = []
+
+        for key, group_frame in _iter_groups(frame, group_cols):
+            summary = (
+                group_frame.groupby("_ggplotly_x", sort=True, as_index=False)["_ggplotly_y"]
+                .mean()
+                .sort_values("_ggplotly_x")
+            )
+            xp = summary["_ggplotly_x"].to_numpy(dtype=float)
+            yp = summary["_ggplotly_y"].to_numpy(dtype=float)
+            aligned_y = np.interp(shared_x, xp, yp, left=0.0, right=0.0)
+            for x_value, y_value in zip(restored_x, aligned_y):
+                row = {x_col: x_value, y_col: y_value}
+                for column, value in zip(group_cols, key):
+                    row[column] = value
+                rows.append(row)
+
+        return pd.DataFrame(rows), self.mapping.copy()
 
 
 class stat_bin2d(Stat):
@@ -250,12 +399,21 @@ class stat_quantile(Stat):
     """Fit linear quantile regression lines."""
 
     __name__ = "quantile"
+    geom = "line"
 
     def __init__(self, data=None, mapping=None, quantiles=(0.25, 0.5, 0.75), n=100,
-                 na_rm=False, **params):
+                 formula=None, method="rq", na_rm=False, **params):
         super().__init__(data, mapping, **params)
-        self.quantiles = quantiles
+        if formula not in (None, "y ~ x"):
+            raise NotImplementedError("stat_quantile currently supports only linear y ~ x formulas")
+        if method != "rq":
+            raise NotImplementedError("stat_quantile currently supports only method='rq'")
+        if isinstance(quantiles, (int, float)):
+            quantiles = (quantiles,)
+        self.quantiles = tuple(float(q) for q in quantiles)
         self.n = n
+        self.formula = formula
+        self.method = method
         self.na_rm = na_rm
 
     def compute(self, data):
@@ -341,6 +499,169 @@ class stat_summary_2d(stat_bin2d):
         values["x"] = values["_xbin"].apply(lambda interval: interval.mid)
         values["y"] = values["_ybin"].apply(lambda interval: interval.mid)
         return values[["x", "y", "value"]], {"x": "x", "y": "y", "fill": "value"}
+
+
+class stat_summary_hex(Stat):
+    """Summarize values inside approximate hexagonal x/y bins."""
+
+    __name__ = "summary_hex"
+    geom = "hex"
+
+    def __init__(self, data=None, mapping=None, bins=30, fun="mean", na_rm=False, **params):
+        super().__init__(data, mapping, **params)
+        self.bins = bins
+        self.fun = fun
+        self.na_rm = na_rm
+
+    def compute(self, data):
+        x_col = self.mapping.get("x")
+        y_col = self.mapping.get("y")
+        value_col = self.mapping.get("z") or self.mapping.get("fill") or self.mapping.get("weight")
+        if x_col is None or y_col is None:
+            raise ValueError("stat_summary_hex requires x and y aesthetics")
+        if value_col is None:
+            return stat_bin_hex(data=self.data, mapping=self.mapping, bins=self.bins, na_rm=self.na_rm).compute(data)
+
+        frame = _clean_numeric(data, [x_col, y_col, value_col], self.na_rm)
+        if frame.empty:
+            return pd.DataFrame(columns=["x", "y", "value", "count", "radius"]), {
+                "x": "x",
+                "y": "y",
+                "fill": "value",
+            }
+
+        if isinstance(self.bins, (tuple, list)):
+            x_bins, y_bins = self.bins
+        else:
+            x_bins = y_bins = self.bins
+        x_edges = _bin_edges(frame[x_col], x_bins, None)
+        y_edges = _bin_edges(frame[y_col], y_bins, None)
+        frame["_xbin"] = pd.cut(frame[x_col], x_edges, include_lowest=True, labels=False)
+        frame["_ybin"] = pd.cut(frame[y_col], y_edges, include_lowest=True, labels=False)
+        frame = frame.dropna(subset=["_xbin", "_ybin"])
+
+        x_step = float(np.median(np.diff(x_edges)) if len(x_edges) > 1 else 1.0)
+        y_step = float(np.median(np.diff(y_edges)) if len(y_edges) > 1 else 1.0)
+        radius = min(abs(x_step), abs(y_step)) * 0.45
+        rows = []
+        for (x_bin, y_bin), group in frame.groupby(["_xbin", "_ybin"], observed=True):
+            x_bin = int(x_bin)
+            y_bin = int(y_bin)
+            rows.append({
+                "x": (x_edges[x_bin] + x_edges[x_bin + 1]) / 2 + (y_bin % 2) * x_step * 0.5,
+                "y": (y_edges[y_bin] + y_edges[y_bin + 1]) / 2,
+                "value": _summary_value(group[value_col], self.fun),
+                "count": int(len(group)),
+                "radius": radius,
+            })
+
+        return pd.DataFrame(rows), {"x": "x", "y": "y", "fill": "value"}
+
+
+class stat_ydensity(Stat):
+    """Compute y-axis density values used by violin-style displays."""
+
+    __name__ = "ydensity"
+
+    def __init__(
+        self,
+        data=None,
+        mapping=None,
+        bw="nrd0",
+        adjust=1,
+        kernel="gaussian",
+        trim=True,
+        scale="area",
+        n=512,
+        na_rm=False,
+        **params,
+    ):
+        super().__init__(data, mapping, **params)
+        self.bw = bw
+        self.adjust = adjust
+        self.kernel = kernel
+        self.trim = trim
+        self.scale = scale
+        self.n = n
+        self.na_rm = na_rm
+
+    def compute(self, data):
+        y_col = self.mapping.get("y")
+        x_col = self.mapping.get("x")
+        if y_col is None:
+            raise ValueError("stat_ydensity requires y aesthetic")
+        if self.kernel != "gaussian":
+            raise NotImplementedError("stat_ydensity currently supports only kernel='gaussian'")
+        if self.scale not in ("area", "count", "width"):
+            raise ValueError("stat_ydensity scale must be one of 'area', 'count', or 'width'")
+
+        frame = _clean_numeric(data, [y_col], self.na_rm)
+        if frame.empty:
+            return pd.DataFrame(
+                columns=["x", "y", "density", "scaled", "ndensity", "count", "n", "violinwidth", "width", "group"],
+            ), {"x": "x", "y": "y", "group": "group"}
+
+        group_col = self.mapping.get("group") or x_col
+        groups = [(None, frame)] if group_col is None or group_col not in frame else frame.groupby(group_col, sort=False, dropna=False)
+        global_min = float(frame[y_col].min())
+        global_max = float(frame[y_col].max())
+        bw_method = _kde_bw_method(self.bw, self.adjust)
+        density_groups = []
+
+        for group, group_frame in groups:
+            values = group_frame[y_col].dropna().astype(float)
+            if len(values) < 2 or values.std() == 0:
+                continue
+            y_min = float(values.min()) if self.trim else global_min
+            y_max = float(values.max()) if self.trim else global_max
+            grid = np.linspace(y_min, y_max, self.n)
+            density = gaussian_kde(values, bw_method=bw_method)(grid)
+            density_groups.append({
+                "group": group,
+                "x": group if group_col is not None else 0,
+                "grid": grid,
+                "density": density,
+                "n": len(values),
+            })
+
+        if not density_groups:
+            return pd.DataFrame(
+                columns=["x", "y", "density", "scaled", "ndensity", "count", "n", "violinwidth", "width", "group"],
+            ), {"x": "x", "y": "y", "group": "group"}
+
+        max_density = max(float(group["density"].max()) for group in density_groups) or 1.0
+        max_n = max(int(group["n"]) for group in density_groups) or 1
+        rows = []
+        for group in density_groups:
+            density = group["density"]
+            group_max = float(density.max()) or 1.0
+            scaled = density / group_max
+            if self.scale == "area":
+                violinwidth = density / max_density
+            elif self.scale == "count":
+                violinwidth = scaled * group["n"] / max_n
+            else:
+                violinwidth = scaled
+            for y_value, density_value, scaled_value, width_value in zip(
+                group["grid"],
+                density,
+                scaled,
+                violinwidth,
+            ):
+                rows.append({
+                    "x": group["x"],
+                    "y": y_value,
+                    "density": density_value,
+                    "scaled": scaled_value,
+                    "ndensity": scaled_value,
+                    "count": density_value * group["n"],
+                    "n": group["n"],
+                    "violinwidth": width_value,
+                    "width": self.params.get("width", 0.9),
+                    "group": group["group"],
+                })
+
+        return pd.DataFrame(rows), {"x": "x", "y": "y", "group": "group"}
 
 
 class stat_halfeye(Stat):

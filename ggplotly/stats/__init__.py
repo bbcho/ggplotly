@@ -1,5 +1,6 @@
 from .stat_advanced import (
     stat_alluvium,
+    stat_align,
     stat_bin_2d,
     stat_bin2d,
     stat_bin_hex,
@@ -15,6 +16,9 @@ from .stat_advanced import (
     stat_sum,
     stat_summary_2d,
     stat_summary_bin,
+    stat_summary_hex,
+    stat_unique,
+    stat_ydensity,
 )
 from .stat_bin import stat_bin
 from .stat_contour import stat_contour, stat_contour_filled
@@ -45,6 +49,7 @@ __all__ = [
     "stat_qq",
     "stat_qq_line",
     "stat_stl",
+    "stat_align",
     "stat_bin2d",
     "stat_bin_2d",
     "stat_bin_hex",
@@ -58,7 +63,10 @@ __all__ = [
     "stat_quantile",
     "stat_summary_bin",
     "stat_summary_2d",
+    "stat_summary_hex",
     "stat_sum",
+    "stat_unique",
+    "stat_ydensity",
     "stat_halfeye",
     "stat_dotsinterval",
     "stat_alluvium",

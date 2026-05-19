@@ -319,6 +319,9 @@ class geom_hex(geom_bin2d):
     def _draw_impl(self, fig, data, row, col):
         count = pd.to_numeric(data["count"], errors="coerce").fillna(0)
         size = 8 + 22 * (count - count.min()) / ((count.max() - count.min()) or 1)
+        color_column = self.mapping.get("fill")
+        color_values = data[color_column] if color_column in data else count
+        colorbar_title = color_column if color_column in data else "count"
         fig.add_trace(
             go.Scatter(
                 x=data["x"],
@@ -327,10 +330,10 @@ class geom_hex(geom_bin2d):
                 marker=dict(
                     symbol="hexagon",
                     size=size,
-                    color=count,
+                    color=color_values,
                     colorscale=self.params.get("palette", "Viridis"),
                     showscale=True,
-                    colorbar=dict(title="count"),
+                    colorbar=dict(title=colorbar_title),
                 ),
                 name=self.params.get("name", "Hex"),
                 showlegend=False,

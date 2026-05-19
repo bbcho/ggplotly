@@ -37,6 +37,7 @@ from .geom_advanced import (
 from .geom_area import geom_area
 from .geom_bar import geom_bar
 from .geom_base import Geom
+from .geom_blank import geom_blank
 from .geom_boxplot import geom_boxplot
 from .geom_candlestick import geom_candlestick, geom_ohlc
 from .geom_col import geom_col
@@ -52,6 +53,7 @@ from .geom_density_2d import (
 from .geom_edgebundle import geom_edgebundle
 from .geom_errorbar import geom_errorbar
 from .geom_fanchart import geom_fanchart
+from .geom_function import geom_function
 from .geom_histogram import geom_histogram
 from .geom_hline import geom_hline
 from .geom_jitter import geom_jitter
@@ -66,6 +68,7 @@ from .geom_point import geom_point
 from .geom_point_3d import geom_point_3d
 from .geom_qq import geom_qq
 from .geom_qq_line import geom_qq_line
+from .geom_quantile import geom_quantile
 from .geom_range import geom_range
 from .geom_rect import geom_rect
 from .geom_ribbon import geom_ribbon
@@ -90,6 +93,7 @@ __all__ = [
     "geom_lines",
     "geom_path",
     "geom_bar",
+    "geom_blank",
     "geom_histogram",
     "geom_boxplot",
     "geom_smooth",
@@ -109,6 +113,7 @@ __all__ = [
     "geom_hline",
     "geom_edgebundle",
     "geom_fanchart",
+    "geom_function",
     "geom_searoute",
     "geom_jitter",
     "geom_rug",
@@ -129,6 +134,7 @@ __all__ = [
     "geom_norm",
     "geom_qq",
     "geom_qq_line",
+    "geom_quantile",
     "geom_sankey",
     "geom_waterfall",
     "geom_linerange",

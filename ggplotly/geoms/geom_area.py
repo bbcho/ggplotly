@@ -3,6 +3,7 @@
 
 import plotly.graph_objects as go
 
+from ..stats.stat_advanced import stat_align
 from .geom_base import Geom
 
 
@@ -23,6 +24,8 @@ class geom_area(Geom):
         group (str, optional): Grouping variable for the areas.
         fill (str, optional): Fill color for the area.
         alpha (float, optional): Transparency level for the fill color. Default is 0.5.
+        stat (str, optional): Statistical transform. Defaults to 'align' to
+            match ggplot2 area alignment. Use 'identity' to preserve raw rows.
         position (str, optional): Position adjustment. Options:
             - 'identity': No stacking (default)
             - 'stack': Stack areas on top of each other
@@ -37,7 +40,12 @@ class geom_area(Geom):
     """
 
     required_aes = ['x', 'y']
-    default_params = {"size": 1, "alpha": 0.5, "position": "identity"}
+    default_params = {"size": 1, "alpha": 0.5, "position": "identity", "stat": "align"}
+
+    def _apply_stats(self, data):
+        if not self.stats and self.params.get("stat", "align") == "align":
+            self.stats.append(stat_align(mapping=self.mapping))
+        return super()._apply_stats(data)
 
     def _draw_impl(self, fig, data, row, col):
         """
