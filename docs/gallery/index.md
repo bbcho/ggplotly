@@ -12,3 +12,4 @@ A visual gallery of ggplotly examples organized by category. Each example includ
 - [Network Graphs](networks.ipynb) - Edge bundling, sea routes
 - [Multi-Panel Plots](facets.ipynb) - Faceting and small multiples
 - [Theming & Styling](theming.ipynb) - Custom themes, publication-ready charts
+- [Dataset Parity](dataset-parity.ipynb) - Bundled ggplot2 dataset compatibility checks

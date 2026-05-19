@@ -74,7 +74,7 @@ The list includes:
 
 ### Project 02: Dataset And Example Compatibility Checks
 
-- [ ] Add ggplot2 dataset parity checks.
+- [x] Add ggplot2 dataset parity checks.
   - Goal: make translated ggplot2 examples load expected data with expected
     columns and basic dtypes.
   - Datasets to verify: `diamonds`, `economics`, `economics_long`,
