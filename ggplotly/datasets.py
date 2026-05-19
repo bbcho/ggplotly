@@ -10,10 +10,27 @@ import pandas as pd
 
 _DATA_DIR = Path(__file__).parent / "data"
 
+_DATASET_DATE_COLUMNS: dict[str, tuple[str, ...]] = {
+    "economics": ("date",),
+    "economics_long": ("date",),
+    "presidential": ("start", "end"),
+}
+
 
 def _list_datasets() -> list[str]:
     """Return sorted list of available dataset names."""
     return sorted([f.stem for f in _DATA_DIR.glob("*.csv")])
+
+
+def _normalize_dataset(name: str, df: pd.DataFrame) -> pd.DataFrame:
+    date_columns = _DATASET_DATE_COLUMNS.get(name)
+    if date_columns is None:
+        return df
+
+    normalized = df.copy()
+    for column in date_columns:
+        normalized[column] = pd.to_datetime(normalized[column])
+    return normalized
 
 
 def _load_us_flights():
@@ -91,4 +108,4 @@ def data(name: str | None = None):
             f"Unknown dataset '{name}'. "
             f"Use data() to see available datasets."
         )
-    return pd.read_csv(_DATA_DIR / f"{name}.csv")
+    return _normalize_dataset(name, pd.read_csv(_DATA_DIR / f"{name}.csv"))
