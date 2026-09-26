@@ -125,6 +125,9 @@ Tests are in `pytest/` using pytest framework:
 
 ## Testing Requirements
 
+Project type: library, for the test-rigor table in `~/Projects/CLAUDE/rules/testing.md`.
+The four categories below are this project's requirements and take precedence.
+
 **When adding new features or modifying existing code, tests MUST include all four categories:**
 
 ### 1. Basic Functionality Tests

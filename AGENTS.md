@@ -44,6 +44,8 @@ as `colour`, `linewidth`, `show.legend`, `na.rm`, and `position_*`.
 
 ### Testing And Verification
 
+- Project type: library, for the test-rigor table in
+  `~/Projects/CLAUDE/rules/testing.md`. The requirements in this file take precedence.
 - Preferred full test command:
   ```bash
   .venv/bin/python -m pytest pytest -q --no-cov
